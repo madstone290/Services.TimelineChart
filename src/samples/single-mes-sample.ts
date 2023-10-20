@@ -707,9 +707,9 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
             sidePointEvents: sidePointEvents as any,
             globalRangeEvents: globalRangeEvents as any,
         };
-        const cellMinutes = 30;
-        const cellWidth = 50;
-        const cellHeight = 50;
+        const cellMinutes = 10;
+        const cellWidth = 20;
+        const cellHeight = 20;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
             subTitle: "Serial No.",

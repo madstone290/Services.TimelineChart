@@ -665,8 +665,8 @@ namespace Services.TimelineChart.Samples.MultiMesSample {
         };
 
         const cellMinutes = 30;
-        const cellWidth = 50;
-        const cellHeight = 50;
+        const cellWidth = 20;
+        const cellHeight = 20;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
             subTitle: "Serial No.",
