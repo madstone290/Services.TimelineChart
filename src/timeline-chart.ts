@@ -817,13 +817,15 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityEvents(entity: Entity, rowIndex: number) {
-            if (entity.pointEvents != null && entity.pointEvents.length > 0) {
-                for (const event of entity.pointEvents) {
+            const pointEvents = entity[_dataOptions.entityPointEventsProp];
+            if (pointEvents != null && pointEvents.length > 0) {
+                for (const event of pointEvents) {
                     _renderEntityPointEvent(event, rowIndex);
                 }
             }
-            if (entity.rangeEvents != null && entity.rangeEvents.length > 0) {
-                for (const event of entity.rangeEvents) {
+            const rangeEvents = entity[_dataOptions.entityRangeEventsProp];
+            if (rangeEvents != null && rangeEvents.length > 0) {
+                for (const event of rangeEvents) {
                     _renderEntityRangeEvent(event, rowIndex);
                 }
             }
