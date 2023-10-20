@@ -398,7 +398,6 @@ namespace Services.TimelineChart.Samples.BaseSample {
                 colors.push(color);
             }
             colorCreated = true;
-            console.log(colors);
         }
         if (colors.length <= colorIdex)
             colorIdex = 0;
@@ -490,8 +489,8 @@ namespace Services.TimelineChart.Samples.BaseSample {
         };
 
         const cellMinutes = 30;
-        const cellWidth = 50;
-        const cellHeight = 50;
+        const cellWidth = 30;
+        const cellHeight = 30;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
             subTitle: "Serial No.",

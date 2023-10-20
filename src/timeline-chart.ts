@@ -690,7 +690,6 @@ namespace Services.TimelineChart {
             const time = dateTimeService.toMinutes(eventTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
             const top = (_state.timelineCanvasHeight - _state.timelineCanvasContentHeight) / 2;
-            console.log(_state.timelineCanvasHeight, _state.timelineCanvasContentHeight);
             const width = _state.timelineCanvasContentHeight;
 
             containerElement.style.left = `${center - (width / 2)}px`;
@@ -747,7 +746,7 @@ namespace Services.TimelineChart {
 
         function _renderEntity(entityContainer: EntityContainer) {
             const { index, entity, containerEl, lastRenderTime } = entityContainer;
-            const shouldRender = lastRenderTime == null || lastRenderTime < _state.lastResizeTime;
+            const shouldRender = lastRenderTime == null || lastRenderTime <= _state.lastResizeTime;
             if (!shouldRender)
                 return;
 
@@ -782,7 +781,7 @@ namespace Services.TimelineChart {
                 if (entry.isIntersecting) {
                     _renderEntity(entityContainer);
                 }
-                
+
             });
         }
         const options: IntersectionObserverInit = {
@@ -965,6 +964,7 @@ namespace Services.TimelineChart {
             // 현재 보여지는 엔티티 리스트만 다시 그린다.
 
             _resetCanvasSize();
+            _state.lastResizeTime = new Date();
 
             _renderSideCanvas();
             _renderSidePointEvents();
@@ -978,8 +978,6 @@ namespace Services.TimelineChart {
             // keep scroll position
             _mainCanvasBoxElement.scrollLeft = scrollLeft;
             _mainCanvasBoxElement.scrollTop = scrollTop;
-
-            _state.lastResizeTime = new Date();
         }
 
         function _renderIntersectingEntitiList() {
