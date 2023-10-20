@@ -69,6 +69,8 @@ namespace Services.TimelineChart {
         hasHorizontalLine?: boolean;
         hasVerticalLine?: boolean;
         canAutoFit?: boolean;
+        resizeStepX?: number;
+        resizeStepY?: number;
         headerTimeFormat?: (time: Date) => string;
         headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
         entityRender?: (entity: Entity, containerEl: HTMLElement) => void;
@@ -130,17 +132,35 @@ namespace Services.TimelineChart {
         /**
          * 셀 너비 조절 단위. 마우스 휠을 이용해 셀 크기를 조절할 때 사용한다.
          */
-        resizeWidthstep: number;
+        resizeStepY: number;
 
         /**
          * 셀 높이 조절 단위. 마우스 휠을 이용해 셀 크기를 조절할 때 사용한다.
          */
-        resizeHeightStep: number;
+        resizeStepX: number;
 
+        /**
+         * x축 리사이징 속도. 
+         */
+        velocityX: number;
+
+        /**
+         * y축 리사이징 속도.
+         */
+        velocityY: number;
+
+        prevResizeDirection: null | "up" | "down";
+
+        /**
+         * 리사이징 가속 초기화 시간(밀리초)
+         */
+        accelResetTimeout: number;
         /**
          * 최근 차트 리사이징 시간. 리사이징 전에 렌더링된 엘리먼트는 새로 렌더링한다.
          */
         lastResizeTime: Date;
+
+
 
     }
 
@@ -283,12 +303,16 @@ namespace Services.TimelineChart {
             canAutoFit: true,
             chartRenderStartTime: new Date(),
             chartRenderEndTime: new Date(),
-            resizeHeightStep: 10,
-            resizeWidthstep: 10,
+            resizeStepX: 10,
+            resizeStepY: 10,
+            velocityX: 0,
+            velocityY: 0,
+            prevResizeDirection: null,
             headerCellCount: 0,
             cellContentHeight: 0,
             timelineCanvasContentHeight: 0,
-            lastResizeTime: new Date()
+            lastResizeTime: new Date(),
+            accelResetTimeout: 300,
         }
 
         /**
@@ -455,7 +479,8 @@ namespace Services.TimelineChart {
                 .forEach(([key, value]) => {
                     (_state as any)[key] = value;
                 });
-
+            _state.maxResizeScale = options.maxResizeScale ?? _state.maxResizeScale;
+            
             _state.minCellWidth = options.minCellWidth ?? _state.cellWidth;
             _state.maxCellWidth = options.maxCellWidth ?? _state.cellWidth * _state.maxResizeScale;
             _state.minCellHeight = options.minCellHeight ?? _state.cellHeight;
@@ -466,8 +491,8 @@ namespace Services.TimelineChart {
 
             _state.chartRenderStartTime = new Date(_state.chartStartTime.getTime() - dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
             _state.chartRenderEndTime = new Date(_state.chartEndTime.getTime() + dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
-            _state.resizeWidthstep = _state.cellWidth / 10;
-            _state.resizeHeightStep = _state.cellHeight / 10;
+            _state.resizeStepY = options.resizeStepX ?? _state.cellWidth / 5;
+            _state.resizeStepX = options.resizeStepY ?? _state.cellHeight / 5;
 
             _state.headerTimeFormat = options.headerTimeFormat ?? ((time: Date) => { return time.toLocaleString(); });
             _state.headerCellRender = options.headerCellRender ?? ((time: Date, containerElement: HTMLElement) => {
@@ -609,6 +634,10 @@ namespace Services.TimelineChart {
                 if (e.target == canvasElement) {
                     pivotPoint.x = e.offsetX;
                     pivotPoint.y = e.offsetY;
+                }
+                else if ((e.target as HTMLElement).parentElement == canvasElement) {
+                    pivotPoint.x = (e.target as HTMLElement).offsetLeft + e.offsetX;
+                    pivotPoint.y = (e.target as HTMLElement).offsetTop + e.offsetY;
                 }
                 else if ((e.target as HTMLElement).parentElement.parentElement == canvasElement) {
                     pivotPoint.x = (e.target as HTMLElement).parentElement.offsetLeft + e.offsetX;
@@ -908,19 +937,41 @@ namespace Services.TimelineChart {
         }
 
         function sizeUpCanvas(pivotPointX?: number, pivotPointY?: number) {
+            const shouldReset = _state.prevResizeDirection == "down" ||
+                _state.accelResetTimeout < new Date().valueOf() - _state.lastResizeTime.valueOf();
+            if (shouldReset) {
+                _state.velocityX = 0;
+                _state.velocityY = 0;
+            }
+
+            _state.velocityX += _state.resizeStepY;
+            _state.velocityY += _state.resizeStepX;
+
             resizeCanvas(
-                _state.cellWidth + _state.resizeWidthstep,
-                _state.cellHeight + _state.resizeHeightStep,
+                _state.cellWidth + _state.velocityX,
+                _state.cellHeight + _state.velocityY,
                 pivotPointX,
                 pivotPointY);
+
+            _state.prevResizeDirection = "up";
         }
 
         function sizeDownCanvas(pivotPointX?: number, pivotPointY?: number) {
+            const shouldReset = _state.prevResizeDirection == "up" ||
+                _state.accelResetTimeout < new Date().valueOf() - _state.lastResizeTime.valueOf();
+            if (shouldReset) {
+                _state.velocityX = 0;
+                _state.velocityY = 0;
+            }
+            _state.velocityX -= _state.resizeStepY;
+            _state.velocityY -= _state.resizeStepX;
             resizeCanvas(
-                _state.cellWidth - _state.resizeWidthstep,
-                _state.cellHeight - _state.resizeHeightStep,
+                _state.cellWidth + _state.velocityX,
+                _state.cellHeight + _state.velocityY,
                 pivotPointX,
                 pivotPointY);
+
+            _state.prevResizeDirection = "down";
         }
 
         /**
@@ -966,6 +1017,7 @@ namespace Services.TimelineChart {
             // 현재 보여지는 엔티티 리스트만 다시 그린다.
 
             _resetCanvasSize();
+            // 일부 렌더링에는 마지막 리사이징 시간이 필요하므로 미리 저장해둔다.
             _state.lastResizeTime = new Date();
 
             _renderSideCanvas();

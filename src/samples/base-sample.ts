@@ -508,6 +508,7 @@ namespace Services.TimelineChart.Samples.BaseSample {
             canAutoFit: true,
             hasHorizontalLine: true,
             hasVerticalLine: true,
+            maxResizeScale: 10,
             headerCellRender: headerCellRender,
             entityPointEventRender: entityPointEventRender,
             entityRangeEventRender: entityRangeEventRender,

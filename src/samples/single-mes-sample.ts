@@ -424,10 +424,8 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
     const WARNING_IMG_SRC = "./asset/image/warning.svg";
 
     const CLS_TOOLTIP = "tr-tooltip";
-
     const CLS_ENTITY_RANGE_EVENT = "tr-entity-range-event";
     const CLS_GLOBAL_RANGE_EVENT = "tr-global-range-event";
-
 
     const COLOR_SELECTED_EVENT = "#333";
 
@@ -724,6 +722,7 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
             cellWidth: cellWidth,
             cellHeight: cellHeight,
             cellContentHeightRatio: 0.5,
+            maxResizeScale: 10,
             canAutoFit: true,
             hasHorizontalLine: true,
             hasVerticalLine: true,
