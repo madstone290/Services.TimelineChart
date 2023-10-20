@@ -10,8 +10,7 @@
     <script src="../dist/other/mes-legend.js"></script>
     <script src="../dist/samples/multi-mes-sample.js"></script>
     
-    <script src="../dist/other/element-full.js"></script>
-    <script src="../dist/other/screen-full.js"></script>
+    <script src="../dist/other/full-size.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/timeline-chart.css">
     <link rel="stylesheet" type="text/css" href="css/mes-timeline-chart.css">
@@ -93,8 +92,12 @@
     const btn4 = document.getElementById('btn4');
 
 
-    //const fuller = new ScreenFull();
-    const fuller = new ElementFull(document.getElementsByClassName('tc-flex')[0]);
+    let screenfull = false;
+    let fuller = null;
+    if(screenfull)
+        fuller = new Services.TimelineChart.Other.FullSize.ScreenFull();
+    else
+        fuller = new Services.TimelineChart.Other.FullSize.ElementFull(document.getElementsByClassName('tc-flex')[0]);
     function fullscreenHandler(element) {
         element.onclick = () => {
             console.log(element);
