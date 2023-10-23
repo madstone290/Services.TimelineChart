@@ -568,7 +568,7 @@ namespace Services.TimelineChart {
             let end = _state.chartRenderEndTime;
             let headerCellCount = 0;
 
-            while (time < end) {
+            while (time <= end) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_TIMELINE_HEADER_ITEM);
                 _state.headerCellRender(time, containerElement);
