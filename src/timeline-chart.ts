@@ -480,7 +480,7 @@ namespace Services.TimelineChart {
                     (_state as any)[key] = value;
                 });
             _state.maxResizeScale = options.maxResizeScale ?? _state.maxResizeScale;
-            
+
             _state.minCellWidth = options.minCellWidth ?? _state.cellWidth;
             _state.maxCellWidth = options.maxCellWidth ?? _state.cellWidth * _state.maxResizeScale;
             _state.minCellHeight = options.minCellHeight ?? _state.cellHeight;
@@ -514,6 +514,15 @@ namespace Services.TimelineChart {
 
         function setData(data: ChartData) {
             _data = data;
+        }
+
+        function isTimeInRange(startTime: Date, endTime?: Date): boolean {
+            if (endTime == null) {
+                return _state.chartStartTime <= startTime && startTime <= _state.chartEndTime;
+            }
+            else {
+                return _state.chartStartTime <= startTime && endTime <= _state.chartEndTime;
+            }
         }
 
         /**
@@ -713,14 +722,15 @@ namespace Services.TimelineChart {
             }
         }
         function _renderSidePointEvent(event: PointEvent) {
+            const evtStartTime = event[_dataOptions.pointEventTimeProp] as Date;
+            if (!isTimeInRange(evtStartTime))
+                return;
+            
             const containerElement = document.createElement("div");
-
-            const eventTime = event[_dataOptions.pointEventTimeProp] as Date;
-            const time = dateTimeService.toMinutes(eventTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const time = dateTimeService.toMinutes(evtStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
             const top = (_state.timelineCanvasHeight - _state.timelineCanvasContentHeight) / 2;
             const width = _state.timelineCanvasContentHeight;
-
             containerElement.style.left = `${center - (width / 2)}px`;
             containerElement.style.top = `${top}px`;
             containerElement.classList.add(CLS_TIMELINE_CANVAS_ITEM);
@@ -732,8 +742,6 @@ namespace Services.TimelineChart {
 
         function _renderMainCanvas() {
             _mainCanvasElement.replaceChildren();
-            // if (_state.hasHorizontalLine)
-            //     _renderMainCanvasHLine();
             if (_state.hasVerticalLine)
                 _renderMainCanvasVLine();
         }
@@ -861,14 +869,15 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityPointEvent(event: PointEvent, rowIndex: number) {
+            const eventStartTime = event[_dataOptions.pointEventTimeProp] as Date;
+            if (!isTimeInRange(eventStartTime))
+                return;
+            
             const containerElement = document.createElement("div");
-
-            const eventTime = event[_dataOptions.pointEventTimeProp] as Date;
-            const time = dateTimeService.toMinutes(eventTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const time = dateTimeService.toMinutes(eventStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
             const top = (_state.cellHeight * rowIndex) + ((_state.cellHeight - _state.cellContentHeight) / 2) - 1;
             const width = _state.cellContentHeight;
-
             containerElement.style.left = `${center - (width / 2)}px`;
             containerElement.style.top = `${top}px`;
             containerElement.style.zIndex = `${Z_INDEX_ENTITY_POINT_EVENT} `;
@@ -881,10 +890,12 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityRangeEvent(event: RangeEvent, rowIndex: number) {
-            const containerElement = document.createElement("div");
-
             const eventStartTime = event[_dataOptions.rangeEventStartTimeProp] as Date;
             const eventEndTime = event[_dataOptions.rangeEventEndTimeProp] as Date;
+            if (!isTimeInRange(eventStartTime, eventEndTime))
+                return;
+
+            const containerElement = document.createElement("div");
             const startTime = dateTimeService.toMinutes(eventStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const duration = dateTimeService.toMinutes(eventEndTime.valueOf() - eventStartTime.valueOf());
             const left = startTime * _state.cellWidth / _state.cellMinutes;
@@ -914,10 +925,12 @@ namespace Services.TimelineChart {
         }
 
         function _renderGlobalRangeEvent(event: RangeEvent) {
-            const containerElement = document.createElement("div");
-
             const eventStartTime = event[_dataOptions.rangeEventStartTimeProp] as Date;
             const eventEndTime = event[_dataOptions.rangeEventEndTimeProp] as Date;
+            if (!isTimeInRange(eventStartTime, eventEndTime))
+                return;
+
+            const containerElement = document.createElement("div");
             const startTime = dateTimeService.toMinutes(eventStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const duration = dateTimeService.toMinutes(eventEndTime.valueOf() - eventStartTime.valueOf());
             const left = startTime * _state.cellWidth / _state.cellMinutes;
