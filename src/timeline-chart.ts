@@ -74,6 +74,11 @@ namespace Services.TimelineChart {
          * 차트 높이를 자동으로 맞출지 여부. 엔티티수가 적을 경우 차트 높이를 자동으로 맞춘다.
          */
         chartHeightAutoFit?: boolean;
+
+        /**
+         * 컬럼 너비를 자동으로 맞출지 여부. true인 경우 셀너비 옵션이 무시된다. 현재 차트 너비에 맞춰 셀너비를 조절한다.
+         */
+        columnAutoWidth?: boolean;
         headerTimeFormat?: (time: Date) => string;
         headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
         entityRender?: (entity: Entity, containerEl: HTMLElement) => void;
@@ -114,6 +119,7 @@ namespace Services.TimelineChart {
         hasHorizontalLine: boolean;
         hasVerticalLine: boolean;
         chartHeightAutoFit: boolean;
+        columnAutoWidth: boolean;
         headerTimeFormat: (time: Date) => string;
         headerCellRender: (time: Date, containerElement: HTMLElement) => void;
         entityRender: (entity: Entity, containerEl: HTMLElement) => void;
@@ -303,7 +309,6 @@ namespace Services.TimelineChart {
             globalRangeEventRender: null,
             hasHorizontalLine: true,
             hasVerticalLine: true,
-            chartHeightAutoFit: true,
             chartRenderStartTime: new Date(),
             chartRenderEndTime: new Date(),
             resizeStepX: 10,
@@ -316,6 +321,8 @@ namespace Services.TimelineChart {
             timelineCanvasContentHeight: 0,
             lastResizeTime: new Date(),
             accelResetTimeout: 300,
+            chartHeightAutoFit: true,
+            columnAutoWidth: true
         }
 
         /**
@@ -497,6 +504,18 @@ namespace Services.TimelineChart {
             _state.resizeStepY = options.resizeStepX ?? _state.cellWidth / 5;
             _state.resizeStepX = options.resizeStepY ?? _state.cellHeight / 5;
 
+            if (_state.columnAutoWidth) {
+                function outputsize() {
+                    const canvasWidth = _mainCanvasBoxElement.clientWidth;
+                    const cellWidth = canvasWidth / _state.headerCellCount;
+                    _state.cellWidth = cellWidth;
+                    cssService.setCellWidth(cellWidth);
+
+                    _renderCanvas();
+                }
+                new ResizeObserver(outputsize).observe(_mainCanvasBoxElement)
+            }
+
             _state.headerTimeFormat = options.headerTimeFormat ?? ((time: Date) => { return time.toLocaleString(); });
             _state.headerCellRender = options.headerCellRender ?? ((time: Date, containerElement: HTMLElement) => {
                 const div = document.createElement("div");
@@ -536,14 +555,26 @@ namespace Services.TimelineChart {
             _renderHeader();
             _addEventListeners();
 
+            _renderCanvas();
+            _startRenderEntityList();
+        }
+
+        /**
+         * 캔버스 영역을 렌더링한다.
+         */
+        function _renderCanvas() {
             _resetCanvasSize();
+            // 일부 렌더링에는 마지막 리사이징 시간이 필요하므로 미리 저장해둔다.
+            _state.lastResizeTime = new Date();
 
             _renderSideCanvas();
             _renderSidePointEvents();
 
             _renderMainCanvas();
-            _startRenderEntityList();
             _renderGlobalRangeEvents();
+
+            // 현재 보여지는 엔티티 리스트만 다시 그린다.
+            _renderIntersectingEntitiList();
         }
 
         function _initLayout() {
@@ -567,21 +598,21 @@ namespace Services.TimelineChart {
         }
 
         function _renderHeader() {
-            let time = _state.chartRenderStartTime;
-            let end = _state.chartRenderEndTime;
-            let headerCellCount = 0;
+            let startTime = _state.chartRenderStartTime;
+            let endTime = _state.chartRenderEndTime;
+            let headerCellCount = (endTime.valueOf() - startTime.valueOf()) / dateTimeService.toTime(_state.cellMinutes);
+            _state.headerCellCount = headerCellCount;
 
-            while (time <= end) {
+            let cellIndex = 0;
+            let currentTime = startTime;
+            while (cellIndex < headerCellCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_TIMELINE_HEADER_ITEM);
-                _state.headerCellRender(time, containerElement);
-
+                _state.headerCellRender(currentTime, containerElement);
                 _timelineHeaderElement.appendChild(containerElement);
-
-                time = new Date(time.getTime() + dateTimeService.toTime(_state.cellMinutes));
-                headerCellCount++;
+                currentTime = new Date(currentTime.getTime() + dateTimeService.toTime(_state.cellMinutes));
+                cellIndex++;
             }
-            _state.headerCellCount = headerCellCount;
         }
 
         function _addEventListeners() {
@@ -705,14 +736,15 @@ namespace Services.TimelineChart {
             const canvasWidth = _timelineCanvasElement.scrollWidth;
             const lineGap = _state.cellWidth;
             const lineHeight = _state.timelineCanvasHeight;
-            const vLineCount = Math.floor(canvasWidth / lineGap);
+            const vLineCount = Math.ceil(canvasWidth / lineGap);
 
-            for (let i = 0; i < vLineCount - 1; i++) {
+            let left = 0;
+            for (let i = 1; i <= vLineCount; i++) {
+                left += lineGap;
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_VLINE);
-                line.style.left = `${lineGap * (i + 1)}px`;
                 line.style.height = `${lineHeight}px`;
-
+                line.style.left = `${left}px`;
                 _timelineCanvasElement.appendChild(line);
             }
         }
@@ -728,7 +760,7 @@ namespace Services.TimelineChart {
             const evtStartTime = event[_dataOptions.pointEventTimeProp] as Date;
             if (!isTimeInRange(evtStartTime))
                 return;
-            
+
             const containerElement = document.createElement("div");
             const time = dateTimeService.toMinutes(evtStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
@@ -752,12 +784,14 @@ namespace Services.TimelineChart {
             const canvasWidth = _mainCanvasElement.scrollWidth;
             const lineGap = _state.cellWidth;
             const lineHeight = _mainCanvasElement.scrollHeight;
-            const vLineCount = Math.floor(canvasWidth / lineGap);
+            const vLineCount = Math.ceil(canvasWidth / lineGap);
 
-            for (let i = 0; i < vLineCount - 1; i++) {
+            let left = 0;
+            for (let i = 1; i <= vLineCount - 1; i++) {
+                left += lineGap;
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_VLINE);
-                line.style.left = `${lineGap * (i + 1)}px`;
+                line.style.left = `${left}px`;
                 line.style.height = `${lineHeight}px`;
 
                 _mainCanvasElement.appendChild(line);
@@ -875,7 +909,7 @@ namespace Services.TimelineChart {
             const eventStartTime = event[_dataOptions.pointEventTimeProp] as Date;
             if (!isTimeInRange(eventStartTime))
                 return;
-            
+
             const containerElement = document.createElement("div");
             const time = dateTimeService.toMinutes(eventStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
@@ -1032,18 +1066,7 @@ namespace Services.TimelineChart {
             // 엔티티리스트는 동적으로 렌더링이 진행되므로 새로 그리지 않는다.
             // 현재 보여지는 엔티티 리스트만 다시 그린다.
 
-            _resetCanvasSize();
-            // 일부 렌더링에는 마지막 리사이징 시간이 필요하므로 미리 저장해둔다.
-            _state.lastResizeTime = new Date();
-
-            _renderSideCanvas();
-            _renderSidePointEvents();
-
-            _renderMainCanvas();
-            _renderGlobalRangeEvents();
-
-            // 현재 보여지는 엔티티 리스트만 다시 그린다.
-            _renderIntersectingEntitiList();
+            _renderCanvas();
 
             // keep scroll position
             _mainCanvasBoxElement.scrollLeft = scrollLeft;
