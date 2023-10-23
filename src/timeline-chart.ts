@@ -110,7 +110,10 @@ namespace Services.TimelineChart {
         maxResizeScale: number;
         hasHorizontalLine: boolean;
         hasVerticalLine: boolean;
-        canAutoFit: boolean;
+        /**
+         * 차트 높이를 자동으로 맞출지 여부. 엔티티수가 적을 경우 차트 높이를 자동으로 맞춘다.
+         */
+        chartHeightAutoFit: boolean;
         headerTimeFormat: (time: Date) => string;
         headerCellRender: (time: Date, containerElement: HTMLElement) => void;
         entityRender: (entity: Entity, containerEl: HTMLElement) => void;
@@ -300,7 +303,7 @@ namespace Services.TimelineChart {
             globalRangeEventRender: null,
             hasHorizontalLine: true,
             hasVerticalLine: true,
-            canAutoFit: true,
+            chartHeightAutoFit: true,
             chartRenderStartTime: new Date(),
             chartRenderEndTime: new Date(),
             resizeStepX: 10,
@@ -680,7 +683,7 @@ namespace Services.TimelineChart {
             const requiredCanvasHeight = cssService.getCellHeight() * _data.entities.length;
             let canvasHeight = requiredCanvasHeight;
             // 필요한 높이가 제공된 높이보다 작을 경우 높이를 맞춘다.
-            if (_state.canAutoFit && requiredCanvasHeight < providedCanvasHeight) {
+            if (_state.chartHeightAutoFit && requiredCanvasHeight < providedCanvasHeight) {
                 cssService.setChartHeight(timelineHeight + scrollWidth + canvasHeight);
             }
 
