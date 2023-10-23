@@ -1,4 +1,4 @@
-namespace Services.TimelineChart {
+namespace Services.TimelineChart  {
 
     /**
      * 차트 이벤트.
@@ -510,6 +510,7 @@ namespace Services.TimelineChart {
                     const cellWidth = canvasWidth / _state.headerCellCount;
                     _state.cellWidth = cellWidth;
                     _state.minCellWidth = cellWidth;
+                    console.log("outputsize", _state.minCellWidth);
                     cssService.setCellWidth(cellWidth);
 
                     _renderCanvas();
@@ -998,9 +999,16 @@ namespace Services.TimelineChart {
             _state.velocityX += _state.resizeStepY;
             _state.velocityY += _state.resizeStepX;
 
+            let cellWidth = _state.cellWidth + _state.velocityX;
+            if (_state.maxCellWidth < cellWidth)
+                cellWidth = _state.maxCellHeight;
+            let cellHeight = _state.cellHeight + _state.velocityY;
+            if (_state.maxCellHeight < cellHeight)
+                cellHeight = _state.maxCellHeight;
+
             resizeCanvas(
-                _state.cellWidth + _state.velocityX,
-                _state.cellHeight + _state.velocityY,
+                cellWidth,
+                cellHeight,
                 pivotPointX,
                 pivotPointY);
 
@@ -1016,9 +1024,17 @@ namespace Services.TimelineChart {
             }
             _state.velocityX -= _state.resizeStepY;
             _state.velocityY -= _state.resizeStepX;
+            let cellWidth = _state.cellWidth + _state.velocityX;
+            if (cellWidth < _state.minCellWidth)
+                cellWidth = _state.minCellWidth;
+
+            let cellHeight = _state.cellHeight + _state.velocityY;
+            if (cellHeight < _state.minCellHeight)
+                cellHeight = _state.minCellHeight;
+
             resizeCanvas(
-                _state.cellWidth + _state.velocityX,
-                _state.cellHeight + _state.velocityY,
+                cellWidth,
+                cellHeight,
                 pivotPointX,
                 pivotPointY);
 
@@ -1037,6 +1053,9 @@ namespace Services.TimelineChart {
                 return;
             }
             if (cellHeight > _state.maxCellHeight || cellWidth > _state.maxCellWidth) {
+                return;
+            }
+            if (cellWidth == _state.cellWidth && cellHeight == _state.cellHeight) {
                 return;
             }
 
