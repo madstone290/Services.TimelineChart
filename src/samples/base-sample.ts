@@ -505,7 +505,7 @@ namespace Services.TimelineChart.Samples.BaseSample {
             cellWidth: cellWidth,
             cellHeight: cellHeight,
             cellContentHeightRatio: 0.6,
-            canAutoFit: true,
+            chartHeightAutoFit: true,
             hasHorizontalLine: true,
             hasVerticalLine: true,
             maxResizeScale: 10,

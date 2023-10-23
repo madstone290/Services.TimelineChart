@@ -68,9 +68,12 @@ namespace Services.TimelineChart {
         maxResizeScale?: number;
         hasHorizontalLine?: boolean;
         hasVerticalLine?: boolean;
-        canAutoFit?: boolean;
         resizeStepX?: number;
         resizeStepY?: number;
+        /**
+         * 차트 높이를 자동으로 맞출지 여부. 엔티티수가 적을 경우 차트 높이를 자동으로 맞춘다.
+         */
+        chartHeightAutoFit?: boolean;
         headerTimeFormat?: (time: Date) => string;
         headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
         entityRender?: (entity: Entity, containerEl: HTMLElement) => void;
@@ -110,9 +113,6 @@ namespace Services.TimelineChart {
         maxResizeScale: number;
         hasHorizontalLine: boolean;
         hasVerticalLine: boolean;
-        /**
-         * 차트 높이를 자동으로 맞출지 여부. 엔티티수가 적을 경우 차트 높이를 자동으로 맞춘다.
-         */
         chartHeightAutoFit: boolean;
         headerTimeFormat: (time: Date) => string;
         headerCellRender: (time: Date, containerElement: HTMLElement) => void;
