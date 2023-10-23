@@ -509,6 +509,7 @@ namespace Services.TimelineChart {
                     const canvasWidth = _mainCanvasBoxElement.clientWidth;
                     const cellWidth = canvasWidth / _state.headerCellCount;
                     _state.cellWidth = cellWidth;
+                    _state.minCellWidth = cellWidth;
                     cssService.setCellWidth(cellWidth);
 
                     _renderCanvas();
