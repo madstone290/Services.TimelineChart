@@ -51,12 +51,12 @@ namespace Services.TimelineChart {
         paddingCellCount?: number;
         mainTitle?: string;
         subTitle?: string;
-        headerTitle?: string;
+        columnTitle?: string;
         leftPanelWidth?: number;
-        timelineTitleHeight?: number;
-        timelineHeaderHeight?: number;
-        timelineCanvasHeight?: number;
-        timelineCanvasContentHeightRatio?: number;
+        columnTitleHeight?: number;
+        columnHeaderHeight?: number;
+        sideCanvasHeight?: number;
+        sideCanvasContentHeightRatio?: number;
         cellMinutes?: number;
         cellWidth?: number;
         cellHeight?: number;
@@ -90,13 +90,13 @@ namespace Services.TimelineChart {
         paddingCellCount: number;
         mainTitle: string;
         subTitle: string;
-        headerTitle?: string;
+        columnTitle?: string;
         leftPanelWidth: number;
-        timelineTitleHeight: number;
-        timelineHeaderHeight: number;
-        timelineCanvasHeight: number;
-        timelineCanvasContentHeightRatio: number;
-        timelineCanvasContentHeight: number;
+        columnTitleHeight: number;
+        columnHeaderHeight: number;
+        sideCanvasHeight: number;
+        sideCanvasContentHeightRatio: number;
+        sideCanvasContentHeight: number;
         scrollWidth: number;
         cellMinutes: number;
         cellWidth: number;
@@ -208,13 +208,13 @@ namespace Services.TimelineChart {
         */
         // #region Constants
         const CLS_ROOT = "tc-root";
-        const CLS_TIMELINE_TITLE = "tc-timeline-title";
-        const CLS_TIMELINE_HEADER_BOX = "tc-timeline-header-box";
-        const CLS_TIMELINE_HEADER = "tc-timeline-header";
-        const CLS_TIMELINE_CANVAS_BOX = "tc-timeline-canvas-box";
-        const CLS_TIMELINE_CANVAS = "tc-timeline-canvas";
+        const CLS_COLUMN_TITLE = "tc-timeline-title";
+        const CLS_COLUMN_HEADER_BOX = "tc-timeline-header-box";
+        const CLS_COLUMN_HEADER = "tc-timeline-header";
+        const CLS_SIDE_CANVAS_BOX = "tc-timeline-canvas-box";
+        const CLS_SIDE_CANVAS = "tc-timeline-canvas";
         const CLS_TIMELINE_HEADER_ITEM = "tc-timeline-header-item";
-        const CLS_TIMELINE = "tc-timeline";
+        const CLS_COLUMN = "tc-timeline";
         const CLS_LEFT_PANEL = "tc-left-panel";
         const CLS_MAIN_PANEL = "tc-main-panel";
         const CLS_MAIN_TITLE = "tc-maintitle";
@@ -246,13 +246,13 @@ namespace Services.TimelineChart {
                         <div class="${CLS_ENTITY_LIST_BOX}"></div>
                     </div>
                     <div class="${CLS_MAIN_PANEL}">
-                        <div class="${CLS_TIMELINE}">
-                            <div class="${CLS_TIMELINE_TITLE}"></div>
-                            <div class="${CLS_TIMELINE_HEADER_BOX}">
-                                <div class="${CLS_TIMELINE_HEADER}"></div>
+                        <div class="${CLS_COLUMN}">
+                            <div class="${CLS_COLUMN_TITLE}"></div>
+                            <div class="${CLS_COLUMN_HEADER_BOX}">
+                                <div class="${CLS_COLUMN_HEADER}"></div>
                             </div>
-                            <div class="${CLS_TIMELINE_CANVAS_BOX}">
-                                <div class="${CLS_TIMELINE_CANVAS}"></div>
+                            <div class="${CLS_SIDE_CANVAS_BOX}">
+                                <div class="${CLS_SIDE_CANVAS}"></div>
                             </div>
         
                         </div>
@@ -282,10 +282,10 @@ namespace Services.TimelineChart {
             subTitle: "",
             leftPanelWidth: 200,
             scrollWidth: 15,
-            timelineTitleHeight: 40,
-            timelineHeaderHeight: 40,
-            timelineCanvasHeight: 40,
-            timelineCanvasContentHeightRatio: 0.8,
+            columnTitleHeight: 40,
+            columnHeaderHeight: 40,
+            sideCanvasHeight: 40,
+            sideCanvasContentHeightRatio: 0.8,
             cellMinutes: 30,
             cellWidth: 40,
             cellHeight: 40,
@@ -315,7 +315,7 @@ namespace Services.TimelineChart {
             prevZoomDirection: null,
             headerCellCount: 0,
             cellContentHeight: 0,
-            timelineCanvasContentHeight: 0,
+            sideCanvasContentHeight: 0,
             lastZoomTime: new Date(),
             accelResetTimeout: 300,
             columnAutoWidth: true
@@ -330,15 +330,15 @@ namespace Services.TimelineChart {
         let _rootElement: HTMLElement;
         let _mainTitleElement: HTMLElement;
         let _subTitleElement: HTMLElement;
-        let _timelineTitleElement: HTMLElement;
+        let _columnTitleElement: HTMLElement;
 
         let _entityListBoxElement: HTMLElement;
 
-        let _timelineHeaderBoxElement: HTMLElement;
-        let _timelineHeaderElement: HTMLElement;
+        let _columnHeaderBoxElement: HTMLElement;
+        let _columnHeaderElement: HTMLElement;
 
-        let _timelineCanvasBoxElement: HTMLElement;
-        let _timelineCanvasElement: HTMLElement;
+        let _sideCanvasBoxElement: HTMLElement;
+        let _sideCanvasElement: HTMLElement;
 
         let _mainCanvasBoxElement: HTMLElement;
         let _mainCanvasElement: HTMLElement;
@@ -366,10 +366,10 @@ namespace Services.TimelineChart {
             const VAR_CHART_HEIGHT = "--tc-height";
             const VAR_CHART_WIDTH = "--tc-width";
 
-            const VAR_TIMELINE_TITLE_HEIGHT = "--tc-timeline-title-height";
-            const VAR_TIMELINE_HEADER_HEIGHT = "--tc-timeline-header-height";
-            const VAR_TIMELINE_CANVAS_HEIGHT = "--tc-timeline-canvas-height";
-            const VAR_TIMELINE_CANVAS_CONTENT_HEIGHT = "--tc-timeline-canvas-content-height";
+            const VAR_COLUMN_TITLE_HEIGHT = "--tc-timeline-title-height";
+            const VAR_COLUMN_HEADER_HEIGHT = "--tc-timeline-header-height";
+            const VAR_SIDE_CANVAS_HEIGHT = "--tc-timeline-canvas-height";
+            const VAR_SIDE_CANVAS_CONTENT_HEIGHT = "--tc-timeline-canvas-content-height";
 
             const VAR_LEFT_PANEL_WIDTH = "--tc-list-width";
             function getVariable(name: string) {
@@ -391,19 +391,19 @@ namespace Services.TimelineChart {
             function getChartHeight() { return parseInt(getVariable(VAR_CHART_HEIGHT)); }
             function setChartHeight(height: number) { setVariable(VAR_CHART_HEIGHT, `${height}px`); }
 
-            function getTimelineTitleHeight() { return parseInt(getVariable(VAR_TIMELINE_TITLE_HEIGHT)); }
-            function setTimeLineTitleHeight(height: number) { setVariable(VAR_TIMELINE_TITLE_HEIGHT, `${height}px`); }
+            function getColumnTitleHeight() { return parseInt(getVariable(VAR_COLUMN_TITLE_HEIGHT)); }
+            function setColumnTitleHeight(height: number) { setVariable(VAR_COLUMN_TITLE_HEIGHT, `${height}px`); }
 
-            function getTimelineHeaderHeight() { return parseInt(getVariable(VAR_TIMELINE_HEADER_HEIGHT)); }
-            function setTimelineHeaderHeight(height: number) { setVariable(VAR_TIMELINE_HEADER_HEIGHT, `${height}px`); }
+            function getColumnHeaderHeight() { return parseInt(getVariable(VAR_COLUMN_HEADER_HEIGHT)); }
+            function setColumnHeaderHeight(height: number) { setVariable(VAR_COLUMN_HEADER_HEIGHT, `${height}px`); }
 
-            function getTimelineCanvasHeight() { return parseInt(getVariable(VAR_TIMELINE_CANVAS_HEIGHT)); }
-            function setTimelineCanvasHeight(height: number) { setVariable(VAR_TIMELINE_CANVAS_HEIGHT, `${height}px`); }
+            function getSideCanvasHeight() { return parseInt(getVariable(VAR_SIDE_CANVAS_HEIGHT)); }
+            function setSideCanvasHeight(height: number) { setVariable(VAR_SIDE_CANVAS_HEIGHT, `${height}px`); }
 
-            function getTimelineCanvasContentHeight() { return parseInt(getVariable(VAR_TIMELINE_CANVAS_CONTENT_HEIGHT)); }
-            function setTimelineCanvasContentHeight(height: number) { setVariable(VAR_TIMELINE_CANVAS_CONTENT_HEIGHT, `${height}px`); }
+            function getSideCanvasContentHeight() { return parseInt(getVariable(VAR_SIDE_CANVAS_CONTENT_HEIGHT)); }
+            function setSideCanvasContentHeight(height: number) { setVariable(VAR_SIDE_CANVAS_CONTENT_HEIGHT, `${height}px`); }
 
-            function getTimelineHeight() { return getTimelineTitleHeight() + getTimelineHeaderHeight() + getTimelineCanvasHeight(); }
+            function getColumnPanelHeight() { return getColumnTitleHeight() + getColumnHeaderHeight() + getSideCanvasHeight(); }
 
             function getCellWidth() { return parseInt(getVariable(VAR_CELL_WIDTH)); }
             function setCellWidth(width: number) { setVariable(VAR_CELL_WIDTH, `${width}px`); }
@@ -426,15 +426,15 @@ namespace Services.TimelineChart {
                 getChartHeight,
                 setChartHeight,
 
-                getTimelineTitleHeight,
-                setTimeLineTitleHeight,
-                getTimelineHeaderHeight,
-                setTimelineHeaderHeight,
-                getTimelineCanvasHeight,
-                setTimelineCanvasHeight,
-                getTimelineCanvasContentHeight,
-                setTimelineCanvasContentHeight,
-                getTimelineHeight,
+                getColumnTitleHeight,
+                setColumnTitleHeight,
+                getColumnHeaderHeight,
+                setColumnHeaderHeight,
+                getSideCanvasHeight,
+                setSideCanvasHeight,
+                getSideCanvasContentHeight,
+                setSideCanvasContentHeight,
+                getColumnPanelHeight,
 
                 getCellWidth,
                 setCellWidth,
@@ -460,12 +460,12 @@ namespace Services.TimelineChart {
             _rootElement = container.getElementsByClassName(CLS_ROOT)[0] as HTMLElement;
             _mainTitleElement = container.getElementsByClassName(CLS_MAIN_TITLE)[0] as HTMLElement;
             _subTitleElement = container.getElementsByClassName(CLS_SUBTITLE)[0] as HTMLElement;
-            _timelineTitleElement = container.getElementsByClassName(CLS_TIMELINE_TITLE)[0] as HTMLElement;
+            _columnTitleElement = container.getElementsByClassName(CLS_COLUMN_TITLE)[0] as HTMLElement;
             _entityListBoxElement = container.getElementsByClassName(CLS_ENTITY_LIST_BOX)[0] as HTMLElement;
-            _timelineHeaderBoxElement = container.getElementsByClassName(CLS_TIMELINE_HEADER_BOX)[0] as HTMLElement;
-            _timelineHeaderElement = container.getElementsByClassName(CLS_TIMELINE_HEADER)[0] as HTMLElement;
-            _timelineCanvasBoxElement = container.getElementsByClassName(CLS_TIMELINE_CANVAS_BOX)[0] as HTMLElement;
-            _timelineCanvasElement = container.getElementsByClassName(CLS_TIMELINE_CANVAS)[0] as HTMLElement;
+            _columnHeaderBoxElement = container.getElementsByClassName(CLS_COLUMN_HEADER_BOX)[0] as HTMLElement;
+            _columnHeaderElement = container.getElementsByClassName(CLS_COLUMN_HEADER)[0] as HTMLElement;
+            _sideCanvasBoxElement = container.getElementsByClassName(CLS_SIDE_CANVAS_BOX)[0] as HTMLElement;
+            _sideCanvasElement = container.getElementsByClassName(CLS_SIDE_CANVAS)[0] as HTMLElement;
             _mainCanvasBoxElement = container.getElementsByClassName(CLS_MAIN_CANVAS_BOX)[0] as HTMLElement;
             _mainCanvasElement = container.getElementsByClassName(CLS_MAIN_CANVAS)[0] as HTMLElement;
 
@@ -492,7 +492,7 @@ namespace Services.TimelineChart {
             _state.minCellHeight = options.minCellHeight ?? _state.cellHeight;
             _state.maxCellHeight = options.maxCellHeight ?? _state.cellHeight * _state.maxZoomScale;
 
-            _state.timelineCanvasContentHeight = _state.timelineCanvasContentHeightRatio * _state.timelineCanvasHeight;
+            _state.sideCanvasContentHeight = _state.sideCanvasContentHeightRatio * _state.sideCanvasHeight;
             _state.cellContentHeight = _state.cellContentHeightRatio * _state.cellHeight;
 
             _state.chartRenderStartTime = new Date(_state.chartStartTime.getTime() - dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
@@ -561,7 +561,7 @@ namespace Services.TimelineChart {
          * 캔버스 영역을 렌더링한다.
          */
         function _renderCanvas() {
-            // 일부 렌더링에는 마지막 리사이징 시간이 필요하므로 미리 저장해둔다.
+            // 일부 렌더링에는 마지막 줌 시간이 필요하므로 미리 저장해둔다.
             _state.lastZoomTime = new Date();
             _resetCanvasSize();
 
@@ -579,20 +579,20 @@ namespace Services.TimelineChart {
             cssService.setChartWidth(_state.chartWidth);
             cssService.setChartHeight(_state.chartHeight);
             cssService.setLeftPanelWidth(_state.leftPanelWidth);
-            cssService.setTimeLineTitleHeight(_state.timelineTitleHeight);
-            cssService.setTimelineHeaderHeight(_state.timelineHeaderHeight);
-            cssService.setTimelineCanvasHeight(_state.timelineCanvasHeight);
+            cssService.setColumnTitleHeight(_state.columnTitleHeight);
+            cssService.setColumnHeaderHeight(_state.columnHeaderHeight);
+            cssService.setSideCanvasHeight(_state.sideCanvasHeight);
 
             cssService.setCellWidth(_state.cellWidth);
             cssService.setCellHeight(_state.cellHeight);
-            cssService.setTimelineCanvasContentHeight(_state.timelineCanvasContentHeight);
+            cssService.setSideCanvasContentHeight(_state.sideCanvasContentHeight);
             cssService.setCellContentHeight(_state.cellContentHeight);
 
             cssService.setScrollWidth(_state.scrollWidth);
 
             _mainTitleElement.innerText = _state.mainTitle;
             _subTitleElement.innerText = _state.subTitle;
-            _timelineTitleElement.innerText = _state.headerTitle;
+            _columnTitleElement.innerText = _state.columnTitle;
         }
 
         function _renderHeader() {
@@ -607,7 +607,7 @@ namespace Services.TimelineChart {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_TIMELINE_HEADER_ITEM);
                 _state.headerCellRender(currentTime, containerElement);
-                _timelineHeaderElement.appendChild(containerElement);
+                _columnHeaderElement.appendChild(containerElement);
                 currentTime = new Date(currentTime.getTime() + dateTimeService.toTime(_state.cellMinutes));
                 cellIndex++;
             }
@@ -615,8 +615,8 @@ namespace Services.TimelineChart {
 
         function _addEventListeners() {
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
-                _timelineHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
-                _timelineCanvasBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
+                _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
+                _sideCanvasBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
             });
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
                 _entityListBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
@@ -638,8 +638,8 @@ namespace Services.TimelineChart {
                 zoomCanvasWhenWheel(_mainCanvasElement, e);
             });
 
-            _timelineCanvasElement.addEventListener("wheel", (e) => {
-                zoomCanvasWhenWheel(_timelineCanvasElement, e);
+            _sideCanvasElement.addEventListener("wheel", (e) => {
+                zoomCanvasWhenWheel(_sideCanvasElement, e);
             });
 
             // prevent default zoom
@@ -707,8 +707,8 @@ namespace Services.TimelineChart {
             const canvasWidth = _state.cellWidth * _state.headerCellCount;
             const canvasHeight = _state.cellHeight * _data.entities.length;
 
-            _timelineHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
-            _timelineCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
+            _columnHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
+            _sideCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
             _mainCanvasElement.style.width = `${canvasWidth}px`;
             _mainCanvasElement.style.height = `${canvasHeight}px`;
         }
@@ -717,14 +717,14 @@ namespace Services.TimelineChart {
          * 보조 캔버스를 그린다.
          */
         function _renderSideCanvas() {
-            _timelineCanvasElement.replaceChildren();
+            _sideCanvasElement.replaceChildren();
             if (_state.hasVerticalLine)
                 _renderSideCanvasVerticalLine();
         }
         function _renderSideCanvasVerticalLine() {
-            const canvasWidth = _timelineCanvasElement.scrollWidth;
+            const canvasWidth = _sideCanvasElement.scrollWidth;
             const lineGap = _state.cellWidth;
-            const lineHeight = _state.timelineCanvasHeight;
+            const lineHeight = _state.sideCanvasHeight;
             const vLineCount = Math.ceil(canvasWidth / lineGap);
 
             let left = 0;
@@ -734,7 +734,7 @@ namespace Services.TimelineChart {
                 line.classList.add(CLS_VLINE);
                 line.style.height = `${lineHeight}px`;
                 line.style.left = `${left}px`;
-                _timelineCanvasElement.appendChild(line);
+                _sideCanvasElement.appendChild(line);
             }
         }
 
@@ -753,15 +753,15 @@ namespace Services.TimelineChart {
             const containerElement = document.createElement("div");
             const time = dateTimeService.toMinutes(evtStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
-            const top = (_state.timelineCanvasHeight - _state.timelineCanvasContentHeight) / 2;
-            const width = _state.timelineCanvasContentHeight;
+            const top = (_state.sideCanvasHeight - _state.sideCanvasContentHeight) / 2;
+            const width = _state.sideCanvasContentHeight;
             containerElement.style.left = `${center - (width / 2)}px`;
             containerElement.style.top = `${top}px`;
             containerElement.classList.add(CLS_TIMELINE_CANVAS_ITEM);
 
             if (_state.sidePointEventRender != null)
-                _state.sidePointEventRender(event, _timelineCanvasElement, containerElement);
-            _timelineCanvasElement.appendChild(containerElement);
+                _state.sidePointEventRender(event, _sideCanvasElement, containerElement);
+            _sideCanvasElement.appendChild(containerElement);
         }
 
         function _renderMainCanvas() {
