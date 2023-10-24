@@ -503,7 +503,7 @@ namespace Services.TimelineChart {
                     const cellWidth = canvasWidth / _state.headerCellCount;
                     _state.cellWidth = cellWidth;
                     _state.minCellWidth = cellWidth;
-                    console.log("outputsize", _state.minCellWidth);
+                    _state.maxCellWidth = options.maxCellWidth ?? cellWidth * _state.maxResizeScale;
                     cssService.setCellWidth(cellWidth);
 
                     _renderCanvas();
@@ -984,11 +984,13 @@ namespace Services.TimelineChart {
             _state.velocityY += _state.resizeStepX;
 
             let cellWidth = _state.cellWidth + _state.velocityX;
-            if (_state.maxCellWidth < cellWidth)
-                cellWidth = _state.maxCellHeight;
+            if (_state.maxCellWidth < cellWidth) {
+                cellWidth = _state.maxCellWidth;
+            }
             let cellHeight = _state.cellHeight + _state.velocityY;
-            if (_state.maxCellHeight < cellHeight)
+            if (_state.maxCellHeight < cellHeight) {
                 cellHeight = _state.maxCellHeight;
+            }
 
             resizeCanvas(
                 cellWidth,
