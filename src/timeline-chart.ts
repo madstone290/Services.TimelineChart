@@ -195,9 +195,9 @@ namespace Services.TimelineChart {
 
         /* Layout
         |---------------|-------------------|
-        | main title    | timeline title    |
+        | main title    | column title      |
         |---------------|-------------------|
-        |               | timeline header   |
+        |               | column header     |
         | sub title     |-------------------|
         |               | side canvas       |
         |---------------|-------------------|
@@ -208,13 +208,13 @@ namespace Services.TimelineChart {
         */
         // #region Constants
         const CLS_ROOT = "tc-root";
-        const CLS_COLUMN_TITLE = "tc-timeline-title";
-        const CLS_COLUMN_HEADER_BOX = "tc-timeline-header-box";
-        const CLS_COLUMN_HEADER = "tc-timeline-header";
-        const CLS_SIDE_CANVAS_BOX = "tc-timeline-canvas-box";
-        const CLS_SIDE_CANVAS = "tc-timeline-canvas";
-        const CLS_TIMELINE_HEADER_ITEM = "tc-timeline-header-item";
-        const CLS_COLUMN = "tc-timeline";
+        const CLS_COLUMN_TITLE = "tc-column-title";
+        const CLS_COLUMN_HEADER_BOX = "tc-column-header-box";
+        const CLS_COLUMN_HEADER = "tc-column-header";
+        const CLS_SIDE_CANVAS_BOX = "tc-side-canvas-box";
+        const CLS_SIDE_CANVAS = "tc-side-canvas";
+        const CLS_COLUMN_HEADER_ITEM = "tc-column-header-item";
+        const CLS_COLUMN_PANEL = "tc-column-panel";
         const CLS_LEFT_PANEL = "tc-left-panel";
         const CLS_MAIN_PANEL = "tc-main-panel";
         const CLS_MAIN_TITLE = "tc-maintitle";
@@ -225,7 +225,7 @@ namespace Services.TimelineChart {
         const CLS_MAIN_CANVAS = "tc-main-canvas";
 
         const CLS_ENTITY_LIST_ITEM = "tc-entity-list-item";
-        const CLS_TIMELINE_CANVAS_ITEM = "tc-timeline-canvas-item";
+        const CLS_SIDE_CANVAS_ITEM = "tc-side-canvas-item";
         const CLS_MAIN_CANVAS_ITEM = "tc-main-canvas-item";
         const CLS_HLINE = "tc-hline";
         const CLS_VLINE = "tc-vline";
@@ -246,7 +246,7 @@ namespace Services.TimelineChart {
                         <div class="${CLS_ENTITY_LIST_BOX}"></div>
                     </div>
                     <div class="${CLS_MAIN_PANEL}">
-                        <div class="${CLS_COLUMN}">
+                        <div class="${CLS_COLUMN_PANEL}">
                             <div class="${CLS_COLUMN_TITLE}"></div>
                             <div class="${CLS_COLUMN_HEADER_BOX}">
                                 <div class="${CLS_COLUMN_HEADER}"></div>
@@ -366,10 +366,10 @@ namespace Services.TimelineChart {
             const VAR_CHART_HEIGHT = "--tc-height";
             const VAR_CHART_WIDTH = "--tc-width";
 
-            const VAR_COLUMN_TITLE_HEIGHT = "--tc-timeline-title-height";
-            const VAR_COLUMN_HEADER_HEIGHT = "--tc-timeline-header-height";
-            const VAR_SIDE_CANVAS_HEIGHT = "--tc-timeline-canvas-height";
-            const VAR_SIDE_CANVAS_CONTENT_HEIGHT = "--tc-timeline-canvas-content-height";
+            const VAR_COLUMN_TITLE_HEIGHT = "--tc-column-title-height";
+            const VAR_COLUMN_HEADER_HEIGHT = "--tc-column-header-height";
+            const VAR_SIDE_CANVAS_HEIGHT = "--tc-side-canvas-height";
+            const VAR_SIDE_CANVAS_CONTENT_HEIGHT = "--tc-side-canvas-content-height";
 
             const VAR_LEFT_PANEL_WIDTH = "--tc-list-width";
             function getVariable(name: string) {
@@ -605,7 +605,7 @@ namespace Services.TimelineChart {
             let currentTime = startTime;
             while (cellIndex < headerCellCount) {
                 const containerElement = document.createElement("div");
-                containerElement.classList.add(CLS_TIMELINE_HEADER_ITEM);
+                containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
                 _state.headerCellRender(currentTime, containerElement);
                 _columnHeaderElement.appendChild(containerElement);
                 currentTime = new Date(currentTime.getTime() + dateTimeService.toTime(_state.cellMinutes));
@@ -757,7 +757,7 @@ namespace Services.TimelineChart {
             const width = _state.sideCanvasContentHeight;
             containerElement.style.left = `${center - (width / 2)}px`;
             containerElement.style.top = `${top}px`;
-            containerElement.classList.add(CLS_TIMELINE_CANVAS_ITEM);
+            containerElement.classList.add(CLS_SIDE_CANVAS_ITEM);
 
             if (_state.sidePointEventRender != null)
                 _state.sidePointEventRender(event, _sideCanvasElement, containerElement);
