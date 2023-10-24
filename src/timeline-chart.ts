@@ -65,11 +65,11 @@ namespace Services.TimelineChart {
         maxCellWidth?: number;
         maxCellHeight?: number;
         cellContentHeightRatio?: number;
-        maxResizeScale?: number;
+        maxZoomScale?: number;
         hasHorizontalLine?: boolean;
         hasVerticalLine?: boolean;
-        resizeStepX?: number;
-        resizeStepY?: number;
+        zoomStepX?: number;
+        zoomStepY?: number;
         /**
          * 컬럼 너비를 자동으로 맞출지 여부. true인 경우 셀너비 옵션이 무시된다. 현재 차트 너비에 맞춰 셀너비를 조절한다.
          */
@@ -110,7 +110,7 @@ namespace Services.TimelineChart {
         cellContentHeightRatio: number;
         cellContentHeight: number;
         headerCellCount: number;
-        maxResizeScale: number;
+        maxZoomScale: number;
         hasHorizontalLine: boolean;
         hasVerticalLine: boolean;
         columnAutoWidth: boolean;
@@ -135,33 +135,36 @@ namespace Services.TimelineChart {
         /**
          * 셀 너비 조절 단위. 마우스 휠을 이용해 셀 크기를 조절할 때 사용한다.
          */
-        resizeStepY: number;
+        zoomStepY: number;
 
         /**
          * 셀 높이 조절 단위. 마우스 휠을 이용해 셀 크기를 조절할 때 사용한다.
          */
-        resizeStepX: number;
+        zoomStepX: number;
 
         /**
-         * x축 리사이징 속도. 
+         * x축 줌 속도. 
          */
-        velocityX: number;
+        zoomVelocityX: number;
 
         /**
-         * y축 리사이징 속도.
+         * y축 줌 속도.
          */
-        velocityY: number;
-
-        prevResizeDirection: null | "up" | "down";
+        zoomVelocityY: number;
 
         /**
-         * 리사이징 가속 초기화 시간(밀리초)
+         * 이전 줌 방향. 줌 방향이 바뀌면 가속도를 초기화한다.
+         */
+        prevZoomDirection: null | "in" | "out";
+
+        /**
+         * 줌 가속 초기화 시간(밀리초)
          */
         accelResetTimeout: number;
         /**
-         * 최근 차트 리사이징 시간. 리사이징 전에 렌더링된 엘리먼트는 새로 렌더링한다.
+         * 최근 줌 시간. 줌 이전에 렌더링된 엘리먼트는 새로 렌더링한다.
          */
-        lastResizeTime: Date;
+        lastZoomTime: Date;
 
 
 
@@ -293,7 +296,7 @@ namespace Services.TimelineChart {
             chartHeight: 0,
             chartWidth: 0,
             cellContentHeightRatio: 0.8,
-            maxResizeScale: 3,
+            maxZoomScale: 3,
             headerTimeFormat: null,
             headerCellRender: null,
             entityRender: null,
@@ -305,15 +308,15 @@ namespace Services.TimelineChart {
             hasVerticalLine: true,
             chartRenderStartTime: new Date(),
             chartRenderEndTime: new Date(),
-            resizeStepX: 10,
-            resizeStepY: 10,
-            velocityX: 0,
-            velocityY: 0,
-            prevResizeDirection: null,
+            zoomStepX: 10,
+            zoomStepY: 10,
+            zoomVelocityX: 0,
+            zoomVelocityY: 0,
+            prevZoomDirection: null,
             headerCellCount: 0,
             cellContentHeight: 0,
             timelineCanvasContentHeight: 0,
-            lastResizeTime: new Date(),
+            lastZoomTime: new Date(),
             accelResetTimeout: 300,
             columnAutoWidth: true
         }
@@ -482,20 +485,20 @@ namespace Services.TimelineChart {
                 .forEach(([key, value]) => {
                     (_state as any)[key] = value;
                 });
-            _state.maxResizeScale = options.maxResizeScale ?? _state.maxResizeScale;
+            _state.maxZoomScale = options.maxZoomScale ?? _state.maxZoomScale;
 
             _state.minCellWidth = options.minCellWidth ?? _state.cellWidth;
-            _state.maxCellWidth = options.maxCellWidth ?? _state.cellWidth * _state.maxResizeScale;
+            _state.maxCellWidth = options.maxCellWidth ?? _state.cellWidth * _state.maxZoomScale;
             _state.minCellHeight = options.minCellHeight ?? _state.cellHeight;
-            _state.maxCellHeight = options.maxCellHeight ?? _state.cellHeight * _state.maxResizeScale;
+            _state.maxCellHeight = options.maxCellHeight ?? _state.cellHeight * _state.maxZoomScale;
 
             _state.timelineCanvasContentHeight = _state.timelineCanvasContentHeightRatio * _state.timelineCanvasHeight;
             _state.cellContentHeight = _state.cellContentHeightRatio * _state.cellHeight;
 
             _state.chartRenderStartTime = new Date(_state.chartStartTime.getTime() - dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
             _state.chartRenderEndTime = new Date(_state.chartEndTime.getTime() + dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
-            _state.resizeStepY = options.resizeStepX ?? _state.cellWidth / 5;
-            _state.resizeStepX = options.resizeStepY ?? _state.cellHeight / 5;
+            _state.zoomStepY = options.zoomStepX ?? _state.cellWidth / 5;
+            _state.zoomStepX = options.zoomStepY ?? _state.cellHeight / 5;
 
             if (_state.columnAutoWidth) {
                 function outputsize() {
@@ -503,7 +506,7 @@ namespace Services.TimelineChart {
                     const cellWidth = canvasWidth / _state.headerCellCount;
                     _state.cellWidth = cellWidth;
                     _state.minCellWidth = cellWidth;
-                    _state.maxCellWidth = options.maxCellWidth ?? cellWidth * _state.maxResizeScale;
+                    _state.maxCellWidth = options.maxCellWidth ?? cellWidth * _state.maxZoomScale;
                     cssService.setCellWidth(cellWidth);
 
                     _renderCanvas();
@@ -559,7 +562,7 @@ namespace Services.TimelineChart {
          */
         function _renderCanvas() {
             // 일부 렌더링에는 마지막 리사이징 시간이 필요하므로 미리 저장해둔다.
-            _state.lastResizeTime = new Date();
+            _state.lastZoomTime = new Date();
             _resetCanvasSize();
 
             _renderSideCanvas();
@@ -632,11 +635,11 @@ namespace Services.TimelineChart {
             });
 
             _mainCanvasElement.addEventListener("wheel", (e) => {
-                resizeCanvasWhenWheel(_mainCanvasElement, e);
+                zoomCanvasWhenWheel(_mainCanvasElement, e);
             });
 
             _timelineCanvasElement.addEventListener("wheel", (e) => {
-                resizeCanvasWhenWheel(_timelineCanvasElement, e);
+                zoomCanvasWhenWheel(_timelineCanvasElement, e);
             });
 
             // prevent default zoom
@@ -660,14 +663,14 @@ namespace Services.TimelineChart {
         }
 
         /**
-         * 휠이벤트 발생시 캔버스 리사이징을 수행한다.
+         * 휠이벤트 발생시 캔버스 줌을 수행한다.
          * @param canvasElement 
          * @param e 
          * @returns 
          */
-        function resizeCanvasWhenWheel(canvasElement: HTMLElement, e: WheelEvent) {
+        function zoomCanvasWhenWheel(canvasElement: HTMLElement, e: WheelEvent) {
             if (e.ctrlKey) {
-                let pivotPoint = { x: 0, y: 0 }; // 리사이징 기준위치. 마우스 커서가 위치한 셀의 좌표.
+                let pivotPoint = { x: 0, y: 0 }; // 줌 기준위치. 마우스 커서가 위치한 셀의 좌표.
                 // 대상 엘리먼트에 따라 pivotPoint를 다르게 계산한다.
                 if (e.target == canvasElement) {
                     pivotPoint.x = e.offsetX;
@@ -685,10 +688,10 @@ namespace Services.TimelineChart {
                     return;
                 }
                 if (e.deltaY > 0) {
-                    sizeDownCanvas(pivotPoint.x, pivotPoint.y);
+                    zoomOutCanvas(pivotPoint.x, pivotPoint.y);
                 }
                 else {
-                    sizeUpCanvas(pivotPoint.x, pivotPoint.y);
+                    zoomInCanvas(pivotPoint.x, pivotPoint.y);
                 }
             }
         }
@@ -806,7 +809,7 @@ namespace Services.TimelineChart {
 
         function _renderEntity(entityContainer: EntityContainer) {
             const { index, entity, containerEl, lastRenderTime } = entityContainer;
-            const shouldRender = lastRenderTime == null || lastRenderTime <= _state.lastResizeTime;
+            const shouldRender = lastRenderTime == null || lastRenderTime <= _state.lastZoomTime;
             if (!shouldRender)
                 return;
 
@@ -972,69 +975,69 @@ namespace Services.TimelineChart {
             _mainCanvasElement.appendChild(containerElement);
         }
 
-        function sizeUpCanvas(pivotPointX?: number, pivotPointY?: number) {
-            const shouldReset = _state.prevResizeDirection == "down" ||
-                _state.accelResetTimeout < new Date().valueOf() - _state.lastResizeTime.valueOf();
+        function zoomInCanvas(pivotPointX?: number, pivotPointY?: number) {
+            const shouldReset = _state.prevZoomDirection == "out" ||
+                _state.accelResetTimeout < new Date().valueOf() - _state.lastZoomTime.valueOf();
             if (shouldReset) {
-                _state.velocityX = 0;
-                _state.velocityY = 0;
+                _state.zoomVelocityX = 0;
+                _state.zoomVelocityY = 0;
             }
 
-            _state.velocityX += _state.resizeStepY;
-            _state.velocityY += _state.resizeStepX;
+            _state.zoomVelocityX += _state.zoomStepY;
+            _state.zoomVelocityY += _state.zoomStepX;
 
-            let cellWidth = _state.cellWidth + _state.velocityX;
+            let cellWidth = _state.cellWidth + _state.zoomVelocityX;
             if (_state.maxCellWidth < cellWidth) {
                 cellWidth = _state.maxCellWidth;
             }
-            let cellHeight = _state.cellHeight + _state.velocityY;
+            let cellHeight = _state.cellHeight + _state.zoomVelocityY;
             if (_state.maxCellHeight < cellHeight) {
                 cellHeight = _state.maxCellHeight;
             }
 
-            resizeCanvas(
+            zoomCanvas(
                 cellWidth,
                 cellHeight,
                 pivotPointX,
                 pivotPointY);
 
-            _state.prevResizeDirection = "up";
+            _state.prevZoomDirection = "in";
         }
 
-        function sizeDownCanvas(pivotPointX?: number, pivotPointY?: number) {
-            const shouldReset = _state.prevResizeDirection == "up" ||
-                _state.accelResetTimeout < new Date().valueOf() - _state.lastResizeTime.valueOf();
+        function zoomOutCanvas(pivotPointX?: number, pivotPointY?: number) {
+            const shouldReset = _state.prevZoomDirection == "in" ||
+                _state.accelResetTimeout < new Date().valueOf() - _state.lastZoomTime.valueOf();
             if (shouldReset) {
-                _state.velocityX = 0;
-                _state.velocityY = 0;
+                _state.zoomVelocityX = 0;
+                _state.zoomVelocityY = 0;
             }
-            _state.velocityX -= _state.resizeStepY;
-            _state.velocityY -= _state.resizeStepX;
-            let cellWidth = _state.cellWidth + _state.velocityX;
+            _state.zoomVelocityX -= _state.zoomStepY;
+            _state.zoomVelocityY -= _state.zoomStepX;
+            let cellWidth = _state.cellWidth + _state.zoomVelocityX;
             if (cellWidth < _state.minCellWidth)
                 cellWidth = _state.minCellWidth;
 
-            let cellHeight = _state.cellHeight + _state.velocityY;
+            let cellHeight = _state.cellHeight + _state.zoomVelocityY;
             if (cellHeight < _state.minCellHeight)
                 cellHeight = _state.minCellHeight;
 
-            resizeCanvas(
+            zoomCanvas(
                 cellWidth,
                 cellHeight,
                 pivotPointX,
                 pivotPointY);
 
-            _state.prevResizeDirection = "down";
+            _state.prevZoomDirection = "out";
         }
 
         /**
-         * 셀 너비 변경을 통해 캔버스 크기를 조정한다. 
+         * 셀크기 변경을 통해 캔버스 줌을 적용한다.
          * @param cellWidth 셀 너비
          * @param cellHeight 셀 높이
          * @param pivotPointX 스크롤 x기준 위치
          * @param pivotPointY 스크롤 y기준 위치
          */
-        function resizeCanvas(cellWidth: number, cellHeight: number, pivotPointX?: number, pivotPointY?: number) {
+        function zoomCanvas(cellWidth: number, cellHeight: number, pivotPointX?: number, pivotPointY?: number) {
             if (cellWidth < _state.minCellWidth || cellHeight < _state.minCellHeight) {
                 return;
             }
@@ -1045,7 +1048,7 @@ namespace Services.TimelineChart {
                 return;
             }
 
-            // 리사이징 후 스크롤 위치 계산
+            // 줌 후 스크롤 위치 계산
             let scrollLeft = _mainCanvasBoxElement.scrollLeft;
             if (pivotPointX) {
                 const scrollOffset = pivotPointX - scrollLeft;
@@ -1089,6 +1092,4 @@ namespace Services.TimelineChart {
             render,
         }
     };
-
-
 }

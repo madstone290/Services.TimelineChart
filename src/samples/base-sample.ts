@@ -507,7 +507,7 @@ namespace Services.TimelineChart.Samples.BaseSample {
             cellContentHeightRatio: 0.6,
             hasHorizontalLine: true,
             hasVerticalLine: true,
-            maxResizeScale: 10,
+            maxZoomScale: 10,
             headerCellRender: headerCellRender,
             entityPointEventRender: entityPointEventRender,
             entityRangeEventRender: entityRangeEventRender,

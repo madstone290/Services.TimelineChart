@@ -725,7 +725,7 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
             cellContentHeightRatio: 0.5,
             minCellWidth: 1,
             maxCellWidth: 300,
-            maxResizeScale: 10,
+            maxZoomScale: 10,
             hasHorizontalLine: true,
             hasVerticalLine: true,
             sidePointEventRender: sidePointEventRender,
