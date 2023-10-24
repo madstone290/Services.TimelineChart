@@ -23,7 +23,7 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
     interface MesEntityRangeEvent {
         id?: any;
         entityId?: any;
-        type: "op10" | "op20" | "op30" | "op40" | "op50";
+        type: "op10" | "op20" | "op30" | "op40" | "op50" | "op60" | "op70" | "op80" | "op90" | "op100" | "op110" | "op120" | "op130" | "op140"| "op150";
         description?: string;
         start?: Date;
         end?: Date;
@@ -80,27 +80,99 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
                 },
                 {
                     description: "도색불량",
-                    time: new Date(Date.parse("2020-01-01T02:45:00")),
+                    time: new Date(Date.parse("2020-01-01T04:45:00")),
                     entityId: 1,
                 }
             ],
             rangeEvents: [
                 {
                     type: "op10",
-                    start: new Date(Date.parse("2020-01-01T01:30:50")),
-                    end: new Date(Date.parse("2020-01-01T02:45:00")),
+                    start: new Date(Date.parse("2020-01-01T01:00:50")),
+                    end: new Date(Date.parse("2020-01-01T01:20:00")),
                     entityId: 1,
                 },
                 {
                     type: "op20",
-                    start: new Date(Date.parse("2020-01-01T03:00:00")),
-                    end: new Date(Date.parse("2020-01-01T04:05:00")),
+                    start: new Date(Date.parse("2020-01-01T01:20:00")),
+                    end: new Date(Date.parse("2020-01-01T01:40:00")),
                     entityId: 1,
                 },
                 {
                     type: "op30",
-                    start: new Date(Date.parse("2020-01-01T06:00:00")),
-                    end: new Date(Date.parse("2020-01-01T07:00:00")),
+                    start: new Date(Date.parse("2020-01-01T01:40:00")),
+                    end: new Date(Date.parse("2020-01-01T02:00:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op40",
+                    start: new Date(Date.parse("2020-01-01T02:10:00")),
+                    end: new Date(Date.parse("2020-01-01T02:30:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op50",
+                    start: new Date(Date.parse("2020-01-01T02:40:00")),
+                    end: new Date(Date.parse("2020-01-01T03:00:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op60",
+                    start: new Date(Date.parse("2020-01-01T03:10:00")),
+                    end: new Date(Date.parse("2020-01-01T03:30:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op70",
+                    start: new Date(Date.parse("2020-01-01T03:40:00")),
+                    end: new Date(Date.parse("2020-01-01T04:00:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op80",
+                    start: new Date(Date.parse("2020-01-01T04:10:00")),
+                    end: new Date(Date.parse("2020-01-01T04:30:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op90",
+                    start: new Date(Date.parse("2020-01-01T04:40:00")),
+                    end: new Date(Date.parse("2020-01-01T04:50:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op100",
+                    start: new Date(Date.parse("2020-01-01T05:10:00")),
+                    end: new Date(Date.parse("2020-01-01T05:20:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op110",
+                    start: new Date(Date.parse("2020-01-01T05:30:00")),
+                    end: new Date(Date.parse("2020-01-01T05:40:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op120",
+                    start: new Date(Date.parse("2020-01-01T06:10:00")),
+                    end: new Date(Date.parse("2020-01-01T06:20:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op130",
+                    start: new Date(Date.parse("2020-01-01T06:30:00")),
+                    end: new Date(Date.parse("2020-01-01T06:40:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op140",
+                    start: new Date(Date.parse("2020-01-01T07:50:00")),
+                    end: new Date(Date.parse("2020-01-01T08:00:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op150",
+                    start: new Date(Date.parse("2020-01-01T08:00:00")),
+                    end: new Date(Date.parse("2020-01-01T08:300:00")),
                     entityId: 1,
                 },
             ],
