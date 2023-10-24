@@ -483,7 +483,7 @@ namespace Services.TimelineChart.Samples.BaseSample {
     export function load() {
         const rootContainer = document.getElementById("root-container");
         const data: Services.TimelineChart.ChartData = {
-            entities: Services.TimelineChart.Samples.BaseSample.eventOwnersX100,
+            entities: Services.TimelineChart.Samples.BaseSample.eventOwners.filter(x=> x.id <= 10),
             sidePointEvents: sidePointEvents,
             globalRangeEvents: globalRangeEvents as any,
         };
@@ -505,7 +505,6 @@ namespace Services.TimelineChart.Samples.BaseSample {
             cellWidth: cellWidth,
             cellHeight: cellHeight,
             cellContentHeightRatio: 0.6,
-            chartAutoHeight: true,
             hasHorizontalLine: true,
             hasVerticalLine: true,
             maxResizeScale: 10,

@@ -1,4 +1,4 @@
-namespace Services.TimelineChart  {
+namespace Services.TimelineChart {
 
     /**
      * 차트 이벤트.
@@ -71,11 +71,6 @@ namespace Services.TimelineChart  {
         resizeStepX?: number;
         resizeStepY?: number;
         /**
-         * 차트 높이를 자동으로 맞출지 여부. 엔티티수가 적을 경우 차트 높이를 자동으로 맞춘다.
-         */
-        chartAutoHeight?: boolean;
-
-        /**
          * 컬럼 너비를 자동으로 맞출지 여부. true인 경우 셀너비 옵션이 무시된다. 현재 차트 너비에 맞춰 셀너비를 조절한다.
          */
         columnAutoWidth?: boolean;
@@ -118,7 +113,6 @@ namespace Services.TimelineChart  {
         maxResizeScale: number;
         hasHorizontalLine: boolean;
         hasVerticalLine: boolean;
-        chartAutoHeight: boolean;
         columnAutoWidth: boolean;
         headerTimeFormat: (time: Date) => string;
         headerCellRender: (time: Date, containerElement: HTMLElement) => void;
@@ -321,7 +315,6 @@ namespace Services.TimelineChart  {
             timelineCanvasContentHeight: 0,
             lastResizeTime: new Date(),
             accelResetTimeout: 300,
-            chartAutoHeight: true,
             columnAutoWidth: true
         }
 
@@ -565,9 +558,9 @@ namespace Services.TimelineChart  {
          * 캔버스 영역을 렌더링한다.
          */
         function _renderCanvas() {
-            _resetCanvasSize();
             // 일부 렌더링에는 마지막 리사이징 시간이 필요하므로 미리 저장해둔다.
             _state.lastResizeTime = new Date();
+            _resetCanvasSize();
 
             _renderSideCanvas();
             _renderSidePointEvents();
@@ -709,16 +702,7 @@ namespace Services.TimelineChart  {
              * entity list는 main canvas 수직스크롤과 동기화한다.
              */
             const canvasWidth = _state.cellWidth * _state.headerCellCount;
-            const chartHeight = cssService.getChartHeight();
-            const timelineHeight = cssService.getTimelineHeight();
-            const scrollWidth = _state.scrollWidth;
-            const providedCanvasHeight = chartHeight - timelineHeight - scrollWidth;
-            const requiredCanvasHeight = cssService.getCellHeight() * _data.entities.length;
-            let canvasHeight = requiredCanvasHeight;
-            // 필요한 높이가 제공된 높이보다 작을 경우 높이를 맞춘다.
-            if (_state.chartAutoHeight && requiredCanvasHeight < providedCanvasHeight) {
-                cssService.setChartHeight(timelineHeight + scrollWidth + canvasHeight);
-            }
+            const canvasHeight = _state.cellHeight * _data.entities.length;
 
             _timelineHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
             _timelineCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
@@ -1085,7 +1069,6 @@ namespace Services.TimelineChart  {
             // 차트 렌더링을 새로 진행한다.
             // 엔티티리스트는 동적으로 렌더링이 진행되므로 새로 그리지 않는다.
             // 현재 보여지는 엔티티 리스트만 다시 그린다.
-
             _renderCanvas();
 
             // keep scroll position
