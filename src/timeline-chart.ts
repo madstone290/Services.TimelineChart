@@ -499,8 +499,8 @@ namespace Services.TimelineChart {
 
             _state.chartRenderStartTime = new Date(_state.chartStartTime.getTime() - dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
             _state.chartRenderEndTime = new Date(_state.chartEndTime.getTime() + dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
-            _state.zoomStepY = options.zoomStepX ?? _state.cellWidth / 5;
-            _state.zoomStepX = options.zoomStepY ?? _state.cellHeight / 5;
+            _state.zoomStepX = options.zoomStepX ?? _state.cellWidth / 5;
+            _state.zoomStepY = options.zoomStepY ?? _state.cellHeight / 5;
 
             if (_state.columnAutoWidth) {
                 function outputsize() {
