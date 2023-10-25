@@ -172,13 +172,6 @@ img {
     width: var(--tc-cell-content-height);
 }
 
-.tc-hline {
-    position: absolute;
-    border-width: 0px 0px 1px 0px;
-    border-style: solid;
-    border-color: var(--tc-line-color);
-}
-
 .tc-vline {
     position: absolute;
     border-width: 0px 1px 0px 0px;
@@ -197,4 +190,14 @@ img {
 
 .tc-main-canvas-box::-webkit-scrollbar-track {
     background-color: #cccccc;
+}
+
+.tc-main-canvas-item-box {
+    position: absolute;
+    width: 100%;
+    height: calc(var(--tc-cell-height));
+    border-width: 0px 0px 1px 0px;
+    border-style: solid;
+    border-color: var(--tc-line-color);
+    z-index:  -1;
 }

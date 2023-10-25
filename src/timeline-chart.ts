@@ -227,7 +227,7 @@ namespace Services.TimelineChart {
         const CLS_ENTITY_LIST_ITEM = "tc-entity-list-item";
         const CLS_SIDE_CANVAS_ITEM = "tc-side-canvas-item";
         const CLS_MAIN_CANVAS_ITEM = "tc-main-canvas-item";
-        const CLS_HLINE = "tc-hline";
+        const CLS_MAIN_CANVAS_ITEM_BOX = "tc-main-canvas-item-box";
         const CLS_VLINE = "tc-vline";
 
         const Z_INDEX_ENTITY_POINT_EVENT = 3;
@@ -786,21 +786,6 @@ namespace Services.TimelineChart {
                 _mainCanvasElement.appendChild(line);
             }
         }
-        function _renderMainCanvasHLine() {
-            const canvasHeight = _mainCanvasElement.scrollHeight;
-            const lineGap = _state.cellHeight;
-            const lineWidth = _mainCanvasElement.scrollWidth;
-            const lineCount = Math.floor(canvasHeight / lineGap);
-            for (let i = 0; i < lineCount; i++) {
-                const line = document.createElement("div");
-                line.classList.add(CLS_HLINE);
-                line.style.top = `${lineGap * (i + 1) - 1}px`;
-                line.style.width = `${lineWidth}px`;
-
-                _mainCanvasElement.appendChild(line);
-            }
-        }
-
 
         /**
          * 현재 리스트에 보여지는 엔티티의 인덱스
@@ -818,15 +803,10 @@ namespace Services.TimelineChart {
             _renderEntityEvents(entity, index);
 
             if (_state.hasHorizontalLine) {
-                const lineGap = _state.cellHeight;
-                const lineWidth = _mainCanvasElement.scrollWidth;
-
-                const line = document.createElement("div");
-                line.classList.add(CLS_HLINE);
-                line.style.top = `${lineGap * (index + 1) - 1}px`;
-                line.style.width = `${lineWidth}px`;
-
-                _mainCanvasElement.appendChild(line);
+                const mainCanvasItem = document.createElement("div");
+                mainCanvasItem.classList.add(CLS_MAIN_CANVAS_ITEM_BOX);
+                mainCanvasItem.style.top = `${_state.cellHeight * (index)}px`;
+                _mainCanvasElement.appendChild(mainCanvasItem);
             }
             entityContainer.lastRenderTime = new Date();
         }
