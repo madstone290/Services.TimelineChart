@@ -50,7 +50,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
     }
 
     const legendData = {
-        leftLegendItems: [
+        leftItems: [
             { color: "#57247a", label: "Op 10" },
             { color: "#f1a83a", label: "Op 20" },
             { color: "#77bc57", label: "Op 30" },
@@ -67,7 +67,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             { color: "#8866d3", label: "Op 140" },
             { color: "#bb9f7b", label: "Op 150" }
         ],
-        rightLegendItems: [
+        rightItems: [
             { color: "#d9d9d9", label: "계획정지" },
             { color: "#E7FF26", label: "비가동" },
             { color: "#FF1100", label: "네트워크이상" },
@@ -720,11 +720,11 @@ namespace Services.TimelineChart.Samples.StyledSample {
         titleElement.innerText = event.type;
         tooltipElement.appendChild(titleElement);
 
-        const colorIcon = document.createElement("div");
-        colorIcon.classList.add(CLS_ENTITY_RANGE_EVENT_COLOR_ICON);
-        colorIcon.style.borderTopColor = entityRangeEventColors.get(event.type);
-        colorIcon.style.borderLeftColor = entityRangeEventColors.get(event.type);
-        tooltipElement.appendChild(colorIcon);
+        const colorIconElement = document.createElement("div");
+        colorIconElement.classList.add(CLS_ENTITY_RANGE_EVENT_COLOR_ICON);
+        colorIconElement.style.borderTopColor = entityRangeEventColors.get(event.type);
+        colorIconElement.style.borderLeftColor = entityRangeEventColors.get(event.type);
+        tooltipElement.appendChild(colorIconElement);
 
         const timeDifference = getTimeDiff(event.start, event.end);
         const timeDifferenceString = getTimeDiffString(timeDifference);
@@ -814,7 +814,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
     };
 
     export function loadSingle() {
-        const mesLegend = MesLegend();
+        const mesLegend = ChartLegend();
         mesLegend.create(document.getElementById("legend-container"), legendData);
         mesLegend.render();
 

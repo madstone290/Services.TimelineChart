@@ -1,13 +1,13 @@
-interface MesLegendData {
+interface LegendData {
     /**
      * 왼쪽 범례 아이템 목록
      */
-    leftLegendItems: any[];
+    leftItems: LegendItem[];
 
     /**
      * 오른쪽 범례 아이템 목록
      */
-    rightLegendItems: any[];
+    rightItems: LegendItem[];
 }
 
 
@@ -21,7 +21,7 @@ interface LegendItem {
 }
 
 
-const MesLegend = function () {
+const ChartLegend = function () {
     const CLS_LEGEND_ITEM = "tr-legend-item";
     const CLS_LEGEND_ITEM_ICON = "tr-legend-item-icon";
     const CLS_LEGEND_ITEM_COLOR = "tr-legend-item-color";
@@ -31,14 +31,14 @@ const MesLegend = function () {
     const CLS_LEFT_LEGEND_BOX = "tr-legend-left-box";
     const CLS_RIGHT_LEGEND_BOX = "tr-legend-right-box";
 
-    let _data: MesLegendData;
+    let _data: LegendData;
 
     let _leftLegendElement: HTMLElement;
     let _rightLegendElement: HTMLElement;
 
 
 
-    function create(container: HTMLElement, data: MesLegendData) {
+    function create(container: HTMLElement, data: LegendData) {
         const elementString = `
         <div class="${CLS_LEGEND_BOX}">
             <div class="${CLS_LEFT_LEGEND_BOX}"></div>
@@ -57,8 +57,8 @@ const MesLegend = function () {
     }
 
     function render() {
-        drawLegendItems(_data.leftLegendItems, _leftLegendElement);
-        drawLegendItems(_data.rightLegendItems, _rightLegendElement);
+        drawLegendItems(_data.leftItems, _leftLegendElement);
+        drawLegendItems(_data.rightItems, _rightLegendElement);
     }
 
     function drawLegendItems(items: LegendItem[], container: HTMLElement) {
