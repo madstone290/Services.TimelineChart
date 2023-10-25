@@ -515,9 +515,31 @@ namespace Services.TimelineChart.Samples.StyledSample {
     const ERROR_IMG_SRC = "./asset/image/error.svg";
     const WARNING_IMG_SRC = "./asset/image/warning.svg";
 
+
+
     const CLS_TOOLTIP = "tr-tooltip";
-    const CLS_ENTITY_RANGE_EVENT = "tr-entity-range-event";
-    const CLS_GLOBAL_RANGE_EVENT = "tr-global-range-event";
+    const CLS_COLUMN_HEADER_CELL = "tr-column-header-cell";
+    const CLS_ENTITY_POINT_EVENT_BOX = "tr-entity-point-event-box";
+    const CLS_ENTITY_POINT_EVENT_TOOLTIP = "tr-entity-point-event-tooltip";
+    const CLS_ENTITY_POINT_EVENT_TITLE = "tr-entity-point-event-title";
+    const CLS_ENTITY_POINT_EVENT_COLOR_ICON = "tr-entity-point-event-color-icon";
+
+    const CLS_ENTITY_RANGE_EVENT_BOX = "tr-entity-range-event-box";
+    const CLS_ENTITY_RANGE_EVENT_TOOLTIP = "tr-entity-range-event-tooltip";
+    const CLS_ENTITY_RANGE_EVENT_TITLE = "tr-entity-range-event-title";
+    const CLS_ENTITY_RANGE_EVENT_COLOR_ICON = "tr-entity-range-event-color-icon";
+
+
+    const CLS_SIDE_POINT_EVENT_BOX = "tr-side-point-event-box";
+    const CLS_SIDE_POINT_EVENT_TOOLTIP = "tr-side-point-event-tooltip";
+    const CLS_SIDE_POINT_EVENT_TITLE = "tr-side-point-event-title";
+    const CLS_SIDE_POINT_EVENT_COLOR_ICON = "tr-side-point-event-color-icon";
+
+    const CLS_GLOBAL_RANGE_EVENT_BOX = "tr-global-range-event-box";
+    const CLS_GLOBAL_RANGE_EVENT_TOOLTIP = "tr-global-range-event-tooltip";
+    const CLS_GLOBAL_RANGE_EVENT_TITLE = "tr-global-range-event-title";
+    const CLS_GLOBAL_RANGE_EVENT_COLOR_ICON = "tr-global-range-event-color-icon";
+
 
     const COLOR_SELECTED_EVENT = "#333";
 
@@ -585,15 +607,9 @@ namespace Services.TimelineChart.Samples.StyledSample {
 
     const headerCellRender = function (time: Date, containerElement: HTMLElement) {
         const divElement = document.createElement("div");
-        containerElement.appendChild(divElement);
+        divElement.classList.add(CLS_COLUMN_HEADER_CELL);
         divElement.innerText = dayjs(time).format("HH:mm");
-        // cls: tr-header-cell
-        divElement.style.backgroundColor = "#5d6393";
-        divElement.style.color = "white";
-        divElement.style.fontSize = "85%";
-        divElement.style.textAlign = "center";
-        divElement.style.height = "100%";
-        divElement.style.width = "100%";
+        containerElement.appendChild(divElement);
     };
 
     const relocateTooltip = function (tooltipElement: HTMLElement, e: MouseEvent) {
@@ -648,41 +664,24 @@ namespace Services.TimelineChart.Samples.StyledSample {
     }
 
     const entityPointEventRender = function (event: any, canvasElement: HTMLElement, containerElement: HTMLElement) {
-        // cls: tr-error-img
         const imgElement = document.createElement("img");
-        imgElement.style.width = "100%";
-        imgElement.style.height = "100%";
+        imgElement.classList.add(CLS_ENTITY_POINT_EVENT_BOX);
         imgElement.src = ERROR_IMG_SRC;
         containerElement.appendChild(imgElement);
 
-        // cls: tr-error-tooltip
         const tooltipElement = document.createElement("div");
         tooltipElement.classList.add(CLS_TOOLTIP);
-        tooltipElement.style.border = "2px double red";
+        tooltipElement.classList.add(CLS_ENTITY_POINT_EVENT_TOOLTIP);
         canvasElement.appendChild(tooltipElement);
 
-        // cls: tr-error-title
         const titleElement = document.createElement("div");
+        titleElement.classList.add(CLS_ENTITY_POINT_EVENT_TITLE);
         titleElement.innerText = "품질 이상";
-        titleElement.style.fontWeight = "bold";
-        titleElement.style.textAlign = "center";
-        titleElement.style.color = "black"
-        titleElement.style.backgroundColor = "white";
-        titleElement.style.padding = "2px 0px 2px 0px";
-        titleElement.style.margin = "0px 0px 10px 0px";
-        titleElement.style.borderRadius = "50px";
         tooltipElement.appendChild(titleElement);
 
-        // cls: tr-error-color-icon
-        const colorIcon = document.createElement("div");
-        colorIcon.style.borderBottom = "10px solid transparent";
-        colorIcon.style.borderTop = "10px solid red";
-        colorIcon.style.borderLeft = "10px solid red";
-        colorIcon.style.borderRight = "10px solid transparent";
-        colorIcon.style.position = "absolute";
-        colorIcon.style.top = "0%";
-        colorIcon.style.left = "0%";
-        tooltipElement.appendChild(colorIcon);
+        const colorIconElement = document.createElement("div");
+        colorIconElement.classList.add(CLS_ENTITY_POINT_EVENT_COLOR_ICON);
+        tooltipElement.appendChild(colorIconElement);
 
         const barcode = entities.find(x => x.id == event.entityId);
         const barcodeElement = document.createElement("div");
@@ -706,44 +705,25 @@ namespace Services.TimelineChart.Samples.StyledSample {
     };
     const entityRangeEventRender = function (event: any, canvasElement: HTMLElement, containerElement: HTMLElement) {
         const boxElement = document.createElement("div");
-        containerElement.appendChild(boxElement);
-        boxElement.style.width = "100%";
-        boxElement.style.height = "100%";
+        boxElement.classList.add(CLS_ENTITY_RANGE_EVENT_BOX);
         boxElement.style.backgroundColor = entityRangeEventColors.get(event.type);
-        boxElement.classList.add(CLS_ENTITY_RANGE_EVENT);
+        containerElement.appendChild(boxElement);
 
-        // cls: tr-range-event-tooltip
         const tooltipElement = document.createElement("div");
         tooltipElement.classList.add(CLS_TOOLTIP);
-        tooltipElement.style.border = "2px double";
+        tooltipElement.classList.add(CLS_ENTITY_RANGE_EVENT_TOOLTIP);
         tooltipElement.style.borderColor = entityRangeEventColors.get(event.type);
         canvasElement.appendChild(tooltipElement);
 
-        // cls: tr-range-event-title
-        const typeElement = document.createElement("div");
-        typeElement.innerText = event.type;
-        typeElement.style.fontWeight = "bold";
-        typeElement.style.textAlign = "center";
-        typeElement.style.color = "black"
-        typeElement.style.backgroundColor = "white";
-        typeElement.style.padding = "2px 0px 2px 0px";
-        typeElement.style.margin = "0px 0px 10px 0px";
-        typeElement.style.borderRadius = "50px";
-        tooltipElement.appendChild(typeElement);
+        const titleElement = document.createElement("div");
+        titleElement.classList.add(CLS_ENTITY_RANGE_EVENT_TITLE);
+        titleElement.innerText = event.type;
+        tooltipElement.appendChild(titleElement);
 
-        // cls: tr-range-event-color-icon
         const colorIcon = document.createElement("div");
-        colorIcon.style.borderBottom = "10px solid transparent";
+        colorIcon.classList.add(CLS_ENTITY_RANGE_EVENT_COLOR_ICON);
         colorIcon.style.borderTopColor = entityRangeEventColors.get(event.type);
-        colorIcon.style.borderTopWidth = "10px";
-        colorIcon.style.borderTopStyle = "solid";
         colorIcon.style.borderLeftColor = entityRangeEventColors.get(event.type);
-        colorIcon.style.borderLeftWidth = "10px";
-        colorIcon.style.borderLeftStyle = "solid";
-        colorIcon.style.borderRight = "10px solid transparent";
-        colorIcon.style.position = "absolute";
-        colorIcon.style.top = "0%";
-        colorIcon.style.left = "0%";
         tooltipElement.appendChild(colorIcon);
 
         const timeDifference = getTimeDiff(event.start, event.end);
@@ -770,39 +750,22 @@ namespace Services.TimelineChart.Samples.StyledSample {
     };
     const sidePointEventRender = function (event: PointEvent, canvasElement: HTMLElement, containerElement: HTMLElement) {
         const imgElement = document.createElement("img");
-        imgElement.style.width = "100%";
-        imgElement.style.height = "100%";
+        imgElement.classList.add(CLS_SIDE_POINT_EVENT_BOX);
         imgElement.src = WARNING_IMG_SRC;
         containerElement.appendChild(imgElement);
 
-        // cls: tr-side-point-event-tooltip
         const tooltipElement = document.createElement("div");
         tooltipElement.classList.add(CLS_TOOLTIP);
-        tooltipElement.style.border = "2px double";
-        tooltipElement.style.borderColor = "yellow";
+        tooltipElement.classList.add(CLS_SIDE_POINT_EVENT_TOOLTIP);
         canvasElement.appendChild(tooltipElement);
 
-        // cls: tr-side-point-event-title
         const titleElement = document.createElement("div");
+        titleElement.classList.add(CLS_SIDE_POINT_EVENT_TITLE);
         titleElement.innerText = "설비 이상";
-        titleElement.style.fontWeight = "bold";
-        titleElement.style.textAlign = "center";
-        titleElement.style.color = "black"
-        titleElement.style.padding = "2px 0px 2px 0px";
-        titleElement.style.margin = "0px 0px 10px 0px";
-        titleElement.style.borderRadius = "50px";
-        titleElement.style.backgroundColor = "white";
         tooltipElement.appendChild(titleElement);
 
-        // cls: tr-side-point-event-color-icon
         const colorIcon = document.createElement("div");
-        colorIcon.style.borderBottom = "10px solid transparent";
-        colorIcon.style.borderTop = "10px solid yellow";
-        colorIcon.style.borderLeft = "10px solid yellow";
-        colorIcon.style.borderRight = "10px solid transparent";
-        colorIcon.style.position = "absolute";
-        colorIcon.style.top = "0%";
-        colorIcon.style.left = "0%";
+        colorIcon.classList.add(CLS_SIDE_POINT_EVENT_COLOR_ICON);
         tooltipElement.appendChild(colorIcon);
 
         const descElement = document.createElement("div");
@@ -818,48 +781,27 @@ namespace Services.TimelineChart.Samples.StyledSample {
     };
 
     const globalRangeEventRender = function (event: any, canvasElement: HTMLElement, containerElement: HTMLElement) {
-        // cls: tr-global-range-event-box
         const boxElement = document.createElement("div");
-        containerElement.appendChild(boxElement);
-        boxElement.style.width = "100%";
-        boxElement.style.height = "100%";
+        boxElement.classList.add(CLS_GLOBAL_RANGE_EVENT_BOX);
         boxElement.style.backgroundColor = globalRangeEventColors.get(event.type);
-        boxElement.style.opacity = "0.5";
-        boxElement.classList.add(CLS_GLOBAL_RANGE_EVENT);
+        containerElement.appendChild(boxElement);
 
-        // cls: tr-global-range-event-tooltip
         const tooltipElement = document.createElement("div");
         tooltipElement.classList.add(CLS_TOOLTIP);
-        tooltipElement.style.border = "2px double";
+        tooltipElement.classList.add(CLS_GLOBAL_RANGE_EVENT_TOOLTIP);
         tooltipElement.style.borderColor = globalRangeEventColors.get(event.type);
         canvasElement.appendChild(tooltipElement);
 
-        // cls: tr-global-range-event-title
         const typeElement = document.createElement("div");
+        typeElement.classList.add(CLS_GLOBAL_RANGE_EVENT_TITLE);
         typeElement.innerText = globalRangeEventNames.get(event.type);
-        typeElement.style.fontWeight = "bold";
-        typeElement.style.textAlign = "center";
-        typeElement.style.color = "black"
-        typeElement.style.padding = "2px 0px 2px 0px";
-        typeElement.style.margin = "0px 0px 10px 0px";
-        typeElement.style.borderRadius = "50px";
-        typeElement.style.backgroundColor = "white";
         tooltipElement.appendChild(typeElement);
 
-        // cls: tr-global-range-event-color-icon
-        const colorIcon = document.createElement("div");
-        colorIcon.style.borderBottom = "10px solid transparent";
-        colorIcon.style.borderTopColor = globalRangeEventColors.get(event.type);
-        colorIcon.style.borderTopWidth = "10px";
-        colorIcon.style.borderTopStyle = "solid";
-        colorIcon.style.borderLeftColor = globalRangeEventColors.get(event.type);
-        colorIcon.style.borderLeftWidth = "10px";
-        colorIcon.style.borderLeftStyle = "solid";
-        colorIcon.style.borderRight = "10px solid transparent";
-        colorIcon.style.position = "absolute";
-        colorIcon.style.top = "0%";
-        colorIcon.style.left = "0%";
-        tooltipElement.appendChild(colorIcon);
+        const colorIconElement = document.createElement("div");
+        colorIconElement.classList.add(CLS_GLOBAL_RANGE_EVENT_COLOR_ICON);
+        colorIconElement.style.borderTopColor = globalRangeEventColors.get(event.type);
+        colorIconElement.style.borderLeftColor = globalRangeEventColors.get(event.type);
+        tooltipElement.appendChild(colorIconElement);
 
         const timeDifference = getTimeDiff(event.start, event.end);
         const timeDifferenceString = getTimeDiffString(timeDifference);
@@ -875,7 +817,6 @@ namespace Services.TimelineChart.Samples.StyledSample {
         const mesLegend = MesLegend();
         mesLegend.create(document.getElementById("legend-container"), legendData);
         mesLegend.render();
-
 
         const container = document.getElementById("tc-container");
         const data: Services.TimelineChart.ChartData =
