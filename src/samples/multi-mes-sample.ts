@@ -695,9 +695,12 @@ namespace Services.TimelineChart.Samples.MultiMesSample {
             entityNameProp: "name",
             entityPointEventsProp: "pointEvents",
             entityRangeEventsProp: "rangeEvents",
-            pointEventTimeProp: "time",
-            rangeEventStartTimeProp: "start",
-            rangeEventEndTimeProp: "end",
+            sidePointEventTimeProp: "time",
+            entityPointEventTimeProp: "time",
+            entityRangeEventStartTimeProp: "start",
+            entityRangeEventEndTimeProp: "end",
+            globalRangeEventStartTimeProp: "start",
+            globalRangeEventEndTimeProp: "end",
         };
 
         tcContainerIds.forEach((id) => {

@@ -861,10 +861,12 @@ namespace Services.TimelineChart.Samples.StyledSample {
             entityNameProp: "name",
             entityPointEventsProp: "pointEvents",
             entityRangeEventsProp: "rangeEvents",
-            pointEventTimeProp: "time",
-            rangeEventStartTimeProp: "start",
-            rangeEventEndTimeProp: "end",
-
+            sidePointEventTimeProp: "time",
+            entityPointEventTimeProp: "time",
+            entityRangeEventStartTimeProp: "start",
+            entityRangeEventEndTimeProp: "end",
+            globalRangeEventStartTimeProp: "start",
+            globalRangeEventEndTimeProp: "end",
         };
 
         const chart = Services.TimelineChart.TimelineChart();

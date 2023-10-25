@@ -40,9 +40,13 @@ namespace Services.TimelineChart {
         entityNameProp?: string;
         entityPointEventsProp?: string;
         entityRangeEventsProp?: string;
-        pointEventTimeProp?: string;
-        rangeEventStartTimeProp?: string;
-        rangeEventEndTimeProp?: string;
+        sidePointEventTimeProp?: string;
+        entityPointEventTimeProp?: string;
+        entityRangeEventStartTimeProp?: string;
+        entityRangeEventEndTimeProp?: string;
+        globalRangeEventStartTimeProp?: string;
+        globalRangeEventEndTimeProp?: string;
+
     }
 
     export interface ChartOptions {
@@ -234,7 +238,7 @@ namespace Services.TimelineChart {
         const CLS_MAIN_CANVAS_ENTITY_POINT_EVENT = "tc-main-canvas-entity-point-event";
         const CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT = "tc-main-canvas-entity-range-event";
         const CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT = "tc-main-canvas-global-range-event";
-        
+
 
         // #endregion
         /**
@@ -271,9 +275,12 @@ namespace Services.TimelineChart {
             entityNameProp: "name",
             entityPointEventsProp: "pointEvents",
             entityRangeEventsProp: "rangeEvents",
-            pointEventTimeProp: "time",
-            rangeEventStartTimeProp: "startTime",
-            rangeEventEndTimeProp: "endTime"
+            sidePointEventTimeProp: "time",
+            entityPointEventTimeProp: "time",
+            entityRangeEventStartTimeProp: "startTime",
+            entityRangeEventEndTimeProp: "endTime",
+            globalRangeEventStartTimeProp: "startTime",
+            globalRangeEventEndTimeProp: "endTime"
         }
 
         let _state: ChartState = {
@@ -477,7 +484,7 @@ namespace Services.TimelineChart {
 
             setData(data);
             setOptions(options);
-            _dataOptions = dataOptions ?? _dataOptions;
+            setDataOptions(dataOptions);
         }
 
 
@@ -536,6 +543,17 @@ namespace Services.TimelineChart {
 
         function setData(data: ChartData) {
             _data = data;
+        }
+
+        function setDataOptions(dataOptions: ChartDataOptions) {
+            if (dataOptions == null)
+                return;
+            
+            Object.entries(dataOptions)
+                .filter(([key, value]) => value !== undefined)
+                .forEach(([key, value]) => {
+                    (_dataOptions as any)[key] = value;
+                });
         }
 
         function isTimeInRange(startTime: Date, endTime?: Date): boolean {
@@ -748,7 +766,7 @@ namespace Services.TimelineChart {
             }
         }
         function _renderSidePointEvent(event: PointEvent) {
-            const evtStartTime = event[_dataOptions.pointEventTimeProp] as Date;
+            const evtStartTime = event[_dataOptions.sidePointEventTimeProp] as Date;
             if (!isTimeInRange(evtStartTime))
                 return;
 
@@ -877,7 +895,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityPointEvent(event: PointEvent, rowIndex: number) {
-            const eventStartTime = event[_dataOptions.pointEventTimeProp] as Date;
+            const eventStartTime = event[_dataOptions.entityPointEventTimeProp] as Date;
             if (!isTimeInRange(eventStartTime))
                 return;
 
@@ -897,8 +915,8 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityRangeEvent(event: RangeEvent, rowIndex: number) {
-            const eventStartTime = event[_dataOptions.rangeEventStartTimeProp] as Date;
-            const eventEndTime = event[_dataOptions.rangeEventEndTimeProp] as Date;
+            const eventStartTime = event[_dataOptions.entityRangeEventStartTimeProp] as Date;
+            const eventEndTime = event[_dataOptions.entityRangeEventEndTimeProp] as Date;
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
 
@@ -931,8 +949,8 @@ namespace Services.TimelineChart {
         }
 
         function _renderGlobalRangeEvent(event: RangeEvent) {
-            const eventStartTime = event[_dataOptions.rangeEventStartTimeProp] as Date;
-            const eventEndTime = event[_dataOptions.rangeEventEndTimeProp] as Date;
+            const eventStartTime = event[_dataOptions.globalRangeEventStartTimeProp] as Date;
+            const eventEndTime = event[_dataOptions.globalRangeEventEndTimeProp] as Date;
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
 

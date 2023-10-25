@@ -517,11 +517,14 @@ namespace Services.TimelineChart.Samples.BaseSample {
 
         const dataOptions: Services.TimelineChart.ChartDataOptions = {
             entityNameProp: "name",
-            pointEventTimeProp: "time",
             entityPointEventsProp: "pointEvents",
             entityRangeEventsProp: "rangeEvents",
-            rangeEventStartTimeProp: "start",
-            rangeEventEndTimeProp: "end",
+            sidePointEventTimeProp: "time",
+            entityPointEventTimeProp: "time",
+            entityRangeEventStartTimeProp: "start",
+            entityRangeEventEndTimeProp: "end",
+            globalRangeEventStartTimeProp: "start",
+            globalRangeEventEndTimeProp: "end",
         };
 
         const chart = Services.TimelineChart.TimelineChart();
