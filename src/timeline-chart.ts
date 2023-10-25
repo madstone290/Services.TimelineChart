@@ -225,14 +225,16 @@ namespace Services.TimelineChart {
         const CLS_MAIN_CANVAS = "tc-main-canvas";
 
         const CLS_ENTITY_LIST_ITEM = "tc-entity-list-item";
-        const CLS_SIDE_CANVAS_ITEM = "tc-side-canvas-item";
-        const CLS_MAIN_CANVAS_ITEM = "tc-main-canvas-item";
-        const CLS_MAIN_CANVAS_ITEM_BOX = "tc-main-canvas-item-box";
-        const CLS_VLINE = "tc-vline";
 
-        const Z_INDEX_ENTITY_POINT_EVENT = 3;
-        const Z_INDEX_ENTITY_RANGE_EVENT = 2;
-        const Z_INDEX_GLOBAL_RANGE_EVENT = 1;
+        const CLS_SIDE_CANVASE_V_BORDER = "tc-side-canvas-v-border";
+        const CLS_SIDE_CANVAS_POINT_EVENT = "tc-side-canvas-point-event";
+
+        const CLS_MAIN_CANVAS_H_BORDER = "tc-main-canvas-h-border";
+        const CLS_MAIN_CANVAS_V_BORDER = "tc-main-canvas-v-border";
+        const CLS_MAIN_CANVAS_ENTITY_POINT_EVENT = "tc-main-canvas-entity-point-event";
+        const CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT = "tc-main-canvas-entity-range-event";
+        const CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT = "tc-main-canvas-global-range-event";
+        
 
         // #endregion
         /**
@@ -731,7 +733,7 @@ namespace Services.TimelineChart {
             for (let i = 1; i <= vLineCount; i++) {
                 left += lineGap;
                 const line = document.createElement("div") as HTMLElement;
-                line.classList.add(CLS_VLINE);
+                line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
                 line.style.height = `${lineHeight}px`;
                 line.style.left = `${left}px`;
                 _sideCanvasElement.appendChild(line);
@@ -757,7 +759,7 @@ namespace Services.TimelineChart {
             const width = _state.sideCanvasContentHeight;
             containerElement.style.left = `${center - (width / 2)}px`;
             containerElement.style.top = `${top}px`;
-            containerElement.classList.add(CLS_SIDE_CANVAS_ITEM);
+            containerElement.classList.add(CLS_SIDE_CANVAS_POINT_EVENT);
 
             if (_state.sidePointEventRender != null)
                 _state.sidePointEventRender(event, _sideCanvasElement, containerElement);
@@ -779,7 +781,7 @@ namespace Services.TimelineChart {
             for (let i = 1; i <= vLineCount - 1; i++) {
                 left += lineGap;
                 const line = document.createElement("div") as HTMLElement;
-                line.classList.add(CLS_VLINE);
+                line.classList.add(CLS_MAIN_CANVAS_V_BORDER);
                 line.style.left = `${left}px`;
                 line.style.height = `${lineHeight}px`;
 
@@ -804,7 +806,7 @@ namespace Services.TimelineChart {
 
             if (_state.hasHorizontalLine) {
                 const mainCanvasItem = document.createElement("div");
-                mainCanvasItem.classList.add(CLS_MAIN_CANVAS_ITEM_BOX);
+                mainCanvasItem.classList.add(CLS_MAIN_CANVAS_H_BORDER);
                 mainCanvasItem.style.top = `${_state.cellHeight * (index)}px`;
                 _mainCanvasElement.appendChild(mainCanvasItem);
             }
@@ -886,8 +888,7 @@ namespace Services.TimelineChart {
             const width = _state.cellContentHeight;
             containerElement.style.left = `${center - (width / 2)}px`;
             containerElement.style.top = `${top}px`;
-            containerElement.style.zIndex = `${Z_INDEX_ENTITY_POINT_EVENT} `;
-            containerElement.classList.add(CLS_MAIN_CANVAS_ITEM);
+            containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_POINT_EVENT);
 
             if (_state.entityPointEventRender != null)
                 _state.entityPointEventRender(event, _mainCanvasElement, containerElement);
@@ -913,8 +914,7 @@ namespace Services.TimelineChart {
             containerElement.style.left = `${left}px`;
             containerElement.style.top = `${top}px`;
             containerElement.style.width = `${width}px`;
-            containerElement.style.zIndex = `${Z_INDEX_ENTITY_RANGE_EVENT} `;
-            containerElement.classList.add(CLS_MAIN_CANVAS_ITEM);
+            containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT);
 
             if (_state.entityRangeEventRender != null)
                 _state.entityRangeEventRender(event, _mainCanvasElement, containerElement);
@@ -943,11 +943,8 @@ namespace Services.TimelineChart {
             const width = duration * _state.cellWidth / _state.cellMinutes;
 
             containerElement.style.left = `${left}px`;
-            containerElement.style.top = "0px";
             containerElement.style.width = `${width}px`;
-            containerElement.style.height = "100%";
-            containerElement.style.zIndex = `${Z_INDEX_GLOBAL_RANGE_EVENT} `;
-            containerElement.classList.add(CLS_MAIN_CANVAS_ITEM);
+            containerElement.classList.add(CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT);
 
             if (_state.globalRangeEventRender != null)
                 _state.globalRangeEventRender(event, _mainCanvasElement, containerElement);

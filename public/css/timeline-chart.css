@@ -76,6 +76,7 @@ img {
     border-color: var(--tc-line-color);
     padding: 0px 8px;
 }
+
 .tc-entity-list-item:last-child {
     border-bottom: none;
 }
@@ -131,7 +132,7 @@ img {
     flex-direction: row;
 }
 
-.tc-column-header-item:first-child{
+.tc-column-header-item:first-child {
     border-left: none;
 }
 
@@ -148,7 +149,7 @@ img {
     position: relative;
 }
 
-.tc-side-canvas-item {
+.tc-side-canvas-point-event {
     position: absolute;
     width: var(--tc-side-canvas-content-height);
     height: var(--tc-side-canvas-content-height);
@@ -166,19 +167,6 @@ img {
     z-index: 0;
 }
 
-.tc-main-canvas-item {
-    position: absolute;
-    height: var(--tc-cell-content-height);
-    width: var(--tc-cell-content-height);
-}
-
-.tc-vline {
-    position: absolute;
-    border-width: 0px 1px 0px 0px;
-    border-style: solid;
-    border-color: var(--tc-line-color);
-}
-
 .tc-main-canvas-box::-webkit-scrollbar {
     width: var(--tc-scroll-width);
     height: var(--tc-scroll-height);
@@ -192,12 +180,46 @@ img {
     background-color: #cccccc;
 }
 
-.tc-main-canvas-item-box {
+.tc-main-canvas-h-border {
     position: absolute;
     width: 100%;
     height: calc(var(--tc-cell-height));
     border-width: 0px 0px 1px 0px;
     border-style: solid;
     border-color: var(--tc-line-color);
-    z-index:  -1;
+    z-index: 1;
+}
+
+.tc-main-canvas-v-border {
+    position: absolute;
+    border-width: 0px 1px 0px 0px;
+    border-style: solid;
+    border-color: var(--tc-line-color);
+    z-index: 2;
+}
+
+.tc-main-canvas-entity-point-event {
+    position: absolute;
+    height: var(--tc-cell-content-height);
+    width: var(--tc-cell-content-height);
+    z-index: 5;
+}
+
+.tc-main-canvas-entity-range-event {
+    position: absolute;
+    height: var(--tc-cell-content-height);
+    z-index: 4;
+}
+
+.tc-main-canvas-global-range-event {
+    position: absolute;
+    height: 100%;
+    z-index: 3;
+}
+
+.tc-side-canvas-v-border {
+    position: absolute;
+    border-width: 0px 1px 0px 0px;
+    border-style: solid;
+    border-color: var(--tc-line-color);
 }
