@@ -639,14 +639,18 @@ namespace Services.TimelineChart {
         }
 
         function isTimeInRange(startTime: Date, endTime?: Date): boolean {
-            if (!_state.strictTimeRange)
-                return true;
             if (endTime == null) {
-                return _state.chartStartTime <= startTime && startTime <= _state.chartEndTime;
+                return _state.chartRenderStartTime <= startTime && startTime <= _state.chartRenderEndTime;
             }
             else {
-                return _state.chartStartTime <= startTime && endTime <= _state.chartEndTime;
+                return _state.chartStartTime <= endTime && endTime <= _state.chartEndTime;
             }
+        }
+
+        function trucateTimeRange(startTime: Date, endTime?: Date): [Date, Date?] {
+            const trucateStartTime = new Date(Math.max(startTime.getTime(), _state.chartRenderStartTime.getTime()));
+            const trucateEndTime = endTime == null ? null : new Date(Math.min(endTime.getTime(), _state.chartRenderEndTime.getTime()));
+            return [trucateStartTime, trucateEndTime];
         }
 
         /**
@@ -831,9 +835,10 @@ namespace Services.TimelineChart {
             const evtStartTime = event[_dataOptions.sidePointEventTimeProp] as Date;
             if (!isTimeInRange(evtStartTime))
                 return;
+            const [renderStartTime] = trucateTimeRange(evtStartTime);
 
             const containerElement = document.createElement("div");
-            const time = dateTimeService.toMinutes(evtStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const time = dateTimeService.toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
             const top = (_state.sideCanvasHeight - _state.sideCanvasContentHeight) / 2;
             const width = _state.sideCanvasContentHeight;
@@ -957,12 +962,13 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityPointEvent(event: PointEvent, rowIndex: number) {
-            const eventStartTime = event[_dataOptions.entityPointEventTimeProp] as Date;
-            if (!isTimeInRange(eventStartTime))
+            const evtStartTime = event[_dataOptions.entityPointEventTimeProp] as Date;
+            if (!isTimeInRange(evtStartTime))
                 return;
+            const [renderStartTime] = trucateTimeRange(evtStartTime);
 
             const containerElement = document.createElement("div");
-            const time = dateTimeService.toMinutes(eventStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const time = dateTimeService.toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
             const top = (_state.cellHeight * rowIndex) + ((_state.cellHeight - _state.cellContentHeight) / 2) - 1;
             const width = _state.cellContentHeight;
@@ -981,10 +987,12 @@ namespace Services.TimelineChart {
             const eventEndTime = event[_dataOptions.entityRangeEventEndTimeProp] as Date;
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
+            const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
+
 
             const containerElement = document.createElement("div");
-            const startTime = dateTimeService.toMinutes(eventStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
-            const duration = dateTimeService.toMinutes(eventEndTime.valueOf() - eventStartTime.valueOf());
+            const startTime = dateTimeService.toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const duration = dateTimeService.toMinutes(renderEndTime.valueOf() - renderStartTime.valueOf());
             const left = startTime * _state.cellWidth / _state.cellMinutes;
             const width = duration * _state.cellWidth / _state.cellMinutes;
             const top = (_state.cellHeight * rowIndex)
@@ -1015,10 +1023,11 @@ namespace Services.TimelineChart {
             const eventEndTime = event[_dataOptions.globalRangeEventEndTimeProp] as Date;
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
+            const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
 
             const containerElement = document.createElement("div");
-            const startTime = dateTimeService.toMinutes(eventStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
-            const duration = dateTimeService.toMinutes(eventEndTime.valueOf() - eventStartTime.valueOf());
+            const startTime = dateTimeService.toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const duration = dateTimeService.toMinutes(renderEndTime.valueOf() - renderStartTime.valueOf());
             const left = startTime * _state.cellWidth / _state.cellMinutes;
             const width = duration * _state.cellWidth / _state.cellMinutes;
 

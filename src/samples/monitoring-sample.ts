@@ -905,7 +905,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
 
 window.addEventListener("load", () => {
     Services.TimelineChart.Samples.MonitoringSample.load();
-    setInterval(() => {
-        Services.TimelineChart.Samples.MonitoringSample.renderChart();
-    }, 10000);
+    // setInterval(() => {
+    //     Services.TimelineChart.Samples.MonitoringSample.renderChart();
+    // }, 10000);
 });
