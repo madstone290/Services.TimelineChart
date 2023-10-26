@@ -78,6 +78,15 @@ namespace Services.TimelineChart {
          * 컬럼 너비를 자동으로 맞출지 여부. true인 경우 셀너비 옵션이 무시된다. 현재 차트 너비에 맞춰 셀너비를 조절한다.
          */
         columnAutoWidth?: boolean;
+        /**
+        * 수평 줌 활성화 여부
+        */
+        hZoomEnabled?: boolean;
+
+        /**
+        * 수직 줌 활성화 여부
+        */
+        vZoomEnabled?: boolean;
         headerTimeFormat?: (time: Date) => string;
         headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
         entityRender?: (entity: Entity, containerEl: HTMLElement) => void;
@@ -118,6 +127,15 @@ namespace Services.TimelineChart {
         hasHorizontalLine: boolean;
         hasVerticalLine: boolean;
         columnAutoWidth: boolean;
+        /**
+        * 수평 줌 활성화 여부
+        */
+        hZoomEnabled: boolean;
+
+        /**
+        * 수직 줌 활성화 여부
+        */
+        vZoomEnabled: boolean;
         headerTimeFormat: (time: Date) => string;
         headerCellRender: (time: Date, containerElement: HTMLElement) => void;
         entityRender: (entity: Entity, containerEl: HTMLElement) => void;
@@ -327,7 +345,9 @@ namespace Services.TimelineChart {
             sideCanvasContentHeight: 0,
             lastZoomTime: new Date(),
             accelResetTimeout: 300,
-            columnAutoWidth: true
+            columnAutoWidth: true,
+            hZoomEnabled: true,
+            vZoomEnabled: false
         }
 
         /**
@@ -1042,29 +1062,34 @@ namespace Services.TimelineChart {
             if (cellWidth == _state.cellWidth && cellHeight == _state.cellHeight) {
                 return;
             }
-
+           
             // 줌 후 스크롤 위치 계산
             let scrollLeft = _mainCanvasBoxElement.scrollLeft;
-            if (pivotPointX) {
-                const scrollOffset = pivotPointX - scrollLeft;
-                const prevCellWidth = _state.cellWidth;
-                const newPivotPointX = pivotPointX * cellWidth / prevCellWidth; // 기준점까지의 거리
-                scrollLeft = newPivotPointX - scrollOffset;
-            }
             let scrollTop = _mainCanvasBoxElement.scrollTop;
-            if (pivotPointY) {
-                const scrollOffset = pivotPointY - scrollTop;
-                const prevCellHeight = _state.cellHeight;
-                const newPivotPointY = pivotPointY * cellHeight / prevCellHeight; // 기준점까지의 거리
-                scrollTop = newPivotPointY - scrollOffset;
+
+            if (_state.hZoomEnabled) {
+                if (pivotPointX) {
+                    const scrollOffset = pivotPointX - scrollLeft;
+                    const prevCellWidth = _state.cellWidth;
+                    const newPivotPointX = pivotPointX * cellWidth / prevCellWidth; // 기준점까지의 거리
+                    scrollLeft = newPivotPointX - scrollOffset;
+                }
+                _state.cellWidth = cellWidth;
+                cssService.setCellWidth(_state.cellWidth);
             }
 
-            _state.cellHeight = cellHeight;
-            _state.cellWidth = cellWidth;
-            _state.cellContentHeight = _state.cellContentHeightRatio * _state.cellHeight;
-            cssService.setCellWidth(_state.cellWidth);
-            cssService.setCellHeight(_state.cellHeight);
-            cssService.setCellContentHeight(_state.cellContentHeight);
+            if (_state.vZoomEnabled) {
+                if (pivotPointY) {
+                    const scrollOffset = pivotPointY - scrollTop;
+                    const prevCellHeight = _state.cellHeight;
+                    const newPivotPointY = pivotPointY * cellHeight / prevCellHeight; // 기준점까지의 거리
+                    scrollTop = newPivotPointY - scrollOffset;
+                }
+                _state.cellHeight = cellHeight;
+                _state.cellContentHeight = _state.cellContentHeightRatio * _state.cellHeight;
+                cssService.setCellHeight(_state.cellHeight);
+                cssService.setCellContentHeight(_state.cellContentHeight);
+            }
 
             // 차트 렌더링을 새로 진행한다.
             // 엔티티리스트는 동적으로 렌더링이 진행되므로 새로 그리지 않는다.

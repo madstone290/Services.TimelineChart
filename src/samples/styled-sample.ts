@@ -854,7 +854,8 @@ namespace Services.TimelineChart.Samples.StyledSample {
             entityRangeEventRender: entityRangeEventRender,
             headerCellRender: headerCellRender,
             globalRangeEventRender: globalRangeEventRender,
-            columnAutoWidth: true
+            columnAutoWidth: true,
+            vZoomEnabled: false,
         };
 
         const dataOptions: Services.TimelineChart.ChartDataOptions = {
