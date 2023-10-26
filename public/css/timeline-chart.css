@@ -51,7 +51,6 @@ img {
     border-width: 0px 0px 1px 0px;
     border-style: solid;
     border-color: var(--tc-line-color);
-    padding: 0px 8px;
     line-height: calc(var(--tc-column-title-height));
 }
 
@@ -60,7 +59,6 @@ img {
     border-width: 0px 0px 1px 0px;
     border-style: solid;
     border-color: var(--tc-line-color);
-    padding: 0px 8px;
     line-height: calc(var(--tc-column-header-height) + var(--tc-side-canvas-height));
 }
 

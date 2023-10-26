@@ -94,7 +94,9 @@ namespace Services.TimelineChart {
         entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-
+        mainTitleRender?: (containerEl: HTMLElement) => void;
+        subTitleRender?: (containerEl: HTMLElement) => void;
+        columnTitleRender?: (containerEl: HTMLElement) => void;
     }
 
     interface ChartState {
@@ -143,7 +145,9 @@ namespace Services.TimelineChart {
         entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-
+        mainTitleRender: (containerEl: HTMLElement) => void;
+        subTitleRender: (containerEl: HTMLElement) => void;
+        columnTitleRender: (containerEl: HTMLElement) => void;
         /**
         * 차트 렌더링 시작 시간
         */
@@ -347,7 +351,10 @@ namespace Services.TimelineChart {
             accelResetTimeout: 300,
             columnAutoWidth: true,
             hZoomEnabled: true,
-            vZoomEnabled: false
+            vZoomEnabled: false,
+            mainTitleRender: null,
+            subTitleRender: null,
+            columnTitleRender: null
         }
 
         /**
@@ -568,7 +575,7 @@ namespace Services.TimelineChart {
         function setDataOptions(dataOptions: ChartDataOptions) {
             if (dataOptions == null)
                 return;
-            
+
             Object.entries(dataOptions)
                 .filter(([key, value]) => value !== undefined)
                 .forEach(([key, value]) => {
@@ -590,8 +597,11 @@ namespace Services.TimelineChart {
          */
         function render() {
             _initLayout();
-            _renderHeader();
             _addEventListeners();
+            _renderMainTitle();
+            _renderSubTitle();
+            _renderColumnTitle();
+            _renderColumnHeader();
 
             _renderCanvas();
             _startRenderEntityList();
@@ -629,13 +639,33 @@ namespace Services.TimelineChart {
             cssService.setCellContentHeight(_state.cellContentHeight);
 
             cssService.setScrollWidth(_state.scrollWidth);
-
-            _mainTitleElement.innerText = _state.mainTitle;
-            _subTitleElement.innerText = _state.subTitle;
-            _columnTitleElement.innerText = _state.columnTitle;
         }
 
-        function _renderHeader() {
+        function _renderMainTitle() {
+            if (_state.mainTitleRender != null) {
+                _state.mainTitleRender(_mainTitleElement);
+            } else {
+                _mainTitleElement.innerText = _state.mainTitle;
+            }
+        }
+
+        function _renderSubTitle(){
+            if (_state.subTitleRender != null) {
+                _state.subTitleRender(_subTitleElement);
+            } else {
+                _subTitleElement.innerText = _state.subTitle;
+            }
+        }
+
+        function _renderColumnTitle(){
+            if (_state.columnTitleRender != null) {
+                _state.columnTitleRender(_columnTitleElement);
+            } else {
+                _columnTitleElement.innerText = _state.columnTitle;
+            }
+        }
+
+        function _renderColumnHeader() {
             let startTime = _state.chartRenderStartTime;
             let endTime = _state.chartRenderEndTime;
             let headerCellCount = (endTime.valueOf() - startTime.valueOf()) / dateTimeService.toTime(_state.cellMinutes);
@@ -1062,7 +1092,7 @@ namespace Services.TimelineChart {
             if (cellWidth == _state.cellWidth && cellHeight == _state.cellHeight) {
                 return;
             }
-           
+
             // 줌 후 스크롤 위치 계산
             let scrollLeft = _mainCanvasBoxElement.scrollLeft;
             let scrollTop = _mainCanvasBoxElement.scrollTop;

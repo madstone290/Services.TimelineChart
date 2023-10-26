@@ -480,6 +480,32 @@ namespace Services.TimelineChart.Samples.BaseSample {
         addTooltip(boxElement, tooltipElement);
     };
 
+    const mainTitleRender = function (containerElement: HTMLElement) {
+        const boxElement = document.createElement("div");
+        containerElement.appendChild(boxElement);
+        
+        boxElement.style.backgroundColor = "red";
+        boxElement.innerText = "==== Main Title ====";
+    }
+
+    const subTitleRender = function (containerElement: HTMLElement) {
+        const boxElement = document.createElement("div");
+        containerElement.appendChild(boxElement);
+        containerElement.classList.add("tr-sub-title");
+        containerElement.innerText = "==== Sub Title ====";
+    }
+
+    const columnTitleRender = function (containerElement: HTMLElement) {
+        const boxElement = document.createElement("div");
+        containerElement.appendChild(boxElement);
+        boxElement.style.width = "100%";
+        boxElement.style.height = "100%";
+        boxElement.style.backgroundColor = "orange";
+        boxElement.innerText = "==== Column Title ====";
+    }
+
+
+
     export function load() {
         const rootContainer = document.getElementById("root-container");
         const data: Services.TimelineChart.ChartData = {
@@ -513,6 +539,9 @@ namespace Services.TimelineChart.Samples.BaseSample {
             entityRangeEventRender: entityRangeEventRender,
             sidePointEventRender: sidePointEventRender,
             globalRangeEventRender: globalRangeEventRender,
+            mainTitleRender: mainTitleRender,
+            subTitleRender: subTitleRender,
+            columnTitleRender: columnTitleRender,
         }
 
         const dataOptions: Services.TimelineChart.ChartDataOptions = {
