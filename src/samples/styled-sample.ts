@@ -840,14 +840,14 @@ namespace Services.TimelineChart.Samples.StyledSample {
             sidePointEvents: sidePointEvents as any,
             globalRangeEvents: globalRangeEvents as any,
         };
-        const cellMinutes = 30;
-        const cellWidth = 30;
+        const cellMinutes = 10;
+        const cellWidth = 100;
         const cellHeight = 30;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
             subTitle: "Serial No.",
             columnTitle: "Time Line",
-            chartStartTime: new Date(Date.parse("2020-01-01T00:00:00")),
+            chartStartTime: new Date(Date.parse("2020-01-01T06:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-01T18:00:00")),
             columnTitleHeight: cellHeight,
             columnHeaderHeight: cellHeight,
@@ -858,7 +858,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             cellHeight: cellHeight,
             paddingCellCount: 1,
             cellContentHeightRatio: 0.5,
-            minCellWidth: 1,
+            minCellWidth: 50,
             maxCellWidth: 300,
             maxZoomScale: 10,
             hasHorizontalLine: true,
@@ -869,7 +869,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             entityRangeEventRender: entityRangeEventRender,
             headerCellRender: headerCellRender,
             globalRangeEventRender: globalRangeEventRender,
-            columnAutoWidth: true,
+            columnAutoWidth: false,
             vZoomEnabled: false,
             mainTitleRender: mainTitleRender,
             subTitleRender: subTitleRender,
