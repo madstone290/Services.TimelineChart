@@ -1140,6 +1140,8 @@ namespace Services.TimelineChart {
         return {
             create,
             render,
+            setOptions,
+            setData,
         }
     };
 }
