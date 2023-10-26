@@ -813,6 +813,21 @@ namespace Services.TimelineChart.Samples.StyledSample {
         addHoverColor(boxElement, COLOR_SELECTED_EVENT);
     };
 
+    const mainTitleRender = function (containerElement: HTMLElement) {
+        containerElement.classList.add("tr-main-title");
+        containerElement.innerHTML = "ABC H/L LH Line 03";
+    }
+
+    const subTitleRender = function (containerElement: HTMLElement) {
+        containerElement.classList.add("tr-sub-title");
+        containerElement.innerText = "ABC Serial No.";
+    }
+
+    const columnTitleRender = function (containerElement: HTMLElement) {
+        containerElement.classList.add("tr-column-title");
+        containerElement.innerText = "ABC TIME LINE";
+    }
+
     export function loadSingle() {
         const mesLegend = ChartLegend();
         mesLegend.create(document.getElementById("legend-container"), legendData);
@@ -856,6 +871,9 @@ namespace Services.TimelineChart.Samples.StyledSample {
             globalRangeEventRender: globalRangeEventRender,
             columnAutoWidth: true,
             vZoomEnabled: false,
+            mainTitleRender: mainTitleRender,
+            subTitleRender: subTitleRender,
+            columnTitleRender: columnTitleRender,
         };
 
         const dataOptions: Services.TimelineChart.ChartDataOptions = {

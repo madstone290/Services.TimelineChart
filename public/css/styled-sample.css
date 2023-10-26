@@ -13,6 +13,29 @@
     position: fixed;
 }
 
+
+.tr-main-title {
+    border-color: #333c77;
+    background-color: #19204d;
+    color: white;
+    font-weight: 900;
+}
+
+.tr-sub-title {
+    border-color: #333c77;
+    text-align: center;
+    background-color: #5d6393;
+    font-weight: 600;
+    color: white;
+}
+
+.tr-column-title {
+    border-color: #333c77;
+    background-color: #1f2e5d;
+    color: white;
+    font-weight: 600;
+}
+
 .tr-column-header-cell {
     background-color: #5d6393;
     color: white;
@@ -202,26 +225,7 @@
     margin-right: 10px;
 }
 
-
-
-
-
 /* timeline-chart.css 덮어쓰기 */
-.tc-maintitle {
-    border-color: #333c77;
-    background-color: #19204d;
-    color: white;
-    font-weight: 900;
-}
-
-.tc-subtitle {
-    border-color: #333c77;
-    text-align: center;
-    background-color: #5d6393;
-    font-weight: 600;
-    color: white;
-}
-
 .tc-entity-list-item {
     border-color: white;
     background-color: white;
@@ -233,13 +237,6 @@
 
 .tc-main-panel {
     border-color: #1f2e5d;
-}
-
-.tc-column-title {
-    border-color: #333c77;
-    background-color: #1f2e5d;
-    color: white;
-    font-weight: 600;
 }
 
 .tc-column-header {
@@ -254,7 +251,6 @@
     border-color: #333c77;
     background-color: #8790b1;
 }
-
 
 .tc-main-canvas-box::-webkit-scrollbar-thumb {
     background-color: #19204d;
