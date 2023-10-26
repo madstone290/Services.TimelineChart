@@ -680,9 +680,6 @@ namespace Services.TimelineChart {
 
             _renderMainCanvas();
             _renderGlobalRangeEvents();
-
-            // 현재 보여지는 엔티티 리스트만 다시 그린다.
-            _renderIntersectingEntitiList();
         }
 
         function _initLayout() {
@@ -926,6 +923,8 @@ namespace Services.TimelineChart {
          * 실제 엔티티는 보여지는 영역에 따라 동적으로 그려진다.
          */
         function _startRenderEntityList() {
+            _entityListBoxElement.replaceChildren();
+
             const canvasHeight = _mainCanvasElement.scrollHeight;
             const cellHeight = _state.cellHeight;
             const containerCount = Math.floor(canvasHeight / cellHeight);
@@ -944,6 +943,10 @@ namespace Services.TimelineChart {
 
                 _intersecionObserver.observe(containerEl);
             }
+        }
+
+        function _stopRenderEntityList() {
+            _intersecionObserver.disconnect();
         }
 
         function _renderEntityEvents(entity: Entity, rowIndex: number) {
@@ -988,7 +991,6 @@ namespace Services.TimelineChart {
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
             const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
-
 
             const containerElement = document.createElement("div");
             const startTime = dateTimeService.toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
@@ -1144,8 +1146,10 @@ namespace Services.TimelineChart {
 
             // 차트 렌더링을 새로 진행한다.
             // 엔티티리스트는 동적으로 렌더링이 진행되므로 새로 그리지 않는다.
-            // 현재 보여지는 엔티티 리스트만 다시 그린다.
             _renderCanvas();
+
+            // 현재 보여지는 엔티티 리스트만 다시 그린다.
+            _renderIntersectingEntitiList();
 
             // keep scroll position
             _mainCanvasBoxElement.scrollLeft = scrollLeft;
@@ -1166,6 +1170,11 @@ namespace Services.TimelineChart {
             _renderColumnHeader();
 
             _renderCanvas();
+
+            _stopRenderEntityList();
+            _startRenderEntityList();
+            // _renderIntersectingEntitiList();
+            // _mainCanvasBoxElement.scrollTop = 0;
         }
 
         return {
@@ -1173,7 +1182,7 @@ namespace Services.TimelineChart {
             render,
             setOptions,
             setData,
-            refresh
+            refresh: refresh
         }
     };
 }

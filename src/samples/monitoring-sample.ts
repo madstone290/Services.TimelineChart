@@ -733,12 +733,12 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         tooltipElement.appendChild(timeElement);
 
         const barcodeElement = document.createElement("div");
-        barcodeElement.innerText = entities.find(entity => entity.id == event.entityId).name;
+        barcodeElement.innerText = entities.find(entity => entity.id == event.entityId)?.name;
         tooltipElement.appendChild(barcodeElement);
 
         const barcode = entities.find(x => x.id == event.entityId);
         const productElement = document.createElement("div");
-        productElement.innerText = `ProductNo: ${barcode.productNumber}`;
+        productElement.innerText = `ProductNo: ${barcode?.productNumber}`;
         tooltipElement.appendChild(productElement);
 
         const descElement = document.createElement("div");
@@ -830,15 +830,16 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
 
     let _chart: any;
     let _options: Services.TimelineChart.ChartOptions;
+    let _data: Services.TimelineChart.ChartData;
     export function load() {
         const mesLegend = ChartLegend();
         mesLegend.create(document.getElementById("legend-container"), legendData);
         mesLegend.render();
 
         const container = document.getElementById("tc-container");
-        const data: Services.TimelineChart.ChartData =
+        _data =
         {
-            entities: entitiesX100 as any,
+            entities: entities as any,
             sidePointEvents: sidePointEvents as any,
             globalRangeEvents: globalRangeEvents as any,
         };
@@ -850,7 +851,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             subTitle: "Serial No.",
             columnTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T06:00:00")),
-            chartEndTime: new Date(Date.parse("2020-01-01T18:00:00")),
+            chartEndTime: new Date(Date.parse("2020-01-01T09:00:00")),
             columnTitleHeight: cellHeight,
             columnHeaderHeight: cellHeight,
             sideCanvasHeight: cellHeight,
@@ -891,21 +892,61 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         };
 
         _chart = Services.TimelineChart.TimelineChart();
-        _chart.create(container, data, _options, dataOptions);
+        _chart.create(container, _data, _options, dataOptions);
         _chart.render();
+
+        tempStart = _options.chartStartTime;
+        tempEnd = _options.chartEndTime;
     }
 
+    let tempStart: Date;
+    let tempEnd: Date;
+    let entityNumber = 10000;
     export function renderChart() {
-        _options.chartStartTime = new Date(_options.chartStartTime.getTime() + 10 * 1000);
-        _options.chartEndTime = new Date(_options.chartEndTime.getTime() + 10 * 1000);
+        // tempStart = new Date(tempStart.getTime() + 1 * 60 * 1000);
+        // tempEnd = new Date(tempEnd.valueOf() + 1 * 60 * 1000);
+        // if(tempStart.getMinutes() % 10 == 0){
+        //     _options.chartStartTime = tempStart;
+        // }
+        // if (tempEnd.getMinutes() % 10 == 0) {
+        //     _options.chartEndTime = tempEnd;
+        // }
+
+        _options.chartStartTime = new Date(_options.chartStartTime.getTime() + 1 * 60 * 1000);
+        _options.chartEndTime = new Date(_options.chartEndTime.getTime() + 1 * 60 * 1000);
         _chart.setOptions(_options);
+
+        _data.entities = [
+            {
+                id: entityNumber,
+                name: "Entity" + entityNumber,
+                barcodeNumber: "H34A2900002",
+                productNumber: "00123H2",
+                pointEvents: [],
+                rangeEvents: [
+                    {
+                        // start, end 속성으로 데이터 접근중..
+                        type: "op10",
+                        startTime: new Date(_options.chartEndTime.valueOf() - 30 * 60 * 1000),
+                        start: new Date(_options.chartEndTime.valueOf() - 30 * 60 * 1000),
+                        endTime: new Date(_options.chartEndTime.valueOf() - 10 * 60 * 1000),
+                        end: new Date(_options.chartEndTime.valueOf() - 10 * 60 * 1000),
+                        entityId: entityNumber
+                    },
+                ],
+            }, ..._data.entities
+        ];
+        console.log(_data);
+        _chart.setData(_data);
         _chart.refresh();
+
+        entityNumber++;
     }
 }
 
 window.addEventListener("load", () => {
     Services.TimelineChart.Samples.MonitoringSample.load();
-    // setInterval(() => {
-    //     Services.TimelineChart.Samples.MonitoringSample.renderChart();
-    // }, 10000);
+    setInterval(() => {
+        Services.TimelineChart.Samples.MonitoringSample.renderChart();
+    }, 2000);
 });
