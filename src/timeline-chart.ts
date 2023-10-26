@@ -504,6 +504,8 @@ namespace Services.TimelineChart {
             _sideCanvasElement = container.getElementsByClassName(CLS_SIDE_CANVAS)[0] as HTMLElement;
             _mainCanvasBoxElement = container.getElementsByClassName(CLS_MAIN_CANVAS_BOX)[0] as HTMLElement;
             _mainCanvasElement = container.getElementsByClassName(CLS_MAIN_CANVAS)[0] as HTMLElement;
+            
+            _addEventListeners();
 
             // 컨테이너 크기에 맞춰 차트 크기를 조정한다.
             _state.chartWidth = container.clientWidth;
@@ -513,6 +515,56 @@ namespace Services.TimelineChart {
             setOptions(options);
             setDataOptions(dataOptions);
         }
+        
+        function _addEventListeners() {
+            _mainCanvasBoxElement.addEventListener("scroll", (e) => {
+                _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
+                _sideCanvasBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
+            });
+            _mainCanvasBoxElement.addEventListener("scroll", (e) => {
+                _entityListBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
+            });
+            _mainCanvasElement.addEventListener("mousemove", (e) => {
+                if (e.buttons === 1) {
+                    _mainCanvasBoxElement.scrollLeft -= e.movementX;
+                    _mainCanvasBoxElement.scrollTop -= e.movementY;
+                }
+            });
+            _mainCanvasElement.addEventListener("mousedown", (e) => {
+                document.body.style.cursor = "pointer";
+            });
+            _mainCanvasElement.addEventListener("mouseup", (e) => {
+                document.body.style.cursor = "default";
+            });
+
+            _mainCanvasElement.addEventListener("wheel", (e) => {
+                zoomCanvasWhenWheel(_mainCanvasElement, e);
+            });
+
+            _sideCanvasElement.addEventListener("wheel", (e) => {
+                zoomCanvasWhenWheel(_sideCanvasElement, e);
+            });
+
+            // prevent default zoom
+            document.body.addEventListener("wheel", (e) => {
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                }
+            }, {
+                passive: false
+            });
+            // change cursor when ctrl key is pressed
+            document.body.addEventListener("keydown", (e) => {
+                if (e.ctrlKey) {
+                    document.body.style.cursor = "pointer";
+                }
+            });
+            // restore cursor when ctrl key is released
+            document.body.addEventListener("keyup", (e) => {
+                document.body.style.cursor = "default";
+            });
+        }
+
 
 
         function setOptions(options: ChartOptions) {
@@ -597,7 +649,6 @@ namespace Services.TimelineChart {
          */
         function render() {
             _initLayout();
-            _addEventListeners();
             _renderMainTitle();
             _renderSubTitle();
             _renderColumnTitle();
@@ -642,6 +693,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderMainTitle() {
+            _mainTitleElement.replaceChildren();
             if (_state.mainTitleRender != null) {
                 _state.mainTitleRender(_mainTitleElement);
             } else {
@@ -650,6 +702,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderSubTitle(){
+            _subTitleElement.replaceChildren();
             if (_state.subTitleRender != null) {
                 _state.subTitleRender(_subTitleElement);
             } else {
@@ -658,6 +711,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderColumnTitle(){
+            _columnTitleElement.replaceChildren();
             if (_state.columnTitleRender != null) {
                 _state.columnTitleRender(_columnTitleElement);
             } else {
@@ -666,6 +720,8 @@ namespace Services.TimelineChart {
         }
 
         function _renderColumnHeader() {
+            _columnHeaderElement.replaceChildren();
+
             let startTime = _state.chartRenderStartTime;
             let endTime = _state.chartRenderEndTime;
             let headerCellCount = (endTime.valueOf() - startTime.valueOf()) / dateTimeService.toTime(_state.cellMinutes);
@@ -681,55 +737,6 @@ namespace Services.TimelineChart {
                 currentTime = new Date(currentTime.getTime() + dateTimeService.toTime(_state.cellMinutes));
                 cellIndex++;
             }
-        }
-
-        function _addEventListeners() {
-            _mainCanvasBoxElement.addEventListener("scroll", (e) => {
-                _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
-                _sideCanvasBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
-            });
-            _mainCanvasBoxElement.addEventListener("scroll", (e) => {
-                _entityListBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
-            });
-            _mainCanvasElement.addEventListener("mousemove", (e) => {
-                if (e.buttons === 1) {
-                    _mainCanvasBoxElement.scrollLeft -= e.movementX;
-                    _mainCanvasBoxElement.scrollTop -= e.movementY;
-                }
-            });
-            _mainCanvasElement.addEventListener("mousedown", (e) => {
-                document.body.style.cursor = "pointer";
-            });
-            _mainCanvasElement.addEventListener("mouseup", (e) => {
-                document.body.style.cursor = "default";
-            });
-
-            _mainCanvasElement.addEventListener("wheel", (e) => {
-                zoomCanvasWhenWheel(_mainCanvasElement, e);
-            });
-
-            _sideCanvasElement.addEventListener("wheel", (e) => {
-                zoomCanvasWhenWheel(_sideCanvasElement, e);
-            });
-
-            // prevent default zoom
-            document.body.addEventListener("wheel", (e) => {
-                if (e.ctrlKey) {
-                    e.preventDefault();
-                }
-            }, {
-                passive: false
-            });
-            // change cursor when ctrl key is pressed
-            document.body.addEventListener("keydown", (e) => {
-                if (e.ctrlKey) {
-                    document.body.style.cursor = "pointer";
-                }
-            });
-            // restore cursor when ctrl key is released
-            document.body.addEventListener("keyup", (e) => {
-                document.body.style.cursor = "default";
-            });
         }
 
         /**
@@ -758,10 +765,10 @@ namespace Services.TimelineChart {
                     return;
                 }
                 if (e.deltaY > 0) {
-                    zoomOutCanvas(pivotPoint.x, pivotPoint.y);
+                    _zoomOutCanvas(pivotPoint.x, pivotPoint.y);
                 }
                 else {
-                    zoomInCanvas(pivotPoint.x, pivotPoint.y);
+                    _zoomInCanvas(pivotPoint.x, pivotPoint.y);
                 }
             }
         }
@@ -1020,7 +1027,7 @@ namespace Services.TimelineChart {
             _mainCanvasElement.appendChild(containerElement);
         }
 
-        function zoomInCanvas(pivotPointX?: number, pivotPointY?: number) {
+        function _zoomInCanvas(pivotPointX?: number, pivotPointY?: number) {
             const shouldReset = _state.prevZoomDirection == "out" ||
                 _state.accelResetTimeout < new Date().valueOf() - _state.lastZoomTime.valueOf();
             if (shouldReset) {
@@ -1040,7 +1047,7 @@ namespace Services.TimelineChart {
                 cellHeight = _state.maxCellHeight;
             }
 
-            zoomCanvas(
+            _zoomCanvas(
                 cellWidth,
                 cellHeight,
                 pivotPointX,
@@ -1049,7 +1056,7 @@ namespace Services.TimelineChart {
             _state.prevZoomDirection = "in";
         }
 
-        function zoomOutCanvas(pivotPointX?: number, pivotPointY?: number) {
+        function _zoomOutCanvas(pivotPointX?: number, pivotPointY?: number) {
             const shouldReset = _state.prevZoomDirection == "in" ||
                 _state.accelResetTimeout < new Date().valueOf() - _state.lastZoomTime.valueOf();
             if (shouldReset) {
@@ -1066,7 +1073,7 @@ namespace Services.TimelineChart {
             if (cellHeight < _state.minCellHeight)
                 cellHeight = _state.minCellHeight;
 
-            zoomCanvas(
+            _zoomCanvas(
                 cellWidth,
                 cellHeight,
                 pivotPointX,
@@ -1082,7 +1089,7 @@ namespace Services.TimelineChart {
          * @param pivotPointX 스크롤 x기준 위치
          * @param pivotPointY 스크롤 y기준 위치
          */
-        function zoomCanvas(cellWidth: number, cellHeight: number, pivotPointX?: number, pivotPointY?: number) {
+        function _zoomCanvas(cellWidth: number, cellHeight: number, pivotPointX?: number, pivotPointY?: number) {
             if (cellWidth < _state.minCellWidth || cellHeight < _state.minCellHeight) {
                 return;
             }
