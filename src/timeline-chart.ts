@@ -515,7 +515,7 @@ namespace Services.TimelineChart {
             setOptions(options);
             setDataOptions(dataOptions);
         }
-        
+
         function _addEventListeners() {
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
                 _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
@@ -1144,11 +1144,22 @@ namespace Services.TimelineChart {
             }
         }
 
+        function refresh(){
+            _initLayout();
+            _renderMainTitle();
+            _renderSubTitle();
+            _renderColumnTitle();
+            _renderColumnHeader();
+
+            _renderCanvas();
+        }
+
         return {
             create,
             render,
             setOptions,
             setData,
+            refresh
         }
     };
 }

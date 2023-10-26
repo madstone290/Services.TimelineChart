@@ -896,10 +896,10 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
     }
 
     export function renderChart() {
-        _options.chartStartTime = new Date(_options.chartStartTime.getTime() + 1 * 60 * 60 * 1000);
-        _options.chartEndTime = new Date(_options.chartEndTime.getTime() + 1 * 60 * 60 * 1000);
+        _options.chartStartTime = new Date(_options.chartStartTime.getTime() + 10 * 1000);
+        _options.chartEndTime = new Date(_options.chartEndTime.getTime() + 10 * 1000);
         _chart.setOptions(_options);
-        _chart.render();
+        _chart.refresh();
     }
 }
 
@@ -907,5 +907,5 @@ window.addEventListener("load", () => {
     Services.TimelineChart.Samples.MonitoringSample.load();
     setInterval(() => {
         Services.TimelineChart.Samples.MonitoringSample.renderChart();
-    }, 3000);
+    }, 10000);
 });
