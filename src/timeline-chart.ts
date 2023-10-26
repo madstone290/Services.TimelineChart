@@ -192,8 +192,10 @@ namespace Services.TimelineChart {
          */
         lastZoomTime: Date;
 
-
-
+        /**
+         * 시간범위를 엄격하게 적용할지 여부. true인 경우 시간범위를 벗어나는 이벤트는 렌더링하지 않는다.
+         */
+        strictTimeRange: boolean;
     }
 
     /**
@@ -354,7 +356,8 @@ namespace Services.TimelineChart {
             vZoomEnabled: false,
             mainTitleRender: null,
             subTitleRender: null,
-            columnTitleRender: null
+            columnTitleRender: null,
+            strictTimeRange: false
         }
 
         /**
@@ -504,7 +507,7 @@ namespace Services.TimelineChart {
             _sideCanvasElement = container.getElementsByClassName(CLS_SIDE_CANVAS)[0] as HTMLElement;
             _mainCanvasBoxElement = container.getElementsByClassName(CLS_MAIN_CANVAS_BOX)[0] as HTMLElement;
             _mainCanvasElement = container.getElementsByClassName(CLS_MAIN_CANVAS)[0] as HTMLElement;
-            
+
             _addEventListeners();
 
             // 컨테이너 크기에 맞춰 차트 크기를 조정한다.
@@ -636,6 +639,8 @@ namespace Services.TimelineChart {
         }
 
         function isTimeInRange(startTime: Date, endTime?: Date): boolean {
+            if (!_state.strictTimeRange)
+                return true;
             if (endTime == null) {
                 return _state.chartStartTime <= startTime && startTime <= _state.chartEndTime;
             }
@@ -701,7 +706,7 @@ namespace Services.TimelineChart {
             }
         }
 
-        function _renderSubTitle(){
+        function _renderSubTitle() {
             _subTitleElement.replaceChildren();
             if (_state.subTitleRender != null) {
                 _state.subTitleRender(_subTitleElement);
@@ -710,7 +715,7 @@ namespace Services.TimelineChart {
             }
         }
 
-        function _renderColumnTitle(){
+        function _renderColumnTitle() {
             _columnTitleElement.replaceChildren();
             if (_state.columnTitleRender != null) {
                 _state.columnTitleRender(_columnTitleElement);
@@ -1144,7 +1149,7 @@ namespace Services.TimelineChart {
             }
         }
 
-        function refresh(){
+        function refresh() {
             _initLayout();
             _renderMainTitle();
             _renderSubTitle();
