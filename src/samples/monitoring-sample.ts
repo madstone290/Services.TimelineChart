@@ -818,9 +818,34 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         containerElement.innerHTML = "ABC H/L LH Line 03";
     }
 
-    const subTitleRender = function (containerElement: HTMLElement) {
-        containerElement.classList.add("tr-sub-title");
-        containerElement.innerText = "ABC Serial No.";
+    const tableColumnRender = function (containerElement: HTMLElement) {
+        const box = document.createElement("div");
+        box.classList.add("tr-table-column-box");
+        containerElement.appendChild(box);
+
+        const item1 = document.createElement("div");
+        item1.classList.add("tr-table-column-item");
+        item1.innerText = "Sequnce No.";
+        box.appendChild(item1);
+
+        const item2 = document.createElement("div");
+        item2.classList.add("tr-table-column-item");
+        item2.innerText = "Lot No.";
+        box.appendChild(item2);
+    }
+
+    const tableRowRender = function (entity: any, containerElement: HTMLElement) {
+        containerElement.classList.add("tr-table-row-box");
+
+        const item1 = document.createElement("div");
+        item1.classList.add("tr-table-row-item");
+        item1.innerText = entity.id;
+        containerElement.appendChild(item1);
+
+        const item2 = document.createElement("div");
+        item2.classList.add("tr-table-row-item");
+        item2.innerText = entity.name;
+        containerElement.appendChild(item2);
     }
 
     const columnTitleRender = function (containerElement: HTMLElement) {
@@ -848,7 +873,6 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         const cellHeight = 30;
         _options = {
             mainTitle: "XXX H/L LH Line 03",
-            //subTitle: "Serial No.",
             columnTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T06:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-01T09:00:00")),
@@ -864,8 +888,10 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             maxZoomScale: 10,
             hasHorizontalLine: true,
             hasVerticalLine: true,
+            leftPanelWidth: 400,
             sidePointEventRender: sidePointEventRender,
-            tableRowRender: null,
+            tableRowRender: tableRowRender,
+            tableColumnRender: tableColumnRender,
             entityPointEventRender: entityPointEventRender,
             entityRangeEventRender: entityRangeEventRender,
             headerCellRender: headerCellRender,
@@ -889,7 +915,10 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         };
 
         _chart = Services.TimelineChart.TimelineChart();
-        _chart.create(container, _data, _options, dataOptions);
+        _chart.create(container);
+        _chart.setOptions(_options);
+        _chart.setData(_data);
+        _chart.setDataOptions(dataOptions);
         _chart.render();
 
         tempStart = _options.chartStartTime;
