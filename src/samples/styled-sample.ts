@@ -818,9 +818,34 @@ namespace Services.TimelineChart.Samples.StyledSample {
         containerElement.innerHTML = "ABC H/L LH Line 03";
     }
 
-    const subTitleRender = function (containerElement: HTMLElement) {
-        containerElement.classList.add("tr-sub-title");
-        containerElement.innerText = "ABC Serial No.";
+    const tableColumnRender = function (containerElement: HTMLElement) {
+        const box = document.createElement("div");
+        box.classList.add("tr-table-column-box");
+        containerElement.appendChild(box);
+
+        const item1 = document.createElement("div");
+        item1.classList.add("tr-table-column-item");
+        item1.innerText = "Sequnce No.";
+        box.appendChild(item1);
+
+        const item2 = document.createElement("div");
+        item2.classList.add("tr-table-column-item");
+        item2.innerText = "Lot No.";
+        box.appendChild(item2);
+    }
+
+    const tableRowRender = function(entity: any, containerElement: HTMLElement) {
+        containerElement.classList.add("tr-table-row-box");
+
+        const item1 = document.createElement("div");
+        item1.classList.add("tr-table-row-item");
+        item1.innerText = entity.id;
+        containerElement.appendChild(item1);
+
+        const item2 = document.createElement("div");
+        item2.classList.add("tr-table-row-item");
+        item2.innerText = entity.name;
+        containerElement.appendChild(item2);
     }
 
     const columnTitleRender = function (containerElement: HTMLElement) {
@@ -845,7 +870,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         const cellHeight = 30;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
-            subTitle: "Serial No.",
+            //subTitle: "Serial No.",
             columnTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T06:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-01T18:00:00")),
@@ -857,6 +882,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             cellWidth: cellWidth,
             cellHeight: cellHeight,
             paddingCellCount: 1,
+            leftPanelWidth: 300,
             cellContentHeightRatio: 0.5,
             minCellWidth: 50,
             maxCellWidth: 300,
@@ -864,7 +890,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             hasHorizontalLine: true,
             hasVerticalLine: true,
             sidePointEventRender: sidePointEventRender,
-            entityRender: null,
+            tableRowRender: tableRowRender,
             entityPointEventRender: entityPointEventRender,
             entityRangeEventRender: entityRangeEventRender,
             headerCellRender: headerCellRender,
@@ -872,7 +898,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             columnAutoWidth: false,
             vZoomEnabled: false,
             mainTitleRender: mainTitleRender,
-            subTitleRender: subTitleRender,
+            tableColumnRender: tableColumnRender,
             columnTitleRender: columnTitleRender,
         };
 

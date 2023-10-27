@@ -669,7 +669,7 @@ namespace Services.TimelineChart.Samples.MultiMesSample {
         const cellHeight = 20;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
-            subTitle: "Serial No.",
+            //subTitle: "Serial No.",
             columnTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T00:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-02T00:00:00")),
@@ -684,7 +684,7 @@ namespace Services.TimelineChart.Samples.MultiMesSample {
             hasHorizontalLine: true,
             hasVerticalLine: true,
             sidePointEventRender: machinePointEventRender,
-            entityRender: null,
+            tableRowRender: null,
             entityPointEventRender: entityPointEventRender,
             entityRangeEventRender: entityRangeEventRender,
             headerCellRender: headerCellRender,

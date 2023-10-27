@@ -54,7 +54,6 @@ namespace Services.TimelineChart {
         chartEndTime: Date;
         paddingCellCount?: number;
         mainTitle?: string;
-        subTitle?: string;
         columnTitle?: string;
         leftPanelWidth?: number;
         columnTitleHeight?: number;
@@ -89,15 +88,14 @@ namespace Services.TimelineChart {
         vZoomEnabled?: boolean;
         headerTimeFormat?: (time: Date) => string;
         headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
-        entityRender?: (entity: Entity, containerEl: HTMLElement) => void;
+        tableRowRender?: (entity: Entity, containerEl: HTMLElement) => void;
         sidePointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         mainTitleRender?: (containerEl: HTMLElement) => void;
-        subTitleRender?: (containerEl: HTMLElement) => void;
         columnTitleRender?: (containerEl: HTMLElement) => void;
-
+        tableColumnRender?: (containerEl: HTMLElement) => void;
         /**
         * fab 버튼 클릭시 작동할 스크롤 길이
         */
@@ -109,7 +107,6 @@ namespace Services.TimelineChart {
         chartEndTime: Date;
         paddingCellCount: number;
         mainTitle: string;
-        subTitle: string;
         columnTitle?: string;
         leftPanelWidth: number;
         columnTitleHeight: number;
@@ -145,14 +142,15 @@ namespace Services.TimelineChart {
         vZoomEnabled: boolean;
         headerTimeFormat: (time: Date) => string;
         headerCellRender: (time: Date, containerElement: HTMLElement) => void;
-        entityRender: (entity: Entity, containerEl: HTMLElement) => void;
+        mainTitleRender: (containerEl: HTMLElement) => void;
+        columnTitleRender: (containerEl: HTMLElement) => void;
+        tableColumnRender: (containerEl: HTMLElement) => void;
+        tableRowRender: (entity: Entity, containerEl: HTMLElement) => void;
         sidePointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        mainTitleRender: (containerEl: HTMLElement) => void;
-        subTitleRender: (containerEl: HTMLElement) => void;
-        columnTitleRender: (containerEl: HTMLElement) => void;
+
         /**
         * 차트 렌더링 시작 시간
         */
@@ -211,7 +209,7 @@ namespace Services.TimelineChart {
     /**
      * 엔티티 렌더링 정보
      */
-    interface EntityContainer {
+    interface EntityRow {
         index: number;
         entity: Entity;
         /**
@@ -256,13 +254,14 @@ namespace Services.TimelineChart {
         const CLS_LEFT_PANEL = "tc-left-panel";
         const CLS_MAIN_PANEL = "tc-main-panel";
         const CLS_MAIN_TITLE = "tc-maintitle";
-        const CLS_SUBTITLE = "tc-subtitle";
-        const CLS_ENTITY_LIST_BOX = "tc-entity-list-box";
-
+        const CLS_TABLE_COLUMN_BOX = "tc-table-column-box";
+        const CLS_ENTITY_TABLE_BOX = "tc-entity-table-box";
+        const CLS_ENTITY_TABLE_ITEM = "tc-entity-table-item";
+        
         const CLS_MAIN_CANVAS_BOX = "tc-main-canvas-box";
         const CLS_MAIN_CANVAS = "tc-main-canvas";
 
-        const CLS_ENTITY_LIST_ITEM = "tc-entity-list-item";
+        
 
         const CLS_SIDE_CANVASE_V_BORDER = "tc-side-canvas-v-border";
         const CLS_SIDE_CANVAS_POINT_EVENT = "tc-side-canvas-point-event";
@@ -286,8 +285,8 @@ namespace Services.TimelineChart {
                 <div class="${CLS_ROOT}">
                     <div class="${CLS_LEFT_PANEL}">
                         <div class="${CLS_MAIN_TITLE}"></div>
-                        <div class="${CLS_SUBTITLE}"></div>
-                        <div class="${CLS_ENTITY_LIST_BOX}"></div>
+                        <div class="${CLS_TABLE_COLUMN_BOX}"></div>
+                        <div class="${CLS_ENTITY_TABLE_BOX}"></div>
                     </div>
                     <div class="${CLS_MAIN_PANEL}">
                         <div class="${CLS_COLUMN_PANEL}">
@@ -329,7 +328,6 @@ namespace Services.TimelineChart {
             chartEndTime: new Date(),
             paddingCellCount: 2,
             mainTitle: "",
-            subTitle: "",
             leftPanelWidth: 200,
             scrollWidth: 15,
             columnTitleHeight: 40,
@@ -349,7 +347,7 @@ namespace Services.TimelineChart {
             maxZoomScale: 3,
             headerTimeFormat: null,
             headerCellRender: null,
-            entityRender: null,
+            tableRowRender: null,
             sidePointEventRender: null,
             entityPointEventRender: null,
             entityRangeEventRender: null,
@@ -372,10 +370,10 @@ namespace Services.TimelineChart {
             hZoomEnabled: true,
             vZoomEnabled: false,
             mainTitleRender: null,
-            subTitleRender: null,
             columnTitleRender: null,
             strictTimeRange: false,
-            fabScrollStep: 200
+            fabScrollStep: 200,
+            tableColumnRender: null
         }
 
         /**
@@ -386,14 +384,14 @@ namespace Services.TimelineChart {
         /**
          * 엔티티 컨테이너 목록. 엔티티 렌더링에 사용한다.
          */
-        let _entityContainers = new Map<HTMLElement, EntityContainer>();
+        let _entityContainers = new Map<HTMLElement, EntityRow>();
 
         /* Html Elements */
         let _rootElement: HTMLElement;
         let _mainTitleElement: HTMLElement;
-        let _subTitleElement: HTMLElement;
+        let _tableColumnBoxElement: HTMLElement;
         let _columnTitleElement: HTMLElement;
-        let _entityListBoxElement: HTMLElement;
+        let _entityTableBoxElement: HTMLElement;
         let _columnHeaderBoxElement: HTMLElement;
         let _columnHeaderElement: HTMLElement;
         let _sideCanvasBoxElement: HTMLElement;
@@ -520,9 +518,9 @@ namespace Services.TimelineChart {
 
             _rootElement = container.getElementsByClassName(CLS_ROOT)[0] as HTMLElement;
             _mainTitleElement = container.getElementsByClassName(CLS_MAIN_TITLE)[0] as HTMLElement;
-            _subTitleElement = container.getElementsByClassName(CLS_SUBTITLE)[0] as HTMLElement;
+            _tableColumnBoxElement = container.getElementsByClassName(CLS_TABLE_COLUMN_BOX)[0] as HTMLElement;
             _columnTitleElement = container.getElementsByClassName(CLS_COLUMN_TITLE)[0] as HTMLElement;
-            _entityListBoxElement = container.getElementsByClassName(CLS_ENTITY_LIST_BOX)[0] as HTMLElement;
+            _entityTableBoxElement = container.getElementsByClassName(CLS_ENTITY_TABLE_BOX)[0] as HTMLElement;
             _columnHeaderBoxElement = container.getElementsByClassName(CLS_COLUMN_HEADER_BOX)[0] as HTMLElement;
             _columnHeaderElement = container.getElementsByClassName(CLS_COLUMN_HEADER)[0] as HTMLElement;
             _sideCanvasBoxElement = container.getElementsByClassName(CLS_SIDE_CANVAS_BOX)[0] as HTMLElement;
@@ -553,7 +551,7 @@ namespace Services.TimelineChart {
                 _sideCanvasBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
             });
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
-                _entityListBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
+                _entityTableBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
             });
             _mainCanvasElement.addEventListener("mousemove", (e) => {
                 if (e.buttons === 1) {
@@ -690,16 +688,6 @@ namespace Services.TimelineChart {
                 div.innerText = _state.headerTimeFormat(time);
                 containerElement.appendChild(div);
             });
-            _state.entityRender = options.entityRender ?? ((entity: Entity, containerElement: HTMLElement) => {
-                const div = document.createElement("div");
-                div.style.height = "100%";
-                div.style.width = "100%";
-                div.style.display = "flex";
-                div.style.justifyContent = "center";
-                div.style.alignItems = "center";
-                div.innerText = entity[_dataOptions.entityNameProp]
-                containerElement.appendChild(div);
-            });
         }
 
         function setData(data: ChartData) {
@@ -737,7 +725,7 @@ namespace Services.TimelineChart {
          */
         function render() {
             _renderMainTitle();
-            _renderSubTitle();
+            _renderTableColumn();
             _renderColumnTitle();
             _renderColumnHeader();
 
@@ -747,7 +735,7 @@ namespace Services.TimelineChart {
             _renderCanvas();
 
             _stopRenderEntityList();
-            _startRenderEntityList();
+            _startRenderEntityTable();
 
             // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
             _mainCanvasBoxElement.scrollTo(_mainCanvasBoxElement.scrollLeft, _mainCanvasBoxElement.scrollTop - 1);
@@ -793,14 +781,11 @@ namespace Services.TimelineChart {
             }
         }
 
-        function _renderSubTitle() {
+        function _renderTableColumn() {
             console.log("_renderSubTitle");
-            _subTitleElement.replaceChildren();
-            if (_state.subTitleRender != null) {
-                _state.subTitleRender(_subTitleElement);
-            } else {
-                _subTitleElement.innerText = _state.subTitle;
-            }
+            _tableColumnBoxElement.replaceChildren();
+            if (_state.tableColumnRender != null)
+                _state.tableColumnRender(_tableColumnBoxElement);
         }
 
         function _renderColumnTitle() {
@@ -964,16 +949,16 @@ namespace Services.TimelineChart {
         /**
          * 현재 리스트에 보여지는 엔티티의 인덱스
          */
-        let _intersectingEntityContainers = new Map<number, EntityContainer>();
+        let _intersectingEntityContainers = new Map<number, EntityRow>();
 
-        function _renderEntity(entityContainer: EntityContainer) {
+        function _renderEntity(entityContainer: EntityRow) {
             const { index, entity, containerEl, lastRenderTime } = entityContainer;
             const shouldRender = lastRenderTime == null || lastRenderTime <= _state.lastZoomTime;
             if (!shouldRender)
                 return;
 
             containerEl.replaceChildren();
-            _state.entityRender(entity, containerEl);
+            _state.tableRowRender(entity, containerEl);
             _renderEntityEvents(entity, index);
 
             if (_state.hasHorizontalLine) {
@@ -1002,26 +987,25 @@ namespace Services.TimelineChart {
             });
         }
         const options: IntersectionObserverInit = {
-            root: _entityListBoxElement,
+            root: _entityTableBoxElement,
             threshold: 0,
         };
-
         const _intersecionObserver = new IntersectionObserver(callback, options);
 
         /**
          * 엔티티 리스트 그리기 과정을 실행한다.
          * 실제 엔티티는 보여지는 영역에 따라 동적으로 그려진다.
          */
-        function _startRenderEntityList() {
-            _entityListBoxElement.replaceChildren();
+        function _startRenderEntityTable() {
+            _entityTableBoxElement.replaceChildren();
 
             const canvasHeight = _mainCanvasElement.scrollHeight;
             const cellHeight = _state.cellHeight;
             const containerCount = Math.floor(canvasHeight / cellHeight);
             for (let i = 0; i < containerCount; i++) {
                 const containerEl = document.createElement("div");
-                containerEl.classList.add(CLS_ENTITY_LIST_ITEM);
-                _entityListBoxElement.appendChild(containerEl);
+                containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
+                _entityTableBoxElement.appendChild(containerEl);
 
                 _entityContainers.set(containerEl, {
                     index: i,

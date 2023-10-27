@@ -519,7 +519,6 @@ namespace Services.TimelineChart.Samples.BaseSample {
         const cellHeight = 30;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
-            subTitle: "Serial No.",
             columnTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T00:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-02T00:00:00")),
@@ -540,7 +539,6 @@ namespace Services.TimelineChart.Samples.BaseSample {
             sidePointEventRender: sidePointEventRender,
             globalRangeEventRender: globalRangeEventRender,
             mainTitleRender: mainTitleRender,
-            subTitleRender: subTitleRender,
             columnTitleRender: columnTitleRender,
         }
 

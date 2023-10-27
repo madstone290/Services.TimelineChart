@@ -848,7 +848,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         const cellHeight = 30;
         _options = {
             mainTitle: "XXX H/L LH Line 03",
-            subTitle: "Serial No.",
+            //subTitle: "Serial No.",
             columnTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T06:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-01T09:00:00")),
@@ -867,7 +867,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             hasHorizontalLine: true,
             hasVerticalLine: true,
             sidePointEventRender: sidePointEventRender,
-            entityRender: null,
+            tableRowRender: null,
             entityPointEventRender: entityPointEventRender,
             entityRangeEventRender: entityRangeEventRender,
             headerCellRender: headerCellRender,
@@ -875,7 +875,6 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             columnAutoWidth: false,
             vZoomEnabled: false,
             mainTitleRender: mainTitleRender,
-            subTitleRender: subTitleRender,
             columnTitleRender: columnTitleRender,
         };
 

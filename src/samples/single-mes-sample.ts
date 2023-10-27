@@ -782,7 +782,7 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
         const cellHeight = 30;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
-            subTitle: "Serial No.",
+            //subTitle: "Serial No.",
             columnTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T00:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-01T18:00:00")),
@@ -801,7 +801,7 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
             hasHorizontalLine: true,
             hasVerticalLine: true,
             sidePointEventRender: sidePointEventRender,
-            entityRender: null,
+            tableRowRender: null,
             entityPointEventRender: entityPointEventRender,
             entityRangeEventRender: entityRangeEventRender,
             headerCellRender: headerCellRender,
