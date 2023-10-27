@@ -547,8 +547,10 @@ namespace Services.TimelineChart {
 
         function _addEventListeners() {
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
+                // 가로스크롤 동기화
                 _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
                 _sideCanvasBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
+                // 세로스크롤 동기화
                 _entityTableBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
             });
             _mainCanvasElement.addEventListener("mousemove", (e) => {
