@@ -594,26 +594,33 @@ namespace Services.TimelineChart {
             });
 
             // fab buttons event. scroll main canvas
+
+
             let fabIntervalId: number;
             const fabTimeout = 100;
+
+            const addFabClearIntervalHandlers = (btn: HTMLElement) => {
+                btn.addEventListener("mouseup", (e) => {
+                    clearInterval(fabIntervalId);
+                });
+                btn.addEventListener("mouseleave", (e) => {
+                    clearInterval(fabIntervalId);
+                });
+            }
+
             _fabUpElement.addEventListener("mousedown", (e) => {
+                clearInterval(fabIntervalId);
                 _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
                 fabIntervalId = setInterval(() => {
                     _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
                 }, fabTimeout);
             });
-            _fabUpElement.addEventListener("mouseup", (e) => {
-                clearInterval(fabIntervalId);
-            });
-
+        
             _fabDownElement.addEventListener("mousedown", (e) => {
                 _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
                 fabIntervalId = setInterval(() => {
                     _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
                 }, fabTimeout);
-            });
-            _fabDownElement.addEventListener("mouseup", (e) => {
-                clearInterval(fabIntervalId);
             });
 
             _fabLeftElement.addEventListener("mousedown", (e) => {
@@ -622,9 +629,6 @@ namespace Services.TimelineChart {
                     _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
                 }, fabTimeout);
             });
-            _fabLeftElement.addEventListener("mouseup", (e) => {
-                clearInterval(fabIntervalId);
-            });
 
             _fabRightElement.addEventListener("mousedown", (e) => {
                 _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
@@ -632,9 +636,11 @@ namespace Services.TimelineChart {
                     _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
                 }, fabTimeout);
             });
-            _fabRightElement.addEventListener("mouseup", (e) => {
-                clearInterval(fabIntervalId);
-            });
+
+            addFabClearIntervalHandlers(_fabUpElement);
+            addFabClearIntervalHandlers(_fabDownElement);
+            addFabClearIntervalHandlers(_fabLeftElement);
+            addFabClearIntervalHandlers(_fabRightElement);
         }
 
         function setOptions(options: ChartOptions) {
