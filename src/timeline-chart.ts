@@ -748,6 +748,9 @@ namespace Services.TimelineChart {
 
             _stopRenderEntityList();
             _startRenderEntityList();
+
+            // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
+            _mainCanvasBoxElement.scrollTo(_mainCanvasBoxElement.scrollLeft, _mainCanvasBoxElement.scrollTop - 1);
         }
 
         /**
