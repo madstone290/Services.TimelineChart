@@ -276,6 +276,19 @@ namespace Services.TimelineChart {
         const CLS_FAB_LEFT = "tc-fab-left";
         const CLS_FAB_RIGHT = "tc-fab-right";
 
+        const VAR_CELL_WIDTH = "--tc-cell-width";
+        const VAR_CELL_HEIGHT = "--tc-cell-height";
+        const VAR_CELL_CONTENT_HEIGHT = "--tc-cell-content-height";
+        const VAR_SCROLL_WIDTH = "--tc-scroll-width";
+
+        const VAR_CHART_HEIGHT = "--tc-height";
+        const VAR_CHART_WIDTH = "--tc-width";
+        const VAR_LEFT_PANEL_WIDTH = "--tc-list-width";
+        const VAR_COLUMN_TITLE_HEIGHT = "--tc-column-title-height";
+        const VAR_COLUMN_HEADER_HEIGHT = "--tc-column-header-height";
+        const VAR_SIDE_CANVAS_HEIGHT = "--tc-side-canvas-height";
+        const VAR_SIDE_CANVAS_CONTENT_HEIGHT = "--tc-side-canvas-content-height";
+
         // #endregion
         /**
         * 타임라인차트 엘리먼트
@@ -418,36 +431,18 @@ namespace Services.TimelineChart {
         }();
 
         const cssService = function () {
-            const VAR_CELL_WIDTH = "--tc-cell-width";
-            const VAR_CELL_HEIGHT = "--tc-cell-height";
-            const VAR_CELL_CONTENT_HEIGHT = "--tc-cell-content-height";
-            const VAR_SCROLL_WIDTH = "--tc-scroll-width";
-
-            const VAR_CHART_HEIGHT = "--tc-height";
-            const VAR_CHART_WIDTH = "--tc-width";
-
-            const VAR_COLUMN_TITLE_HEIGHT = "--tc-column-title-height";
-            const VAR_COLUMN_HEADER_HEIGHT = "--tc-column-header-height";
-            const VAR_SIDE_CANVAS_HEIGHT = "--tc-side-canvas-height";
-            const VAR_SIDE_CANVAS_CONTENT_HEIGHT = "--tc-side-canvas-content-height";
-
-            const VAR_LEFT_PANEL_WIDTH = "--tc-list-width";
             function getVariable(name: string) {
                 return getComputedStyle(_rootElement).getPropertyValue(name);
             }
-
             function setVariable(name: string, value: string) {
                 _rootElement.style.setProperty(name, value);
             }
-
             function setChartWidth(width: number) {
                 setVariable(VAR_CHART_WIDTH, `${width}px`);
             }
-
             function setLeftPanelWidth(width: number) {
                 setVariable(VAR_LEFT_PANEL_WIDTH, `${width}px`);
             }
-
             function getChartHeight() { return parseInt(getVariable(VAR_CHART_HEIGHT)); }
             function setChartHeight(height: number) { setVariable(VAR_CHART_HEIGHT, `${height}px`); }
 
@@ -511,7 +506,7 @@ namespace Services.TimelineChart {
          * 차트 엘리먼트를 생성한다.
          * @param container 
          */
-        function create(container: HTMLElement, data: ChartData, options: ChartOptions, dataOptions?: ChartDataOptions) {
+        function create(container: HTMLElement) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(TC_ELEMENT_HTML, 'text/html');
             const element = doc.body.firstChild;
@@ -536,15 +531,61 @@ namespace Services.TimelineChart {
             _addEventListeners();
 
             // 컨테이너 크기에 맞춰 차트 크기를 조정한다.
-            _state.chartWidth = container.clientWidth;
-            _state.chartHeight = container.clientHeight;
-
-            setData(data);
-            setOptions(options);
-            setDataOptions(dataOptions);
-
-            _initLayout();
+            _setChartSize(container.clientWidth, container.clientHeight);
         }
+
+        function _setChartSize(width: number, height: number) {
+            _state.chartWidth = width;
+            _state.chartHeight = height;
+            cssService.setChartWidth(width);
+            cssService.setChartHeight(height);
+        }
+
+        function _setLeftPanelWidth(width: number) {
+            _state.leftPanelWidth = width;
+            cssService.setLeftPanelWidth(width);
+        }
+
+        function _setColumnTitleHeight(height: number) {
+            _state.columnTitleHeight = height;
+            cssService.setColumnTitleHeight(height);
+        }
+
+        function _setColumnHeaderHeight(height: number) {
+            _state.columnHeaderHeight = height;
+            cssService.setColumnHeaderHeight(height);
+        }
+
+        function _setSideCanvasHeight(height: number) {
+            _state.sideCanvasHeight = height;
+            cssService.setSideCanvasHeight(height);
+        }
+
+        function _setSideCanvasContentHeight(height: number) {
+            _state.sideCanvasContentHeight = height;
+            cssService.setSideCanvasContentHeight(height);
+        }
+
+        function _setCellWidth(width: number) {
+            _state.cellWidth = width;
+            cssService.setCellWidth(width);
+        }
+
+        function _setCellHeight(height: number) {
+            _state.cellHeight = height;
+            cssService.setCellHeight(height);
+        }
+
+        function _setCellContentHeight(height: number) {
+            _state.cellContentHeight = height;
+            cssService.setCellContentHeight(height);
+        }
+
+        function _setScrollWidth(width: number) {
+            _state.scrollWidth = width;
+            cssService.setScrollWidth(width);
+        }
+
 
         function _addEventListeners() {
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
@@ -650,6 +691,17 @@ namespace Services.TimelineChart {
                 .forEach(([key, value]) => {
                     (_state as any)[key] = value;
                 });
+
+            _setLeftPanelWidth(options.leftPanelWidth ?? _state.leftPanelWidth);
+            _setColumnTitleHeight(options.columnTitleHeight ?? _state.columnTitleHeight);
+            _setColumnHeaderHeight(options.columnHeaderHeight ?? _state.columnHeaderHeight);
+            _setSideCanvasHeight(options.sideCanvasHeight ?? _state.sideCanvasHeight);
+            _setSideCanvasContentHeight(_state.cellHeight * (options.sideCanvasContentHeightRatio ?? _state.sideCanvasContentHeightRatio));
+            _setCellWidth(options.cellWidth ?? _state.cellWidth);
+            _setCellHeight(options.cellHeight ?? _state.cellHeight);
+            _setCellContentHeight(_state.cellHeight * (options.cellContentHeightRatio ?? _state.cellContentHeightRatio));
+            _setScrollWidth(_state.scrollWidth);
+
             _state.minCellWidth = _state.cellWidth * _state.minZoomScale;
             _state.maxCellWidth = _state.cellWidth * _state.maxZoomScale;
             _state.minCellHeight = _state.cellHeight * _state.minZoomScale;
@@ -680,7 +732,7 @@ namespace Services.TimelineChart {
                     _state.maxCellWidth = cellWidth * _state.maxZoomScale;
                     cssService.setCellWidth(cellWidth);
 
-                    
+
                     _resetCanvasSize();
                     _renderCanvas();
                     _renderIntersectingEntitiList();
@@ -762,22 +814,6 @@ namespace Services.TimelineChart {
 
             _renderMainCanvas();
             _renderGlobalRangeEvents();
-        }
-
-        function _initLayout() {
-            cssService.setChartWidth(_state.chartWidth);
-            cssService.setChartHeight(_state.chartHeight);
-            cssService.setLeftPanelWidth(_state.leftPanelWidth);
-            cssService.setColumnTitleHeight(_state.columnTitleHeight);
-            cssService.setColumnHeaderHeight(_state.columnHeaderHeight);
-            cssService.setSideCanvasHeight(_state.sideCanvasHeight);
-
-            cssService.setCellWidth(_state.cellWidth);
-            cssService.setCellHeight(_state.cellHeight);
-            cssService.setSideCanvasContentHeight(_state.sideCanvasContentHeight);
-            cssService.setCellContentHeight(_state.cellContentHeight);
-
-            cssService.setScrollWidth(_state.scrollWidth);
         }
 
         function _renderMainTitle() {
@@ -1251,6 +1287,7 @@ namespace Services.TimelineChart {
             render,
             setOptions,
             setData,
+            setDataOptions
         }
     };
 }

@@ -913,7 +913,10 @@ namespace Services.TimelineChart.Samples.StyledSample {
         };
 
         const chart = Services.TimelineChart.TimelineChart();
-        chart.create(container, data, options, dataOptions);
+        chart.create(container);
+        chart.setData(data);
+        chart.setOptions(options);
+        chart.setDataOptions(dataOptions);
         chart.render();
     }
 }

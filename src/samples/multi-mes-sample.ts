@@ -706,7 +706,10 @@ namespace Services.TimelineChart.Samples.MultiMesSample {
         tcContainerIds.forEach((id) => {
             const container = document.getElementById(id);
             const chart = Services.TimelineChart.TimelineChart();
-            chart.create(container, data, options, dataOptions);
+            chart.create(container);
+            chart.setData(data);
+            chart.setOptions(options);
+            chart.setDataOptions(dataOptions);
             chart.render();
         });
     }

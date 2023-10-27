@@ -483,7 +483,7 @@ namespace Services.TimelineChart.Samples.BaseSample {
     const mainTitleRender = function (containerElement: HTMLElement) {
         const boxElement = document.createElement("div");
         containerElement.appendChild(boxElement);
-        
+
         boxElement.style.backgroundColor = "red";
         boxElement.innerText = "==== Main Title ====";
     }
@@ -507,9 +507,9 @@ namespace Services.TimelineChart.Samples.BaseSample {
 
 
     export function load() {
-        const rootContainer = document.getElementById("root-container");
+        const container = document.getElementById("root-container");
         const data: Services.TimelineChart.ChartData = {
-            entities: Services.TimelineChart.Samples.BaseSample.eventOwners.filter(x=> x.id <= 10),
+            entities: Services.TimelineChart.Samples.BaseSample.eventOwners.filter(x => x.id <= 10),
             sidePointEvents: sidePointEvents,
             globalRangeEvents: globalRangeEvents as any,
         };
@@ -555,7 +555,10 @@ namespace Services.TimelineChart.Samples.BaseSample {
         };
 
         const chart = Services.TimelineChart.TimelineChart();
-        chart.create(rootContainer, data, options, dataOptions);
+        chart.create(container);
+        chart.setData(data);
+        chart.setOptions(options);
+        chart.setDataOptions(dataOptions);
         chart.render();
     }
 }
