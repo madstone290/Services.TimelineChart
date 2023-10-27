@@ -938,7 +938,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         ];
         console.log(_data);
         _chart.setData(_data);
-        _chart.refresh();
+        _chart.render();
 
         entityNumber++;
     }

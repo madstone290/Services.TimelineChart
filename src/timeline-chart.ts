@@ -97,7 +97,7 @@ namespace Services.TimelineChart {
         mainTitleRender?: (containerEl: HTMLElement) => void;
         subTitleRender?: (containerEl: HTMLElement) => void;
         columnTitleRender?: (containerEl: HTMLElement) => void;
-        
+
         /**
         * fab 버튼 클릭시 작동할 스크롤 길이
         */
@@ -375,8 +375,13 @@ namespace Services.TimelineChart {
             subTitleRender: null,
             columnTitleRender: null,
             strictTimeRange: false,
-            fabScrollStep: 100
+            fabScrollStep: 200
         }
+
+        /**
+         * 메인캔버스 사이즈 변경 관찰자. fab버튼 및 컬럼헤더 크기 조정에 사용한다.
+         */
+        let _mainCanvasBoxResizeObserver: ResizeObserver;
 
         /**
          * 엔티티 컨테이너 목록. 엔티티 렌더링에 사용한다.
@@ -595,7 +600,7 @@ namespace Services.TimelineChart {
             const fabTimeout = 100;
             _fabUpElement.addEventListener("mousedown", (e) => {
                 _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
-                fabIntervalId = setInterval(()=>{
+                fabIntervalId = setInterval(() => {
                     _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
                 }, fabTimeout);
             });
@@ -605,7 +610,7 @@ namespace Services.TimelineChart {
 
             _fabDownElement.addEventListener("mousedown", (e) => {
                 _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
-                fabIntervalId = setInterval(()=>{
+                fabIntervalId = setInterval(() => {
                     _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
                 }, fabTimeout);
             });
@@ -614,8 +619,8 @@ namespace Services.TimelineChart {
             });
 
             _fabLeftElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
-                fabIntervalId = setInterval(()=>{
+                _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
+                fabIntervalId = setInterval(() => {
                     _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
                 }, fabTimeout);
             });
@@ -624,8 +629,8 @@ namespace Services.TimelineChart {
             });
 
             _fabRightElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
-                fabIntervalId = setInterval(()=>{
+                _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
+                fabIntervalId = setInterval(() => {
                     _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
                 }, fabTimeout);
             });
@@ -655,26 +660,29 @@ namespace Services.TimelineChart {
             _state.zoomStepX = options.zoomStepX ?? _state.cellWidth / 5;
             _state.zoomStepY = options.zoomStepY ?? _state.cellHeight / 5;
 
-            if (_state.columnAutoWidth) {
-                function outputsize() {
+
+            function mainCanvasBoxresizeCallback() {
+                // relocate fab buttons
+                const mainCanvasBoxRect = _mainCanvasBoxElement.getBoundingClientRect();
+                cssService.setVariable("--tc-main-canvas-top", `${mainCanvasBoxRect.top}px`);
+                cssService.setVariable("--tc-main-canvas-bottom", `${mainCanvasBoxRect.bottom}px`);
+                cssService.setVariable("--tc-main-canvas-left", `${mainCanvasBoxRect.left}px`);
+                cssService.setVariable("--tc-main-canvas-right", `${mainCanvasBoxRect.right}px`);
+
+                if (_state.columnAutoWidth) {
                     const canvasWidth = _mainCanvasBoxElement.clientWidth;
                     const cellWidth = canvasWidth / _state.headerCellCount;
                     _state.cellWidth = cellWidth;
                     _state.minCellWidth = cellWidth;
                     _state.maxCellWidth = options.maxCellWidth ?? cellWidth * _state.maxZoomScale;
                     cssService.setCellWidth(cellWidth);
-
                     _renderCanvas();
-
-                    // relocate fab buttons
-                    const mainCanvasBoxRect = _mainCanvasBoxElement.getBoundingClientRect();
-                    cssService.setVariable("--tc-main-canvas-top", `${mainCanvasBoxRect.top}px`);
-                    cssService.setVariable("--tc-main-canvas-bottom", `${mainCanvasBoxRect.bottom}px`);
-                    cssService.setVariable("--tc-main-canvas-left", `${mainCanvasBoxRect.left}px`);
-                    cssService.setVariable("--tc-main-canvas-right", `${mainCanvasBoxRect.right}px`);
                 }
-                new ResizeObserver(outputsize).observe(_mainCanvasBoxElement)
             }
+
+            _mainCanvasBoxResizeObserver?.disconnect();
+            _mainCanvasBoxResizeObserver = new ResizeObserver(mainCanvasBoxresizeCallback);
+            _mainCanvasBoxResizeObserver.observe(_mainCanvasBoxElement);
 
             _state.headerTimeFormat = options.headerTimeFormat ?? ((time: Date) => { return time.toLocaleString(); });
             _state.headerCellRender = options.headerCellRender ?? ((time: Date, containerElement: HTMLElement) => {
@@ -728,13 +736,17 @@ namespace Services.TimelineChart {
          * 차트를 그린다.
          */
         function render() {
-
             _renderMainTitle();
             _renderSubTitle();
             _renderColumnTitle();
             _renderColumnHeader();
 
+            // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
+            _resetCanvasSize();
+
             _renderCanvas();
+
+            _stopRenderEntityList();
             _startRenderEntityList();
         }
 
@@ -744,7 +756,6 @@ namespace Services.TimelineChart {
         function _renderCanvas() {
             // 일부 렌더링에는 마지막 줌 시간이 필요하므로 미리 저장해둔다.
             _state.lastZoomTime = new Date();
-            _resetCanvasSize();
 
             _renderSideCanvas();
             _renderSidePointEvents();
@@ -770,6 +781,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderMainTitle() {
+            console.log("_renderMainTitle");
             _mainTitleElement.replaceChildren();
             if (_state.mainTitleRender != null) {
                 _state.mainTitleRender(_mainTitleElement);
@@ -779,6 +791,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderSubTitle() {
+            console.log("_renderSubTitle");
             _subTitleElement.replaceChildren();
             if (_state.subTitleRender != null) {
                 _state.subTitleRender(_subTitleElement);
@@ -788,6 +801,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderColumnTitle() {
+            console.log("_renderColumnTitle");
             _columnTitleElement.replaceChildren();
             if (_state.columnTitleRender != null) {
                 _state.columnTitleRender(_columnTitleElement);
@@ -797,6 +811,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderColumnHeader() {
+            console.log("_renderColumnHeader");
             _columnHeaderElement.replaceChildren();
 
             let startTime = _state.chartRenderStartTime;
@@ -920,6 +935,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderMainCanvas() {
+            console.log("_renderMainCanvas");
             _mainCanvasElement.replaceChildren();
             if (_state.hasVerticalLine)
                 _renderMainCanvasVLine();
@@ -1217,6 +1233,7 @@ namespace Services.TimelineChart {
 
             // 차트 렌더링을 새로 진행한다.
             // 엔티티리스트는 동적으로 렌더링이 진행되므로 새로 그리지 않는다.
+            _resetCanvasSize();
             _renderCanvas();
 
             // 현재 보여지는 엔티티 리스트만 다시 그린다.
@@ -1233,27 +1250,11 @@ namespace Services.TimelineChart {
             }
         }
 
-        function refresh() {
-            _initLayout();
-            _renderMainTitle();
-            _renderSubTitle();
-            _renderColumnTitle();
-            _renderColumnHeader();
-
-            _renderCanvas();
-
-            _stopRenderEntityList();
-            _startRenderEntityList();
-            // _renderIntersectingEntitiList();
-            // _mainCanvasBoxElement.scrollTop = 0;
-        }
-
         return {
             create,
             render,
             setOptions,
             setData,
-            refresh: refresh
         }
     };
 }
