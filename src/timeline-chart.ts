@@ -529,8 +529,6 @@ namespace Services.TimelineChart {
             _fabLeftElement = container.getElementsByClassName(CLS_FAB_LEFT)[0] as HTMLElement;
             _fabRightElement = container.getElementsByClassName(CLS_FAB_RIGHT)[0] as HTMLElement;
 
-
-
             _addEventListeners();
 
             // 컨테이너 크기에 맞춰 차트 크기를 조정한다.
@@ -540,6 +538,8 @@ namespace Services.TimelineChart {
             setData(data);
             setOptions(options);
             setDataOptions(dataOptions);
+
+            _initLayout();
         }
 
         function _addEventListeners() {
@@ -632,11 +632,7 @@ namespace Services.TimelineChart {
             _fabRightElement.addEventListener("mouseup", (e) => {
                 clearInterval(fabIntervalId);
             });
-
-
         }
-
-
 
         function setOptions(options: ChartOptions) {
             Object.entries(options)
@@ -732,7 +728,7 @@ namespace Services.TimelineChart {
          * 차트를 그린다.
          */
         function render() {
-            _initLayout();
+
             _renderMainTitle();
             _renderSubTitle();
             _renderColumnTitle();
