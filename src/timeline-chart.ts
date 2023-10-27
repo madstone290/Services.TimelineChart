@@ -257,11 +257,11 @@ namespace Services.TimelineChart {
         const CLS_TABLE_COLUMN_BOX = "tc-table-column-box";
         const CLS_ENTITY_TABLE_BOX = "tc-entity-table-box";
         const CLS_ENTITY_TABLE_ITEM = "tc-entity-table-item";
-        
+
         const CLS_MAIN_CANVAS_BOX = "tc-main-canvas-box";
         const CLS_MAIN_CANVAS = "tc-main-canvas";
 
-        
+
 
         const CLS_SIDE_CANVASE_V_BORDER = "tc-side-canvas-v-border";
         const CLS_SIDE_CANVAS_POINT_EVENT = "tc-side-canvas-point-event";
@@ -549,8 +549,6 @@ namespace Services.TimelineChart {
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
                 _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
                 _sideCanvasBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
-            });
-            _mainCanvasBoxElement.addEventListener("scroll", (e) => {
                 _entityTableBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
             });
             _mainCanvasElement.addEventListener("mousemove", (e) => {
