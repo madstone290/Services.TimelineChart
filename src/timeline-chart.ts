@@ -663,7 +663,6 @@ namespace Services.TimelineChart {
             _state.zoomStepX = options.zoomStepX ?? _state.cellWidth / 5;
             _state.zoomStepY = options.zoomStepY ?? _state.cellHeight / 5;
 
-
             function mainCanvasBoxresizeCallback() {
                 // relocate fab buttons
                 const mainCanvasBoxRect = _mainCanvasBoxElement.getBoundingClientRect();
@@ -673,13 +672,18 @@ namespace Services.TimelineChart {
                 cssService.setVariable("--tc-main-canvas-right", `${mainCanvasBoxRect.right}px`);
 
                 if (_state.columnAutoWidth) {
+                    // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
                     const canvasWidth = _mainCanvasBoxElement.clientWidth;
                     const cellWidth = canvasWidth / _state.headerCellCount;
                     _state.cellWidth = cellWidth;
-                    _state.minCellWidth = cellWidth * _state.minZoomScale;
+                    _state.minCellWidth = cellWidth;
                     _state.maxCellWidth = cellWidth * _state.maxZoomScale;
                     cssService.setCellWidth(cellWidth);
+
+                    
+                    _resetCanvasSize();
                     _renderCanvas();
+                    _renderIntersectingEntitiList();
                 }
             }
 

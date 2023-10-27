@@ -893,7 +893,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             entityRangeEventRender: entityRangeEventRender,
             headerCellRender: headerCellRender,
             globalRangeEventRender: globalRangeEventRender,
-            columnAutoWidth: false,
+            columnAutoWidth: true,
             vZoomEnabled: false,
             mainTitleRender: mainTitleRender,
             tableColumnRender: tableColumnRender,
