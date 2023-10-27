@@ -63,11 +63,8 @@ namespace Services.TimelineChart {
         cellMinutes?: number;
         cellWidth?: number;
         cellHeight?: number;
-        minCellWidth?: number;
-        minCellHeight?: number;
-        maxCellWidth?: number;
-        maxCellHeight?: number;
         cellContentHeightRatio?: number;
+        minZoomScale?: number;
         maxZoomScale?: number;
         hasHorizontalLine?: boolean;
         hasVerticalLine?: boolean;
@@ -122,12 +119,14 @@ namespace Services.TimelineChart {
         minCellHeight: number;
         maxCellWidth: number;
         maxCellHeight: number;
+        currentZoomScale: number;
+        minZoomScale: number;
+        maxZoomScale: number;
         chartHeight: number;
         chartWidth: number;
         cellContentHeightRatio: number;
         cellContentHeight: number;
         headerCellCount: number;
-        maxZoomScale: number;
         hasHorizontalLine: boolean;
         hasVerticalLine: boolean;
         columnAutoWidth: boolean;
@@ -344,6 +343,8 @@ namespace Services.TimelineChart {
             chartHeight: 0,
             chartWidth: 0,
             cellContentHeightRatio: 0.8,
+            currentZoomScale: 1,
+            minZoomScale: 0.5,
             maxZoomScale: 3,
             headerTimeFormat: null,
             headerCellRender: null,
@@ -615,7 +616,7 @@ namespace Services.TimelineChart {
                     _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
                 }, fabTimeout);
             });
-        
+
             _fabDownElement.addEventListener("mousedown", (e) => {
                 _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
                 fabIntervalId = setInterval(() => {
@@ -649,12 +650,10 @@ namespace Services.TimelineChart {
                 .forEach(([key, value]) => {
                     (_state as any)[key] = value;
                 });
-            _state.maxZoomScale = options.maxZoomScale ?? _state.maxZoomScale;
-
-            _state.minCellWidth = options.minCellWidth ?? _state.cellWidth;
-            _state.maxCellWidth = options.maxCellWidth ?? _state.cellWidth * _state.maxZoomScale;
-            _state.minCellHeight = options.minCellHeight ?? _state.cellHeight;
-            _state.maxCellHeight = options.maxCellHeight ?? _state.cellHeight * _state.maxZoomScale;
+            _state.minCellWidth = _state.cellWidth * _state.minZoomScale;
+            _state.maxCellWidth = _state.cellWidth * _state.maxZoomScale;
+            _state.minCellHeight = _state.cellHeight * _state.minZoomScale;
+            _state.maxCellHeight = _state.cellHeight * _state.maxZoomScale;
 
             _state.sideCanvasContentHeight = _state.sideCanvasContentHeightRatio * _state.sideCanvasHeight;
             _state.cellContentHeight = _state.cellContentHeightRatio * _state.cellHeight;
@@ -677,8 +676,8 @@ namespace Services.TimelineChart {
                     const canvasWidth = _mainCanvasBoxElement.clientWidth;
                     const cellWidth = canvasWidth / _state.headerCellCount;
                     _state.cellWidth = cellWidth;
-                    _state.minCellWidth = cellWidth;
-                    _state.maxCellWidth = options.maxCellWidth ?? cellWidth * _state.maxZoomScale;
+                    _state.minCellWidth = cellWidth * _state.minZoomScale;
+                    _state.maxCellWidth = cellWidth * _state.maxZoomScale;
                     cssService.setCellWidth(cellWidth);
                     _renderCanvas();
                 }

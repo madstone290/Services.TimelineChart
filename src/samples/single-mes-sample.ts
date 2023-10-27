@@ -795,8 +795,6 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
             cellHeight: cellHeight,
             paddingCellCount: 1,
             cellContentHeightRatio: 0.5,
-            minCellWidth: 1,
-            maxCellWidth: 300,
             maxZoomScale: 10,
             hasHorizontalLine: true,
             hasVerticalLine: true,
