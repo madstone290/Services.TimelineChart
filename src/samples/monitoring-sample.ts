@@ -972,7 +972,24 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
 
 window.addEventListener("load", () => {
     Services.TimelineChart.Samples.MonitoringSample.load();
+
+    let controlling = false;
     setInterval(() => {
+        if (controlling)
+            return;
         Services.TimelineChart.Samples.MonitoringSample.renderChart();
     }, 2000);
+
+
+    const setControlling = function () {
+        controlling = true;
+        setTimeout(() => {
+            controlling = false;
+        }, 2000);
+    };
+
+    window.addEventListener("click", setControlling);
+    window.addEventListener("wheel", setControlling);
+    window.addEventListener("keydown", setControlling);
+    window.addEventListener("mousemove", setControlling);
 });
