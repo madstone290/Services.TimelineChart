@@ -97,6 +97,11 @@ namespace Services.TimelineChart {
         mainTitleRender?: (containerEl: HTMLElement) => void;
         subTitleRender?: (containerEl: HTMLElement) => void;
         columnTitleRender?: (containerEl: HTMLElement) => void;
+        
+        /**
+        * fab 버튼 클릭시 작동할 스크롤 길이
+        */
+        fabScrollLength?: number;
     }
 
     interface ChartState {
@@ -196,6 +201,11 @@ namespace Services.TimelineChart {
          * 시간범위를 엄격하게 적용할지 여부. true인 경우 시간범위를 벗어나는 이벤트는 렌더링하지 않는다.
          */
         strictTimeRange: boolean;
+
+        /**
+         * fab 버튼 클릭시 작동할 스크롤 길이
+         */
+        fabScrollStep: number;
     }
 
     /**
@@ -263,6 +273,10 @@ namespace Services.TimelineChart {
         const CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT = "tc-main-canvas-entity-range-event";
         const CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT = "tc-main-canvas-global-range-event";
 
+        const CLS_FAB_UP = "tc-fab-up";
+        const CLS_FAB_DOWN = "tc-fab-down";
+        const CLS_FAB_LEFT = "tc-fab-left";
+        const CLS_FAB_RIGHT = "tc-fab-right";
 
         // #endregion
         /**
@@ -287,8 +301,11 @@ namespace Services.TimelineChart {
         
                         </div>
                         <div class="${CLS_MAIN_CANVAS_BOX}">
-                            <div class="${CLS_MAIN_CANVAS}">
-                            </div>
+                            <div class="${CLS_MAIN_CANVAS}"></div>
+                            <button class="${CLS_FAB_UP}">↑</button>
+                            <button class="${CLS_FAB_DOWN}">↓</button>
+                            <button class="${CLS_FAB_LEFT}">←</button>
+                            <button class="${CLS_FAB_RIGHT}">→</button>
                         </div>
                     </div>
                 </div>
@@ -357,7 +374,8 @@ namespace Services.TimelineChart {
             mainTitleRender: null,
             subTitleRender: null,
             columnTitleRender: null,
-            strictTimeRange: false
+            strictTimeRange: false,
+            fabScrollStep: 100
         }
 
         /**
@@ -370,18 +388,17 @@ namespace Services.TimelineChart {
         let _mainTitleElement: HTMLElement;
         let _subTitleElement: HTMLElement;
         let _columnTitleElement: HTMLElement;
-
         let _entityListBoxElement: HTMLElement;
-
         let _columnHeaderBoxElement: HTMLElement;
         let _columnHeaderElement: HTMLElement;
-
         let _sideCanvasBoxElement: HTMLElement;
         let _sideCanvasElement: HTMLElement;
-
         let _mainCanvasBoxElement: HTMLElement;
         let _mainCanvasElement: HTMLElement;
-
+        let _fabUpElement: HTMLElement;
+        let _fabDownElement: HTMLElement;
+        let _fabLeftElement: HTMLElement;
+        let _fabRightElement: HTMLElement;
 
         const dateTimeService = function () {
             function toMinutes(time: number) {
@@ -507,6 +524,12 @@ namespace Services.TimelineChart {
             _sideCanvasElement = container.getElementsByClassName(CLS_SIDE_CANVAS)[0] as HTMLElement;
             _mainCanvasBoxElement = container.getElementsByClassName(CLS_MAIN_CANVAS_BOX)[0] as HTMLElement;
             _mainCanvasElement = container.getElementsByClassName(CLS_MAIN_CANVAS)[0] as HTMLElement;
+            _fabUpElement = container.getElementsByClassName(CLS_FAB_UP)[0] as HTMLElement;
+            _fabDownElement = container.getElementsByClassName(CLS_FAB_DOWN)[0] as HTMLElement;
+            _fabLeftElement = container.getElementsByClassName(CLS_FAB_LEFT)[0] as HTMLElement;
+            _fabRightElement = container.getElementsByClassName(CLS_FAB_RIGHT)[0] as HTMLElement;
+
+
 
             _addEventListeners();
 
@@ -566,6 +589,51 @@ namespace Services.TimelineChart {
             document.body.addEventListener("keyup", (e) => {
                 document.body.style.cursor = "default";
             });
+
+            // fab buttons event. scroll main canvas
+            let fabIntervalId: number;
+            const fabTimeout = 100;
+            _fabUpElement.addEventListener("mousedown", (e) => {
+                _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
+                fabIntervalId = setInterval(()=>{
+                    _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
+                }, fabTimeout);
+            });
+            _fabUpElement.addEventListener("mouseup", (e) => {
+                clearInterval(fabIntervalId);
+            });
+
+            _fabDownElement.addEventListener("mousedown", (e) => {
+                _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
+                fabIntervalId = setInterval(()=>{
+                    _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
+                }, fabTimeout);
+            });
+            _fabDownElement.addEventListener("mouseup", (e) => {
+                clearInterval(fabIntervalId);
+            });
+
+            _fabLeftElement.addEventListener("mousedown", (e) => {
+                _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
+                fabIntervalId = setInterval(()=>{
+                    _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
+                }, fabTimeout);
+            });
+            _fabLeftElement.addEventListener("mouseup", (e) => {
+                clearInterval(fabIntervalId);
+            });
+
+            _fabRightElement.addEventListener("mousedown", (e) => {
+                _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
+                fabIntervalId = setInterval(()=>{
+                    _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
+                }, fabTimeout);
+            });
+            _fabRightElement.addEventListener("mouseup", (e) => {
+                clearInterval(fabIntervalId);
+            });
+
+
         }
 
 
@@ -601,6 +669,13 @@ namespace Services.TimelineChart {
                     cssService.setCellWidth(cellWidth);
 
                     _renderCanvas();
+
+                    // relocate fab buttons
+                    const mainCanvasBoxRect = _mainCanvasBoxElement.getBoundingClientRect();
+                    cssService.setVariable("--tc-main-canvas-top", `${mainCanvasBoxRect.top}px`);
+                    cssService.setVariable("--tc-main-canvas-bottom", `${mainCanvasBoxRect.bottom}px`);
+                    cssService.setVariable("--tc-main-canvas-left", `${mainCanvasBoxRect.left}px`);
+                    cssService.setVariable("--tc-main-canvas-right", `${mainCanvasBoxRect.right}px`);
                 }
                 new ResizeObserver(outputsize).observe(_mainCanvasBoxElement)
             }

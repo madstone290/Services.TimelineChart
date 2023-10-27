@@ -14,6 +14,12 @@
     --tc-cell-content-height: 30px;
 
     --tc-line-color: #999999;
+
+
+    --tc-main-canvas-top: 0px;
+    --tc-main-canvas-bottom: 0px;
+    --tc-main-canvas-left: 0px;
+    --tc-main-canvas-right: 0px;
 }
 
 .tc-root {
@@ -220,4 +226,67 @@ img {
     border-width: 0px 1px 0px 0px;
     border-style: solid;
     border-color: var(--tc-line-color);
+}
+
+.tc-fab-up {
+    position: fixed;
+    top: calc(var(--tc-main-canvas-top) + 2px);
+    left: calc(var(--tc-main-canvas-right) - var(--tc-scroll-height) - 32px);
+    width: 30px;
+    height: 30px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+
+.tc-fab-down {
+    position: fixed;
+    top: calc(var(--tc-main-canvas-bottom) - var(--tc-scroll-width) - 62px);
+    left: calc(var(--tc-main-canvas-right) - var(--tc-scroll-height) - 32px);
+    width: 30px;
+    height: 30px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+
+.tc-fab-left {
+    position: fixed;
+    top: calc(var(--tc-main-canvas-bottom) - var(--tc-scroll-width) - 32px);
+    left: calc(var(--tc-main-canvas-left) + 2px);
+    width: 30px;
+    height: 30px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+
+.tc-fab-right {
+    position: absolute;
+    top: calc(var(--tc-main-canvas-bottom) - var(--tc-scroll-width) - 32px);
+    left: calc(var(--tc-main-canvas-right) - var(--tc-scroll-height) - 62px);
+    width: 30px;
+    height: 30px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
