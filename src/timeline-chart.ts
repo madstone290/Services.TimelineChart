@@ -841,7 +841,7 @@ namespace Services.TimelineChart {
 
             let cellIndex = 0;
             let currentTime = startTime;
-            while (cellIndex < headerCellCount) {
+            while (cellIndex <= headerCellCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
                 containerElement.style.left = `${cellIndex * _state.cellWidth}px`;
