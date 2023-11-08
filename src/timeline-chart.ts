@@ -277,7 +277,6 @@ namespace Services.TimelineChart {
         const CLS_FAB_LEFT = "tc-fab-left";
         const CLS_FAB_RIGHT = "tc-fab-right";
 
-        const VAR_CELL_WIDTH = "--tc-cell-width";
         const VAR_CELL_HEIGHT = "--tc-cell-height";
         const VAR_CELL_CONTENT_HEIGHT = "--tc-cell-content-height";
         const VAR_SCROLL_WIDTH = "--tc-scroll-width";
@@ -463,9 +462,6 @@ namespace Services.TimelineChart {
 
             function getColumnPanelHeight() { return getColumnTitleHeight() + getColumnHeaderHeight() + getSideCanvasHeight(); }
 
-            function getCellWidth() { return parseInt(getVariable(VAR_CELL_WIDTH)); }
-            function setCellWidth(width: number) { setVariable(VAR_CELL_WIDTH, `${width}px`); }
-
             function getCellHeight() { return parseInt(getVariable(VAR_CELL_HEIGHT)); }
             function setCellHeight(height: number) { setVariable(VAR_CELL_HEIGHT, `${height}px`); }
 
@@ -494,8 +490,6 @@ namespace Services.TimelineChart {
                 setSideCanvasContentHeight,
                 getColumnPanelHeight,
 
-                getCellWidth,
-                setCellWidth,
                 getCellHeight,
                 setCellHeight,
                 getCellContentHeight,
@@ -571,7 +565,6 @@ namespace Services.TimelineChart {
 
         function _setCellWidth(width: number) {
             _state.cellWidth = width;
-            cssService.setCellWidth(width);
         }
 
         function _setCellHeight(height: number) {
@@ -721,21 +714,16 @@ namespace Services.TimelineChart {
             function mainCanvasBoxresizeCallback() {
                 // relocate fab buttons
                 const mainCanvasBoxRect = _mainCanvasBoxElement.getBoundingClientRect();
-                cssService.setVariable("--tc-main-canvas-top", `${mainCanvasBoxRect.top}px`);
-                cssService.setVariable("--tc-main-canvas-bottom", `${mainCanvasBoxRect.bottom}px`);
-                cssService.setVariable("--tc-main-canvas-left", `${mainCanvasBoxRect.left}px`);
-                cssService.setVariable("--tc-main-canvas-right", `${mainCanvasBoxRect.right}px`);
 
                 if (_state.columnAutoWidth) {
                     // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
                     const canvasWidth = _mainCanvasBoxElement.clientWidth;
                     const cellWidth = canvasWidth / _state.headerCellCount;
-                    _state.cellWidth = cellWidth;
+                    _setCellWidth(cellWidth);
                     _state.minCellWidth = cellWidth;
                     _state.maxCellWidth = cellWidth * _state.maxZoomScale;
-                    cssService.setCellWidth(cellWidth);
 
-
+                    _renderColumnHeader();
                     _resetCanvasSize();
                     _renderCanvas();
                     _renderIntersectingEntitiList();
@@ -820,7 +808,6 @@ namespace Services.TimelineChart {
         }
 
         function _renderMainTitle() {
-            console.log("_renderMainTitle");
             _mainTitleElement.replaceChildren();
             if (_state.mainTitleRender != null) {
                 _state.mainTitleRender(_mainTitleElement);
@@ -830,14 +817,12 @@ namespace Services.TimelineChart {
         }
 
         function _renderTableColumn() {
-            console.log("_renderSubTitle");
             _tableColumnBoxElement.replaceChildren();
             if (_state.tableColumnRender != null)
                 _state.tableColumnRender(_tableColumnBoxElement);
         }
 
         function _renderColumnTitle() {
-            console.log("_renderColumnTitle");
             _columnTitleElement.replaceChildren();
             if (_state.columnTitleRender != null) {
                 _state.columnTitleRender(_columnTitleElement);
@@ -847,7 +832,6 @@ namespace Services.TimelineChart {
         }
 
         function _renderColumnHeader() {
-            console.log("_renderColumnHeader");
             _columnHeaderElement.replaceChildren();
 
             let startTime = _state.chartRenderStartTime;
@@ -860,6 +844,9 @@ namespace Services.TimelineChart {
             while (cellIndex < headerCellCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
+                containerElement.style.left = `${cellIndex * _state.cellWidth}px`;
+                containerElement.style.width = `${_state.cellWidth}px`;
+                containerElement.style.position = "absolute";
                 _state.headerCellRender(currentTime, containerElement);
                 _columnHeaderElement.appendChild(containerElement);
                 currentTime = new Date(currentTime.getTime() + dateTimeService.toTime(_state.cellMinutes));
@@ -971,7 +958,6 @@ namespace Services.TimelineChart {
         }
 
         function _renderMainCanvas() {
-            console.log("_renderMainCanvas");
             _mainCanvasElement.replaceChildren();
             if (_state.hasVerticalLine)
                 _renderMainCanvasVLine();
@@ -1250,7 +1236,6 @@ namespace Services.TimelineChart {
                     scrollLeft = newPivotPointX - scrollOffset;
                 }
                 _state.cellWidth = cellWidth;
-                cssService.setCellWidth(_state.cellWidth);
             }
 
             if (_state.vZoomEnabled) {
@@ -1268,6 +1253,7 @@ namespace Services.TimelineChart {
 
             // 차트 렌더링을 새로 진행한다.
             // 엔티티리스트는 동적으로 렌더링이 진행되므로 새로 그리지 않는다.
+            _renderColumnHeader();
             _resetCanvasSize();
             _renderCanvas();
 

@@ -9,17 +9,10 @@
     --tc-scroll-width: 15px;
     --tc-scroll-height: 15px;
 
-    --tc-cell-width: 200px;
     --tc-cell-height: 40px;
     --tc-cell-content-height: 30px;
 
     --tc-line-color: #999999;
-
-
-    --tc-main-canvas-top: 0px;
-    --tc-main-canvas-bottom: 0px;
-    --tc-main-canvas-left: 0px;
-    --tc-main-canvas-right: 0px;
 }
 
 .tc-root {
@@ -124,11 +117,11 @@ img {
     display: flex;
     flex-direction: row;
     line-height: var(--tc-column-header-height);
+    position: relative;
 }
 
 .tc-column-header-item {
     border-width: 0px 0px 1px 1px;
-    width: var(--tc-cell-width);
     border-style: solid;
     border-color: var(--tc-line-color);
     flex-direction: row;
