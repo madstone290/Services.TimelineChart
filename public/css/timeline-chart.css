@@ -157,10 +157,17 @@ img {
     height: var(--tc-side-canvas-content-height);
 }
 
+.tc-main-box {
+    overflow: hidden;
+    width: 100%;
+    height: calc(100% - var(--tc-column-title-height) - var(--tc-column-header-height) - var(--tc-side-canvas-height));
+    position: relative;
+}
+
 .tc-main-canvas-box {
     overflow: scroll;
     width: 100%;
-    height: calc(100% - var(--tc-column-title-height) - var(--tc-column-header-height) - var(--tc-side-canvas-height));
+    height: 100%;
 }
 
 .tc-main-canvas {
@@ -227,9 +234,9 @@ img {
 }
 
 .tc-fab-up {
-    position: fixed;
-    top: calc(var(--tc-main-canvas-top) + 2px);
-    left: calc(var(--tc-main-canvas-right) - var(--tc-scroll-height) - 32px);
+    position: absolute;
+    top: 2px;
+    right: calc(var(--tc-scroll-width) + 2px);
     width: 30px;
     height: 30px;
     background-color: #007bff;
@@ -243,9 +250,9 @@ img {
 
 
 .tc-fab-down {
-    position: fixed;
-    top: calc(var(--tc-main-canvas-bottom) - var(--tc-scroll-width) - 62px);
-    left: calc(var(--tc-main-canvas-right) - var(--tc-scroll-height) - 32px);
+    position: absolute;
+    bottom: calc(var(--tc-scroll-height) + 2px + 30px);
+    right: calc(var(--tc-scroll-width) + 2px);
     width: 30px;
     height: 30px;
     background-color: #007bff;
@@ -259,9 +266,9 @@ img {
 
 
 .tc-fab-left {
-    position: fixed;
-    top: calc(var(--tc-main-canvas-bottom) - var(--tc-scroll-width) - 32px);
-    left: calc(var(--tc-main-canvas-left) + 2px);
+    position: absolute;
+    bottom: calc(var(--tc-scroll-height) + 2px);
+    left: 2px;
     width: 30px;
     height: 30px;
     background-color: #007bff;
@@ -276,8 +283,8 @@ img {
 
 .tc-fab-right {
     position: absolute;
-    top: calc(var(--tc-main-canvas-bottom) - var(--tc-scroll-width) - 32px);
-    left: calc(var(--tc-main-canvas-right) - var(--tc-scroll-height) - 62px);
+    bottom: calc(var(--tc-scroll-height) + 2px);
+    right: calc(var(--tc-scroll-width) + 2px + 30px);
     width: 30px;
     height: 30px;
     background-color: #007bff;

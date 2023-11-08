@@ -257,6 +257,7 @@ namespace Services.TimelineChart {
         const CLS_ENTITY_TABLE_BOX = "tc-entity-table-box";
         const CLS_ENTITY_TABLE_ITEM = "tc-entity-table-item";
 
+        const CLS_MAIN_BOX = "tc-main-box";
         const CLS_MAIN_CANVAS_BOX = "tc-main-canvas-box";
         const CLS_MAIN_CANVAS = "tc-main-canvas";
 
@@ -311,13 +312,15 @@ namespace Services.TimelineChart {
                             </div>
         
                         </div>
-                        <div class="${CLS_MAIN_CANVAS_BOX}">
-                            <div class="${CLS_MAIN_CANVAS}"></div>
+                        <div class="${CLS_MAIN_BOX}">
+                            <div class="${CLS_MAIN_CANVAS_BOX}">
+                                <div class="${CLS_MAIN_CANVAS}"></div>
+                            </div>
                             <button class="${CLS_FAB_UP}">↑</button>
                             <button class="${CLS_FAB_DOWN}">↓</button>
                             <button class="${CLS_FAB_LEFT}">←</button>
                             <button class="${CLS_FAB_RIGHT}">→</button>
-                        </div>
+                        <div>
                     </div>
                 </div>
                 `;
