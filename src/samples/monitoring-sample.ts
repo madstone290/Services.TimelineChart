@@ -1003,7 +1003,7 @@ window.addEventListener("load", () => {
         controlling = true;
         setTimeout(() => {
             controlling = false;
-        }, 2000);
+        }, 3000);
     };
 
     window.addEventListener("click", setControlling);

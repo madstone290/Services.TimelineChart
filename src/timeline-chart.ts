@@ -213,6 +213,11 @@ namespace Services.TimelineChart {
          * 테이블 행에 마우스를 올렸을 때 배경색
          */
         rowHoverColor?: string;
+
+        /**
+         * 엔티티클릭으로 이벤트 검색결과를 표시할 때 사용하는 오프셋. 오프셋만큼 스크롤위치를 보정한다.
+         */
+        entityEventSearchScrollOffset: number;
     }
 
     /**
@@ -399,7 +404,8 @@ namespace Services.TimelineChart {
             columnTitleRender: null,
             strictTimeRange: false,
             fabScrollStep: 200,
-            tableColumnRender: null
+            tableColumnRender: null,
+            entityEventSearchScrollOffset: -100
         }
 
         /**
@@ -646,8 +652,6 @@ namespace Services.TimelineChart {
             });
 
             // fab buttons event. scroll main canvas
-
-
             let fabIntervalId: number;
             const fabTimeout = 100;
 
@@ -780,6 +784,12 @@ namespace Services.TimelineChart {
             }
         }
 
+        /**
+         * 주어진 시간범위를 유효한 시간범위로 조정한다.
+         * @param startTime 
+         * @param endTime 
+         * @returns 
+         */
         function trucateTimeRange(startTime: Date, endTime?: Date): [Date, Date?] {
             const trucateStartTime = new Date(Math.max(startTime.getTime(), _state.chartRenderStartTime.getTime()));
             const trucateEndTime = endTime == null ? null : new Date(Math.min(endTime.getTime(), _state.chartRenderEndTime.getTime()));
@@ -1051,6 +1061,12 @@ namespace Services.TimelineChart {
             const cellHeight = _state.cellHeight;
             const containerCount = Math.floor(canvasHeight / cellHeight);
             for (let i = 0; i < containerCount; i++) {
+                /*
+엔티티 컨테이너(로우) 생성
+-마우스 오버시 배경색 변경
+-마우스 클릭시 해당 엔티티의 가장 빠른 이벤트로 이동
+                */
+
                 const containerEl = document.createElement("div");
                 containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
                 containerEl.addEventListener("mouseenter", (e) => {
@@ -1059,6 +1075,23 @@ namespace Services.TimelineChart {
                 });
                 containerEl.addEventListener("mouseleave", (e) => {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
+                });
+                containerEl.addEventListener("click", (e) => {
+                    const entityContainer = _entityContainers.get(containerEl);
+                    const entity = entityContainer.entity;
+                    console.log("click", entity);
+
+                    const evtStartTime = _getFirstVisibleEventTime(entity);
+
+                    console.log(evtStartTime);
+                    if (evtStartTime != null) {
+                        const [renderStartTime] = trucateTimeRange(evtStartTime);
+                        const time = dateTimeService.toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+                        // const center = time * _state.cellWidth / _state.cellMinutes;
+                        // const left = center - (_state.cellWidth / 2);
+                        const left = time * _state.cellWidth / _state.cellMinutes;
+                        _mainCanvasBoxElement.scrollLeft = left + _state.entityEventSearchScrollOffset;
+                    }
                 });
                 _entityTableBoxElement.appendChild(containerEl);
 
@@ -1072,6 +1105,72 @@ namespace Services.TimelineChart {
 
                 _intersecionObserver.observe(containerEl);
             }
+        }
+
+        /**
+         * 화면에 보이는 엔티티의 이벤트중 가장 빠른 시간을 찾는다.
+         * @param entity 
+         * @returns 
+         */
+        function _getFirstVisibleEventTime(entity: Entity): Date | null {
+            const visibleRangeEvents = _getVisibleRangeEvents(entity[_dataOptions.entityRangeEventsProp] as RangeEvent[]);
+            let rangeEvtTime = null;
+            if (0 < visibleRangeEvents.length) {
+                // 현재 화면에 보이는 엔티티의 가장 빠른 이벤트 시간을 찾는다.
+                rangeEvtTime = visibleRangeEvents[0][_dataOptions.entityRangeEventStartTimeProp] as Date;
+            }
+
+            const visiblePointEvents = _getVisiblePointEvents(entity[_dataOptions.entityPointEventsProp] as PointEvent[]);
+            let pointEvtTime = null;
+            if (0 < visiblePointEvents.length) {
+                pointEvtTime = visiblePointEvents[0][_dataOptions.entityPointEventTimeProp] as Date;
+            }
+
+            let evtStartTime = null;
+            if (rangeEvtTime != null && pointEvtTime != null) {
+                evtStartTime = rangeEvtTime < pointEvtTime ? rangeEvtTime : pointEvtTime;
+            }
+            else if (rangeEvtTime != null && pointEvtTime == null) {
+                evtStartTime = rangeEvtTime;
+            }
+            else if (rangeEvtTime == null && pointEvtTime != null) {
+                evtStartTime = pointEvtTime;
+            }
+            return evtStartTime;
+        }
+
+        /**
+         * 화면에 보이는 엔티티의 이벤트 목록을 찾는다. 시간순 정렬.
+         * @param rangeEvents 
+         * @returns 
+         */
+        function _getVisibleRangeEvents(rangeEvents: RangeEvent[]) {
+            if (rangeEvents == null || rangeEvents.length == 0)
+                return [];
+
+            return rangeEvents.filter((evt: RangeEvent) => {
+                return _state.chartRenderStartTime.valueOf() <= (evt[_dataOptions.entityRangeEventStartTimeProp] as Date).valueOf()
+                    && (evt[_dataOptions.entityRangeEventStartTimeProp] as Date).valueOf() <= _state.chartRenderEndTime.valueOf();
+            }).sort((a: RangeEvent, b: RangeEvent) => {
+                return (a[_dataOptions.entityRangeEventStartTimeProp] as Date).valueOf() - (b[_dataOptions.entityRangeEventStartTimeProp] as Date).valueOf();
+            });
+        }
+
+        /**
+         * 화면에 보이는 엔티티의 이벤트 목록을 찾는다. 시간순 정렬.
+         * @param pointEvents 
+         * @returns 
+         */
+        function _getVisiblePointEvents(pointEvents: PointEvent[]) {
+            if (pointEvents == null || pointEvents.length == 0)
+                return [];
+
+            return pointEvents.filter((evt: PointEvent) => {
+                return _state.chartRenderStartTime.valueOf() <= (evt[_dataOptions.entityPointEventTimeProp] as Date).valueOf()
+                    && (evt[_dataOptions.entityPointEventTimeProp] as Date).valueOf() <= _state.chartRenderEndTime.valueOf();
+            }).sort((a: PointEvent, b: PointEvent) => {
+                return (a[_dataOptions.entityPointEventTimeProp] as Date).valueOf() - (b[_dataOptions.entityPointEventTimeProp] as Date).valueOf();
+            });
         }
 
         function _stopRenderEntityTable() {
