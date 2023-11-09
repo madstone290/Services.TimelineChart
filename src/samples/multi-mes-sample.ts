@@ -653,7 +653,8 @@ namespace Services.TimelineChart.Samples.MultiMesSample {
 
         legendContainerIds.forEach((id) => {
             const mesLegend = ChartLegend();
-            mesLegend.create(document.getElementById(id), legendData);
+            mesLegend.create(document.getElementById(id));
+            mesLegend.setData(legendData);
             mesLegend.render();
         });
 

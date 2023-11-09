@@ -38,7 +38,7 @@ const ChartLegend = function () {
 
 
 
-    function create(container: HTMLElement, data: LegendData) {
+    function create(container: HTMLElement) {
         const elementString = `
         <div class="${CLS_LEGEND_BOX}">
             <div class="${CLS_LEFT_LEGEND_BOX}"></div>
@@ -50,10 +50,12 @@ const ChartLegend = function () {
         const element = doc.body.firstChild;
         container.appendChild(element);
 
-        _data = data;
-
         _leftLegendElement = container.getElementsByClassName(CLS_LEFT_LEGEND_BOX)[0] as HTMLElement;
         _rightLegendElement = container.getElementsByClassName(CLS_RIGHT_LEGEND_BOX)[0] as HTMLElement;
+    }
+
+    function setData(data: LegendData) {
+        _data = data;
     }
 
     function render() {
@@ -64,6 +66,8 @@ const ChartLegend = function () {
     function drawLegendItems(items: LegendItem[], container: HTMLElement) {
         if (items == null || items.length == 0)
             return;
+
+        container.replaceChildren();
 
         for (const item of items) {
             const box = document.createElement("div");
@@ -91,6 +95,7 @@ const ChartLegend = function () {
 
     return {
         create,
+        setData,
         render
     }
 };

@@ -23,7 +23,7 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
     interface MesEntityRangeEvent {
         id?: any;
         entityId?: any;
-        type: "op10" | "op20" | "op30" | "op40" | "op50" | "op60" | "op70" | "op80" | "op90" | "op100" | "op110" | "op120" | "op130" | "op140"| "op150";
+        type: "op10" | "op20" | "op30" | "op40" | "op50" | "op60" | "op70" | "op80" | "op90" | "op100" | "op110" | "op120" | "op130" | "op140" | "op150";
         description?: string;
         start?: Date;
         end?: Date;
@@ -766,7 +766,8 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
 
     export function loadSingle() {
         const mesLegend = ChartLegend();
-        mesLegend.create(document.getElementById("legend-container"), legendData);
+        mesLegend.create(document.getElementById("legend-container"));
+        mesLegend.setData(legendData);
         mesLegend.render();
 
 

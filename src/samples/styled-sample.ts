@@ -855,7 +855,8 @@ namespace Services.TimelineChart.Samples.StyledSample {
 
     export function loadSingle() {
         const mesLegend = ChartLegend();
-        mesLegend.create(document.getElementById("legend-container"), legendData);
+        mesLegend.create(document.getElementById("legend-container"));
+        mesLegend.setData(legendData);
         mesLegend.render();
 
         const container = document.getElementById("tc-container");

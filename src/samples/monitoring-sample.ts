@@ -856,10 +856,13 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
     let _chart: any;
     let _options: Services.TimelineChart.ChartOptions;
     let _data: Services.TimelineChart.ChartData;
+    const d = ChartLegend();
+    let _legend: typeof d;
     export function load() {
-        const mesLegend = ChartLegend();
-        mesLegend.create(document.getElementById("legend-container"), legendData);
-        mesLegend.render();
+        _legend = ChartLegend();
+        _legend.create(document.getElementById("legend-container"));
+        _legend.setData(legendData);
+        _legend.render();
 
         const container = document.getElementById("tc-container");
         _data =
@@ -929,15 +932,6 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
     let tempEnd: Date;
     let entityNumber = 10000;
     export function renderChart() {
-        // tempStart = new Date(tempStart.getTime() + 1 * 60 * 1000);
-        // tempEnd = new Date(tempEnd.valueOf() + 1 * 60 * 1000);
-        // if(tempStart.getMinutes() % 10 == 0){
-        //     _options.chartStartTime = tempStart;
-        // }
-        // if (tempEnd.getMinutes() % 10 == 0) {
-        //     _options.chartEndTime = tempEnd;
-        // }
-
         _options.chartStartTime = new Date(_options.chartStartTime.getTime() + 1 * 60 * 1000);
         _options.chartEndTime = new Date(_options.chartEndTime.getTime() + 1 * 60 * 1000);
         _chart.setOptions(_options);
@@ -962,11 +956,35 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
                 ],
             }, ..._data.entities
         ];
-        console.log(_data);
         _chart.setData(_data);
         _chart.render();
 
         entityNumber++;
+
+
+        const legendData = {
+            leftItems: [
+                { color: "#57247a", label: "Op 10" },
+                { color: "#f1a83a", label: "Op 20" },
+                { color: "#77bc57", label: "Op 30" },
+                { color: "#ff8fd3", label: "Op 40" },
+                { color: "#ff4199", label: "Op 110" },
+                { color: "#8d3f59", label: "Op 120" },
+                { color: "#94deeb", label: "Op 130" },
+                { color: "#8866d3", label: "Op 140" },
+                { color: "#bb9f7b", label: "Op 150" }
+            ],
+            rightItems: [
+                { color: "#d9d9d9", label: "계획정지" },
+                { color: "#E7FF26", label: "비가동" },
+                { color: "#FF1100", label: "네트워크이상" },
+                { color: "#044180", label: "바코드누락" },
+                { icon: "./asset/image/warning.svg", label: "설비이상" },
+                { icon: "./asset/image/error.svg", label: "품질이상" },
+            ]
+        }
+        _legend.setData(legendData);
+        _legend.render();
     }
 }
 
