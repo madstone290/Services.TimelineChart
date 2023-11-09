@@ -903,6 +903,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             vZoomEnabled: false,
             mainTitleRender: mainTitleRender,
             columnTitleRender: columnTitleRender,
+            rowHoverColor: "#ccc",
         };
 
         const dataOptions: Services.TimelineChart.ChartDataOptions = {
@@ -992,17 +993,31 @@ window.addEventListener("load", () => {
     Services.TimelineChart.Samples.MonitoringSample.load();
 
     let controlling = false;
-    setInterval(() => {
+    const refresh = function () {
         if (controlling)
             return;
         Services.TimelineChart.Samples.MonitoringSample.renderChart();
+    };
+
+    let intervalId = 0;
+    intervalId = setInterval(() => {
+        refresh();
     }, 2000);
 
 
+    let timeoutId = 0;
     const setControlling = function () {
         controlling = true;
-        setTimeout(() => {
+        clearTimeout(timeoutId);
+
+        timeoutId = setTimeout(() => {
             controlling = false;
+            clearInterval(intervalId);
+            refresh();
+
+            intervalId = setInterval(() => {
+                refresh();
+            }, 2000);
         }, 3000);
     };
 
