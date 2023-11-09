@@ -97,6 +97,11 @@ namespace Services.TimelineChart {
         * fab 버튼 클릭시 작동할 스크롤 길이
         */
         fabScrollLength?: number;
+
+        /**
+         * 테이블 행에 마우스를 올렸을 때 배경색
+         */
+        rowHoverColor?: string;
     }
 
     interface ChartState {
@@ -203,6 +208,11 @@ namespace Services.TimelineChart {
          * fab 버튼 클릭시 작동할 스크롤 길이
          */
         fabScrollStep: number;
+
+        /**
+         * 테이블 행에 마우스를 올렸을 때 배경색
+         */
+        rowHoverColor?: string;
     }
 
     /**
@@ -786,7 +796,7 @@ namespace Services.TimelineChart {
 
             _renderCanvas();
 
-            _stopRenderEntityList();
+            _stopRenderEntityTable();
             _startRenderEntityTable();
 
             // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
@@ -1039,6 +1049,13 @@ namespace Services.TimelineChart {
             for (let i = 0; i < containerCount; i++) {
                 const containerEl = document.createElement("div");
                 containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
+                containerEl.addEventListener("mouseenter", (e) => {
+                    (containerEl as any).tag = containerEl.style.backgroundColor;
+                    containerEl.style.backgroundColor = _state.rowHoverColor;
+                });
+                containerEl.addEventListener("mouseleave", (e) => {
+                    containerEl.style.backgroundColor = (containerEl as any).tag;
+                });
                 _entityTableBoxElement.appendChild(containerEl);
 
                 _entityContainers.set(containerEl, {
@@ -1053,7 +1070,7 @@ namespace Services.TimelineChart {
             }
         }
 
-        function _stopRenderEntityList() {
+        function _stopRenderEntityTable() {
             _intersecionObserver.disconnect();
         }
 

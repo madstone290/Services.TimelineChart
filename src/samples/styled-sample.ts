@@ -899,6 +899,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             mainTitleRender: mainTitleRender,
             tableColumnRender: tableColumnRender,
             columnTitleRender: columnTitleRender,
+            rowHoverColor: "red"
         };
 
         const dataOptions: Services.TimelineChart.ChartDataOptions = {
