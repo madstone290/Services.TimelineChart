@@ -601,6 +601,10 @@ namespace Services.TimelineChart {
                 // 세로스크롤 동기화
                 _entityTableBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
             });
+            _entityTableBoxElement.addEventListener("wheel", (e) => {
+                // 세로스크롤 동기화
+                _mainCanvasBoxElement.scrollTop += e.deltaY;
+            });
             _mainCanvasElement.addEventListener("mousemove", (e) => {
                 if (e.buttons === 1) {
                     _mainCanvasBoxElement.scrollLeft -= e.movementX;
