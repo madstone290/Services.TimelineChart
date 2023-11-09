@@ -121,6 +121,7 @@ img {
 }
 
 .tc-column-header-item {
+    position: absolute;
     border-width: 0px 0px 1px 1px;
     border-style: solid;
     border-color: var(--tc-line-color);

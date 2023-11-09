@@ -865,17 +865,23 @@ namespace Services.TimelineChart {
 
             let cellIndex = 0;
             let currentTime = startTime;
-            while (cellIndex <= headerCellCount) {
+            while (cellIndex < headerCellCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
                 containerElement.style.left = `${cellIndex * _state.cellWidth}px`;
                 containerElement.style.width = `${_state.cellWidth}px`;
-                containerElement.style.position = "absolute";
                 _state.headerCellRender(currentTime, containerElement);
                 _columnHeaderElement.appendChild(containerElement);
                 currentTime = new Date(currentTime.getTime() + dateTimeService.toTime(_state.cellMinutes));
                 cellIndex++;
             }
+            // 마지막 셀의 오른쪽 테두리를 그린다.
+            const rightBorder = document.createElement("div");
+            rightBorder.classList.add(CLS_COLUMN_HEADER_ITEM);
+            rightBorder.style.width = `1px`;
+            rightBorder.style.height = `100%`;
+            rightBorder.style.left = `${cellIndex * _state.cellWidth}px`;
+            _columnHeaderElement.appendChild(rightBorder);
         }
 
         /**
