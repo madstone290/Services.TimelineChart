@@ -443,7 +443,7 @@ namespace Services.TimelineChart.Samples.BaseSample {
         tooltipElement.appendChild(titleElement);
 
         const descElement = document.createElement("div");
-        descElement.innerText = event.description;
+        descElement.innerText = (event as any).description;
         tooltipElement.appendChild(descElement);
 
         const timeElement = document.createElement("div");
@@ -542,23 +542,10 @@ namespace Services.TimelineChart.Samples.BaseSample {
             columnTitleRender: columnTitleRender,
         }
 
-        const dataOptions: Services.TimelineChart.ChartDataOptions = {
-            entityNameProp: "name",
-            entityPointEventsProp: "pointEvents",
-            entityRangeEventsProp: "rangeEvents",
-            sidePointEventTimeProp: "time",
-            entityPointEventTimeProp: "time",
-            entityRangeEventStartTimeProp: "start",
-            entityRangeEventEndTimeProp: "end",
-            globalRangeEventStartTimeProp: "start",
-            globalRangeEventEndTimeProp: "end",
-        };
-
         const chart = Services.TimelineChart.TimelineChart();
         chart.create(container);
         chart.setData(data);
         chart.setOptions(options);
-        chart.setDataOptions(dataOptions);
         chart.render();
     }
 }

@@ -692,25 +692,12 @@ namespace Services.TimelineChart.Samples.MultiMesSample {
             globalRangeEventRender: globalRangeEventRender,
         };
 
-        const dataOptions: Services.TimelineChart.ChartDataOptions = {
-            entityNameProp: "name",
-            entityPointEventsProp: "pointEvents",
-            entityRangeEventsProp: "rangeEvents",
-            sidePointEventTimeProp: "time",
-            entityPointEventTimeProp: "time",
-            entityRangeEventStartTimeProp: "start",
-            entityRangeEventEndTimeProp: "end",
-            globalRangeEventStartTimeProp: "start",
-            globalRangeEventEndTimeProp: "end",
-        };
-
         tcContainerIds.forEach((id) => {
             const container = document.getElementById(id);
             const chart = Services.TimelineChart.TimelineChart();
             chart.create(container);
             chart.setData(data);
             chart.setOptions(options);
-            chart.setDataOptions(dataOptions);
             chart.render();
         });
     }

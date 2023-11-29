@@ -420,12 +420,12 @@ namespace Services.TimelineChart.Samples.StyledSample {
         {
             id: 2,
             description: "냉각기 이상",
-            time: new Date(Date.parse("2020-01-01T02:30:00")),
+            time: new Date(Date.parse("2020-01-01T08:30:00")),
         },
         {
             id: 3,
             description: "온수기 이상",
-            time: new Date(Date.parse("2020-01-01T03:00:00")),
+            time: new Date(Date.parse("2020-01-01T09:00:00")),
         },
         {
             id: 4,
@@ -749,6 +749,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         addHoverColor(boxElement, COLOR_SELECTED_EVENT);
     };
     const sidePointEventRender = function (event: PointEvent, canvasElement: HTMLElement, containerElement: HTMLElement) {
+        console.log(event);
         const imgElement = document.createElement("img");
         imgElement.classList.add(CLS_SIDE_POINT_EVENT_BOX);
         imgElement.src = WARNING_IMG_SRC;
@@ -769,7 +770,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         tooltipElement.appendChild(colorIcon);
 
         const descElement = document.createElement("div");
-        descElement.innerText = event.description;
+        descElement.innerText = (event as any).description;
         tooltipElement.appendChild(descElement);
 
         const timeElement = document.createElement("div");
@@ -834,7 +835,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         box.appendChild(item2);
     }
 
-    const tableRowRender = function(entity: any, containerElement: HTMLElement) {
+    const tableRowRender = function (entity: any, containerElement: HTMLElement) {
         containerElement.classList.add("tr-table-row-box");
 
         const item1 = document.createElement("div");
@@ -862,9 +863,33 @@ namespace Services.TimelineChart.Samples.StyledSample {
         const container = document.getElementById("tc-container");
         const data: Services.TimelineChart.ChartData =
         {
-            entities: entitiesX100 as any,
+            entities: entitiesX100.map(entity => {
+                const shapedEntity: Entity = {
+                    ...entity,
+                    pointEvents: entity.pointEvents?.map((pointEvent: any): PointEvent => {
+                        return {
+                            ...pointEvent,
+                            time: pointEvent.time,
+                        }
+                    }),
+                    rangeEvents: entity.rangeEvents?.map((rangeEvent: any): RangeEvent => {
+                        return {
+                            ...rangeEvent,
+                            startTime: rangeEvent.start,
+                            endTime: rangeEvent.end,
+                        }
+                    })
+                };
+                return shapedEntity;
+            }),
             sidePointEvents: sidePointEvents as any,
-            globalRangeEvents: globalRangeEvents as any,
+            globalRangeEvents: globalRangeEvents.map((globalRangeEvent: any): RangeEvent => {
+                return {
+                    ...globalRangeEvent,
+                    startTime: globalRangeEvent.start,
+                    endTime: globalRangeEvent.end,
+                }
+            })
         };
         const cellMinutes = 10;
         const cellWidth = 100;
@@ -902,23 +927,10 @@ namespace Services.TimelineChart.Samples.StyledSample {
             rowHoverColor: "#ccc"
         };
 
-        const dataOptions: Services.TimelineChart.ChartDataOptions = {
-            entityNameProp: "name",
-            entityPointEventsProp: "pointEvents",
-            entityRangeEventsProp: "rangeEvents",
-            sidePointEventTimeProp: "time",
-            entityPointEventTimeProp: "time",
-            entityRangeEventStartTimeProp: "start",
-            entityRangeEventEndTimeProp: "end",
-            globalRangeEventStartTimeProp: "start",
-            globalRangeEventEndTimeProp: "end",
-        };
-
         const chart = Services.TimelineChart.TimelineChart();
         chart.create(container);
         chart.setData(data);
         chart.setOptions(options);
-        chart.setDataOptions(dataOptions);
         chart.render();
     }
 }

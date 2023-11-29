@@ -4,18 +4,15 @@ namespace Services.TimelineChart {
      * 차트 이벤트.
      */
     export interface PointEvent {
-        [key: string]: any;
         time: Date;
     }
 
     export interface RangeEvent {
-        [key: string]: any;
         startTime: Date;
         endTime: Date;
     }
 
     export interface Entity {
-        [key: string]: any;
         name: string;
         pointEvents: PointEvent[];
         rangeEvents: RangeEvent[];
@@ -34,19 +31,6 @@ namespace Services.TimelineChart {
          * 메인 캔버스에 표시할 글로벌 포인트 이벤트 목록.
          */
         globalRangeEvents: RangeEvent[];
-    }
-
-    export interface ChartDataOptions {
-        entityNameProp?: string;
-        entityPointEventsProp?: string;
-        entityRangeEventsProp?: string;
-        sidePointEventTimeProp?: string;
-        entityPointEventTimeProp?: string;
-        entityRangeEventStartTimeProp?: string;
-        entityRangeEventEndTimeProp?: string;
-        globalRangeEventStartTimeProp?: string;
-        globalRangeEventEndTimeProp?: string;
-
     }
 
     export interface ChartOptions {
@@ -340,17 +324,6 @@ namespace Services.TimelineChart {
                 `;
 
         let _data: ChartData;
-        let _dataOptions: ChartDataOptions = {
-            entityNameProp: "name",
-            entityPointEventsProp: "pointEvents",
-            entityRangeEventsProp: "rangeEvents",
-            sidePointEventTimeProp: "time",
-            entityPointEventTimeProp: "time",
-            entityRangeEventStartTimeProp: "startTime",
-            entityRangeEventEndTimeProp: "endTime",
-            globalRangeEventStartTimeProp: "startTime",
-            globalRangeEventEndTimeProp: "endTime"
-        }
 
         let _state: ChartState = {
             chartStartTime: new Date(),
@@ -764,17 +737,6 @@ namespace Services.TimelineChart {
             _data = data;
         }
 
-        function setDataOptions(dataOptions: ChartDataOptions) {
-            if (dataOptions == null)
-                return;
-
-            Object.entries(dataOptions)
-                .filter(([key, value]) => value !== undefined)
-                .forEach(([key, value]) => {
-                    (_dataOptions as any)[key] = value;
-                });
-        }
-
         function isTimeInRange(startTime: Date, endTime?: Date): boolean {
             if (endTime == null) {
                 return _state.chartRenderStartTime <= startTime && startTime <= _state.chartRenderEndTime;
@@ -968,7 +930,7 @@ namespace Services.TimelineChart {
             }
         }
         function _renderSidePointEvent(event: PointEvent) {
-            const evtStartTime = event[_dataOptions.sidePointEventTimeProp] as Date;
+            const evtStartTime = event.time;
             if (!isTimeInRange(evtStartTime))
                 return;
             const [renderStartTime] = trucateTimeRange(evtStartTime);
@@ -1085,11 +1047,9 @@ namespace Services.TimelineChart {
                 containerEl.addEventListener("click", (e) => {
                     const entityContainer = _entityContainers.get(containerEl);
                     const entity = entityContainer.entity;
-                    console.log("click", entity);
 
                     const evtStartTime = _getFirstVisibleEventTime(entity);
 
-                    console.log(evtStartTime);
                     if (evtStartTime != null) {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
                         const time = dateTimeService.toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
@@ -1119,17 +1079,17 @@ namespace Services.TimelineChart {
          * @returns 
          */
         function _getFirstVisibleEventTime(entity: Entity): Date | null {
-            const visibleRangeEvents = _getVisibleRangeEvents(entity[_dataOptions.entityRangeEventsProp] as RangeEvent[]);
+            const visibleRangeEvents = _getVisibleRangeEvents(entity.rangeEvents);
             let rangeEvtTime = null;
             if (0 < visibleRangeEvents.length) {
                 // 현재 화면에 보이는 엔티티의 가장 빠른 이벤트 시간을 찾는다.
-                rangeEvtTime = visibleRangeEvents[0][_dataOptions.entityRangeEventStartTimeProp] as Date;
+                rangeEvtTime = visibleRangeEvents[0].startTime;
             }
 
-            const visiblePointEvents = _getVisiblePointEvents(entity[_dataOptions.entityPointEventsProp] as PointEvent[]);
+            const visiblePointEvents = _getVisiblePointEvents(entity.pointEvents);
             let pointEvtTime = null;
             if (0 < visiblePointEvents.length) {
-                pointEvtTime = visiblePointEvents[0][_dataOptions.entityPointEventTimeProp] as Date;
+                pointEvtTime = visiblePointEvents[0].time;
             }
 
             let evtStartTime = null;
@@ -1155,10 +1115,10 @@ namespace Services.TimelineChart {
                 return [];
 
             return rangeEvents.filter((evt: RangeEvent) => {
-                return _state.chartRenderStartTime.valueOf() <= (evt[_dataOptions.entityRangeEventStartTimeProp] as Date).valueOf()
-                    && (evt[_dataOptions.entityRangeEventStartTimeProp] as Date).valueOf() <= _state.chartRenderEndTime.valueOf();
+                return _state.chartRenderStartTime.valueOf() <= evt.startTime.valueOf()
+                    && evt.startTime.valueOf() <= _state.chartRenderEndTime.valueOf();
             }).sort((a: RangeEvent, b: RangeEvent) => {
-                return (a[_dataOptions.entityRangeEventStartTimeProp] as Date).valueOf() - (b[_dataOptions.entityRangeEventStartTimeProp] as Date).valueOf();
+                return a.startTime.valueOf() - b.startTime.valueOf();
             });
         }
 
@@ -1172,10 +1132,10 @@ namespace Services.TimelineChart {
                 return [];
 
             return pointEvents.filter((evt: PointEvent) => {
-                return _state.chartRenderStartTime.valueOf() <= (evt[_dataOptions.entityPointEventTimeProp] as Date).valueOf()
-                    && (evt[_dataOptions.entityPointEventTimeProp] as Date).valueOf() <= _state.chartRenderEndTime.valueOf();
+                return _state.chartRenderStartTime.valueOf() <= evt.time.valueOf()
+                    && evt.time.valueOf() <= _state.chartRenderEndTime.valueOf();
             }).sort((a: PointEvent, b: PointEvent) => {
-                return (a[_dataOptions.entityPointEventTimeProp] as Date).valueOf() - (b[_dataOptions.entityPointEventTimeProp] as Date).valueOf();
+                return a.time.valueOf() - b.time.valueOf();
             });
         }
 
@@ -1184,13 +1144,13 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityEvents(entity: Entity, rowIndex: number) {
-            const pointEvents = entity[_dataOptions.entityPointEventsProp];
+            const pointEvents = entity.pointEvents;
             if (pointEvents != null && pointEvents.length > 0) {
                 for (const event of pointEvents) {
                     _renderEntityPointEvent(event, rowIndex);
                 }
             }
-            const rangeEvents = entity[_dataOptions.entityRangeEventsProp];
+            const rangeEvents = entity.rangeEvents;
             if (rangeEvents != null && rangeEvents.length > 0) {
                 for (const event of rangeEvents) {
                     _renderEntityRangeEvent(event, rowIndex);
@@ -1199,7 +1159,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityPointEvent(event: PointEvent, rowIndex: number) {
-            const evtStartTime = event[_dataOptions.entityPointEventTimeProp] as Date;
+            const evtStartTime = event.time;
             if (!isTimeInRange(evtStartTime))
                 return;
             const [renderStartTime] = trucateTimeRange(evtStartTime);
@@ -1220,8 +1180,8 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityRangeEvent(event: RangeEvent, rowIndex: number) {
-            const eventStartTime = event[_dataOptions.entityRangeEventStartTimeProp] as Date;
-            const eventEndTime = event[_dataOptions.entityRangeEventEndTimeProp] as Date;
+            const eventStartTime = event.startTime;
+            const eventEndTime = event.endTime;
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
             const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
@@ -1255,8 +1215,8 @@ namespace Services.TimelineChart {
         }
 
         function _renderGlobalRangeEvent(event: RangeEvent) {
-            const eventStartTime = event[_dataOptions.globalRangeEventStartTimeProp] as Date;
-            const eventEndTime = event[_dataOptions.globalRangeEventEndTimeProp] as Date;
+            const eventStartTime = event.startTime;
+            const eventEndTime = event.endTime;
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
             const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
@@ -1401,8 +1361,7 @@ namespace Services.TimelineChart {
             create,
             render,
             setOptions,
-            setData,
-            setDataOptions
+            setData
         }
     };
 }

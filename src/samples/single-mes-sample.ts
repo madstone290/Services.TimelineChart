@@ -723,7 +723,7 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
         tooltipElement.appendChild(titleElement);
 
         const descElement = document.createElement("div");
-        descElement.innerText = event.description;
+        descElement.innerText = (<any>event).description;
         tooltipElement.appendChild(descElement);
 
         const timeElement = document.createElement("div");
@@ -808,24 +808,10 @@ namespace Services.TimelineChart.Samples.SingleMesSample {
             columnAutoWidth: true
         };
 
-        const dataOptions: Services.TimelineChart.ChartDataOptions = {
-            entityNameProp: "name",
-            entityPointEventsProp: "pointEvents",
-            entityRangeEventsProp: "rangeEvents",
-            sidePointEventTimeProp: "time",
-            entityPointEventTimeProp: "time",
-            entityRangeEventStartTimeProp: "start",
-            entityRangeEventEndTimeProp: "end",
-            globalRangeEventStartTimeProp: "start",
-            globalRangeEventEndTimeProp: "end",
-
-        };
-
         const chart = Services.TimelineChart.TimelineChart();
         chart.create(container);
         chart.setData(data);
         chart.setOptions(options);
-        chart.setDataOptions(dataOptions);
         chart.render();
     }
 }

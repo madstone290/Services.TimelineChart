@@ -97,92 +97,92 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rangeEvents: [
                 {
                     type: "op10",
-                    start: new Date(Date.parse("2020-01-01T01:00:50")),
-                    end: new Date(Date.parse("2020-01-01T01:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T01:00:50")),
+                    endTime: new Date(Date.parse("2020-01-01T01:20:00")),
                     entityId: 1,
                 },
                 {
                     type: "op20",
-                    start: new Date(Date.parse("2020-01-01T01:20:00")),
-                    end: new Date(Date.parse("2020-01-01T01:40:00")),
+                    startTime: new Date(Date.parse("2020-01-01T01:20:00")),
+                    endTime: new Date(Date.parse("2020-01-01T01:40:00")),
                     entityId: 1,
                 },
                 {
                     type: "op30",
-                    start: new Date(Date.parse("2020-01-01T01:40:00")),
-                    end: new Date(Date.parse("2020-01-01T02:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T01:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T02:00:00")),
                     entityId: 1,
                 },
                 {
                     type: "op40",
-                    start: new Date(Date.parse("2020-01-01T02:10:00")),
-                    end: new Date(Date.parse("2020-01-01T02:30:00")),
+                    startTime: new Date(Date.parse("2020-01-01T02:10:00")),
+                    endTime: new Date(Date.parse("2020-01-01T02:30:00")),
                     entityId: 1,
                 },
                 {
                     type: "op50",
-                    start: new Date(Date.parse("2020-01-01T02:40:00")),
-                    end: new Date(Date.parse("2020-01-01T03:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T02:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T03:00:00")),
                     entityId: 1,
                 },
                 {
                     type: "op60",
-                    start: new Date(Date.parse("2020-01-01T03:10:00")),
-                    end: new Date(Date.parse("2020-01-01T03:30:00")),
+                    startTime: new Date(Date.parse("2020-01-01T03:10:00")),
+                    endTime: new Date(Date.parse("2020-01-01T03:30:00")),
                     entityId: 1,
                 },
                 {
                     type: "op70",
-                    start: new Date(Date.parse("2020-01-01T03:40:00")),
-                    end: new Date(Date.parse("2020-01-01T04:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T03:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T04:00:00")),
                     entityId: 1,
                 },
                 {
                     type: "op80",
-                    start: new Date(Date.parse("2020-01-01T04:10:00")),
-                    end: new Date(Date.parse("2020-01-01T04:30:00")),
+                    startTime: new Date(Date.parse("2020-01-01T04:10:00")),
+                    endTime: new Date(Date.parse("2020-01-01T04:30:00")),
                     entityId: 1,
                 },
                 {
                     type: "op90",
-                    start: new Date(Date.parse("2020-01-01T04:40:00")),
-                    end: new Date(Date.parse("2020-01-01T04:50:00")),
+                    startTime: new Date(Date.parse("2020-01-01T04:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T04:50:00")),
                     entityId: 1,
                 },
                 {
                     type: "op100",
-                    start: new Date(Date.parse("2020-01-01T05:10:00")),
-                    end: new Date(Date.parse("2020-01-01T05:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T05:10:00")),
+                    endTime: new Date(Date.parse("2020-01-01T05:20:00")),
                     entityId: 1,
                 },
                 {
                     type: "op110",
-                    start: new Date(Date.parse("2020-01-01T05:30:00")),
-                    end: new Date(Date.parse("2020-01-01T05:40:00")),
+                    startTime: new Date(Date.parse("2020-01-01T05:30:00")),
+                    endTime: new Date(Date.parse("2020-01-01T05:40:00")),
                     entityId: 1,
                 },
                 {
                     type: "op120",
-                    start: new Date(Date.parse("2020-01-01T06:10:00")),
-                    end: new Date(Date.parse("2020-01-01T06:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T06:10:00")),
+                    endTime: new Date(Date.parse("2020-01-01T06:20:00")),
                     entityId: 1,
                 },
                 {
                     type: "op130",
-                    start: new Date(Date.parse("2020-01-01T06:30:00")),
-                    end: new Date(Date.parse("2020-01-01T06:40:00")),
+                    startTime: new Date(Date.parse("2020-01-01T06:30:00")),
+                    endTime: new Date(Date.parse("2020-01-01T06:40:00")),
                     entityId: 1,
                 },
                 {
                     type: "op140",
-                    start: new Date(Date.parse("2020-01-01T07:50:00")),
-                    end: new Date(Date.parse("2020-01-01T08:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T07:50:00")),
+                    endTime: new Date(Date.parse("2020-01-01T08:00:00")),
                     entityId: 1,
                 },
                 {
                     type: "op150",
-                    start: new Date(Date.parse("2020-01-01T08:00:00")),
-                    end: new Date(Date.parse("2020-01-01T08:300:00")),
+                    startTime: new Date(Date.parse("2020-01-01T08:00:00")),
+                    endTime: new Date(Date.parse("2020-01-01T08:300:00")),
                     entityId: 1,
                 },
             ],
@@ -195,8 +195,8 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rangeEvents: [
                 {
                     type: "op10",
-                    start: new Date(Date.parse("2020-01-01T06:00:00")),
-                    end: new Date(Date.parse("2020-01-01T07:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T06:00:00")),
+                    endTime: new Date(Date.parse("2020-01-01T07:00:00")),
                     entityId: 2,
                 },
             ],
@@ -221,14 +221,14 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rangeEvents: [
                 {
                     type: "op10",
-                    start: new Date(Date.parse("2020-01-01T03:15:00")),
-                    end: new Date(Date.parse("2020-01-01T04:15:00")),
+                    startTime: new Date(Date.parse("2020-01-01T03:15:00")),
+                    endTime: new Date(Date.parse("2020-01-01T04:15:00")),
                     entityId: 3,
                 },
                 {
                     type: "op20",
-                    start: new Date(Date.parse("2020-01-01T06:00:00")),
-                    end: new Date(Date.parse("2020-01-01T07:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T06:00:00")),
+                    endTime: new Date(Date.parse("2020-01-01T07:00:00")),
                     entityId: 3,
                 },
             ],
@@ -241,38 +241,38 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rangeEvents: [
                 {
                     type: "op10",
-                    start: new Date(Date.parse("2020-01-01T00:40:00")),
-                    end: new Date(Date.parse("2020-01-01T01:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T00:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T01:20:00")),
                     entityId: 4,
                 },
                 {
                     type: "op20",
-                    start: new Date(Date.parse("2020-01-01T01:20:00")),
-                    end: new Date(Date.parse("2020-01-01T02:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T01:20:00")),
+                    endTime: new Date(Date.parse("2020-01-01T02:00:00")),
                     entityId: 4,
                 },
                 {
                     type: "op30",
-                    start: new Date(Date.parse("2020-01-01T02:00:00")),
-                    end: new Date(Date.parse("2020-01-01T02:40:00")),
+                    startTime: new Date(Date.parse("2020-01-01T02:00:00")),
+                    endTime: new Date(Date.parse("2020-01-01T02:40:00")),
                     entityId: 4,
                 },
                 {
                     type: "op40",
-                    start: new Date(Date.parse("2020-01-01T02:40:00")),
-                    end: new Date(Date.parse("2020-01-01T03:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T02:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T03:20:00")),
                     entityId: 4,
                 },
                 {
                     type: "op30",
-                    start: new Date(Date.parse("2020-01-01T22:00:00")),
-                    end: new Date(Date.parse("2020-01-01T23:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T22:00:00")),
+                    endTime: new Date(Date.parse("2020-01-01T23:00:00")),
                     entityId: 4,
                 },
                 {
                     type: "op40",
-                    start: new Date(Date.parse("2020-01-01T23:00:00")),
-                    end: new Date(Date.parse("2020-01-01T23:50:00")),
+                    startTime: new Date(Date.parse("2020-01-01T23:00:00")),
+                    endTime: new Date(Date.parse("2020-01-01T23:50:00")),
                     entityId: 4,
                 },
             ]
@@ -285,26 +285,26 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rangeEvents: [
                 {
                     type: "op10",
-                    start: new Date(Date.parse("2020-01-01T01:40:00")),
-                    end: new Date(Date.parse("2020-01-01T02:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T01:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T02:20:00")),
                     entityId: 5,
                 },
                 {
                     type: "op20",
-                    start: new Date(Date.parse("2020-01-01T02:20:00")),
-                    end: new Date(Date.parse("2020-01-01T03:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T02:20:00")),
+                    endTime: new Date(Date.parse("2020-01-01T03:00:00")),
                     entityId: 5,
                 },
                 {
                     type: "op30",
-                    start: new Date(Date.parse("2020-01-01T03:00:00")),
-                    end: new Date(Date.parse("2020-01-01T03:40:00")),
+                    startTime: new Date(Date.parse("2020-01-01T03:00:00")),
+                    endTime: new Date(Date.parse("2020-01-01T03:40:00")),
                     entityId: 5,
                 },
                 {
                     type: "op40",
-                    start: new Date(Date.parse("2020-01-01T03:40:00")),
-                    end: new Date(Date.parse("2020-01-01T04:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T03:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T04:20:00")),
                     entityId: 5,
                 },
             ],
@@ -332,26 +332,26 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rangeEvents: [
                 {
                     type: "op10",
-                    start: new Date(Date.parse("2020-01-01T03:40:00")),
-                    end: new Date(Date.parse("2020-01-01T04:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T03:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T04:20:00")),
                     entityId: 9,
                 },
                 {
                     type: "op20",
-                    start: new Date(Date.parse("2020-01-01T04:20:00")),
-                    end: new Date(Date.parse("2020-01-01T05:00:00")),
+                    startTime: new Date(Date.parse("2020-01-01T04:20:00")),
+                    endTime: new Date(Date.parse("2020-01-01T05:00:00")),
                     entityId: 9,
                 },
                 {
                     type: "op30",
-                    start: new Date(Date.parse("2020-01-01T05:00:00")),
-                    end: new Date(Date.parse("2020-01-01T05:40:00")),
+                    startTime: new Date(Date.parse("2020-01-01T05:00:00")),
+                    endTime: new Date(Date.parse("2020-01-01T05:40:00")),
                     entityId: 9,
                 },
                 {
                     type: "op40",
-                    start: new Date(Date.parse("2020-01-01T05:40:00")),
-                    end: new Date(Date.parse("2020-01-01T06:20:00")),
+                    startTime: new Date(Date.parse("2020-01-01T05:40:00")),
+                    endTime: new Date(Date.parse("2020-01-01T06:20:00")),
                     entityId: 9,
                 },
             ],
@@ -374,8 +374,8 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rangeEvents: [
                 {
                     type: "op30",
-                    start: new Date(Date.parse("2020-01-01T06:10:01")),
-                    end: new Date(Date.parse("2020-01-01T06:26:03")),
+                    startTime: new Date(Date.parse("2020-01-01T06:10:01")),
+                    endTime: new Date(Date.parse("2020-01-01T06:26:03")),
                     entityId: 13,
                 },
             ],
@@ -389,8 +389,8 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rangeEvents: [
                 {
                     type: "op10",
-                    start: new Date(Date.parse("2020-01-01T12:16:16")),
-                    end: new Date(Date.parse("2020-01-01T13:52:20")),
+                    startTime: new Date(Date.parse("2020-01-01T12:16:16")),
+                    endTime: new Date(Date.parse("2020-01-01T13:52:20")),
                     entityId: 15,
                 },
             ],
@@ -447,38 +447,38 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         {
             type: "pause",
             description: "계획정지 00:30~03:30",
-            start: new Date(Date.parse("2020-01-01T00:30:00")),
-            end: new Date(Date.parse("2020-01-01T03:30:00")),
+            startTime: new Date(Date.parse("2020-01-01T00:30:00")),
+            endTime: new Date(Date.parse("2020-01-01T03:30:00")),
         },
         {
             type: "barcodeMissing",
             description: "바코드 누락 04:00~04:30",
-            start: new Date(Date.parse("2020-01-01T04:00:00")),
-            end: new Date(Date.parse("2020-01-01T04:30:00")),
+            startTime: new Date(Date.parse("2020-01-01T04:00:00")),
+            endTime: new Date(Date.parse("2020-01-01T04:30:00")),
         },
         {
             type: "networkError",
             description: "네트워크 이상 05:30~06:30",
-            start: new Date(Date.parse("2020-01-01T05:30:00")),
-            end: new Date(Date.parse("2020-01-01T06:30:00")),
+            startTime: new Date(Date.parse("2020-01-01T05:30:00")),
+            endTime: new Date(Date.parse("2020-01-01T06:30:00")),
         },
         {
             type: "networkError",
             description: "네트워크 이상 22:30~23:30",
-            start: new Date(Date.parse("2020-01-01T22:30:00")),
-            end: new Date(Date.parse("2020-01-01T23:30:00")),
+            startTime: new Date(Date.parse("2020-01-01T22:30:00")),
+            endTime: new Date(Date.parse("2020-01-01T23:30:00")),
         },
         {
             type: "fault",
             description: "비가동",
-            start: new Date(Date.parse("2020-01-01T08:10:20")),
-            end: new Date(Date.parse("2020-01-01T08:43:00")),
+            startTime: new Date(Date.parse("2020-01-01T08:10:20")),
+            endTime: new Date(Date.parse("2020-01-01T08:43:00")),
         },
         {
             type: "barcodeMissing",
             description: "바코드 누락",
-            start: new Date(Date.parse("2020-01-01T15:58:53")),
-            end: new Date(Date.parse("2020-01-01T17:12:42")),
+            startTime: new Date(Date.parse("2020-01-01T15:58:53")),
+            endTime: new Date(Date.parse("2020-01-01T17:12:42")),
         },
     ];
 
@@ -544,8 +544,8 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
     const COLOR_SELECTED_EVENT = "#333";
 
 
-    function getTimeDiff(start: Date, end: Date) {
-        const totalMilliseconds = end.getTime() - start.getTime();
+    function getTimeDiff(startTime: Date, endTime: Date) {
+        const totalMilliseconds = endTime.getTime() - startTime.getTime();
         const totalSeconds = totalMilliseconds / 1000;
         const totalMinutes = totalSeconds / 60;
         const totalHours = totalMinutes / 60;
@@ -726,10 +726,10 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         colorIconElement.style.borderLeftColor = entityRangeEventColors.get(event.type);
         tooltipElement.appendChild(colorIconElement);
 
-        const timeDifference = getTimeDiff(event.start, event.end);
+        const timeDifference = getTimeDiff(event.startTime, event.endTime);
         const timeDifferenceString = getTimeDiffString(timeDifference);
         const timeElement = document.createElement("div");
-        timeElement.innerText = dayjs(event.start).format("HH:mm:ss") + " ~ " + dayjs(event.end).format("HH:mm:ss") + " (" + timeDifferenceString + ")";
+        timeElement.innerText = dayjs(event.startTime).format("HH:mm:ss") + " ~ " + dayjs(event.endTime).format("HH:mm:ss") + " (" + timeDifferenceString + ")";
         tooltipElement.appendChild(timeElement);
 
         const barcodeElement = document.createElement("div");
@@ -769,7 +769,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         tooltipElement.appendChild(colorIcon);
 
         const descElement = document.createElement("div");
-        descElement.innerText = event.description;
+        descElement.innerText = (event as any).description;
         tooltipElement.appendChild(descElement);
 
         const timeElement = document.createElement("div");
@@ -803,10 +803,10 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         colorIconElement.style.borderLeftColor = globalRangeEventColors.get(event.type);
         tooltipElement.appendChild(colorIconElement);
 
-        const timeDifference = getTimeDiff(event.start, event.end);
+        const timeDifference = getTimeDiff(event.startTime, event.endTime);
         const timeDifferenceString = getTimeDiffString(timeDifference);
         const timeElement = document.createElement("div");
-        timeElement.innerText = dayjs(event.start).format("HH:mm:ss") + " ~ " + dayjs(event.end).format("HH:mm:ss") + " (" + timeDifferenceString + ")";
+        timeElement.innerText = dayjs(event.startTime).format("HH:mm:ss") + " ~ " + dayjs(event.endTime).format("HH:mm:ss") + " (" + timeDifferenceString + ")";
         tooltipElement.appendChild(timeElement);
 
         addTooltip(boxElement, tooltipElement);
@@ -856,8 +856,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
     let _chart: any;
     let _options: Services.TimelineChart.ChartOptions;
     let _data: Services.TimelineChart.ChartData;
-    const d = ChartLegend();
-    let _legend: typeof d;
+    let _legend: any;
     export function load() {
         _legend = ChartLegend();
         _legend.create(document.getElementById("legend-container"));
@@ -906,31 +905,18 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rowHoverColor: "#ccc",
         };
 
-        const dataOptions: Services.TimelineChart.ChartDataOptions = {
-            entityNameProp: "name",
-            entityPointEventsProp: "pointEvents",
-            entityRangeEventsProp: "rangeEvents",
-            sidePointEventTimeProp: "time",
-            entityPointEventTimeProp: "time",
-            entityRangeEventStartTimeProp: "start",
-            entityRangeEventEndTimeProp: "end",
-            globalRangeEventStartTimeProp: "start",
-            globalRangeEventEndTimeProp: "end",
-        };
-
         _chart = Services.TimelineChart.TimelineChart();
         _chart.create(container);
         _chart.setOptions(_options);
         _chart.setData(_data);
-        _chart.setDataOptions(dataOptions);
         _chart.render();
 
-        tempStart = _options.chartStartTime;
-        tempEnd = _options.chartEndTime;
+        tempstartTime = _options.chartStartTime;
+        tempendTime = _options.chartEndTime;
     }
 
-    let tempStart: Date;
-    let tempEnd: Date;
+    let tempstartTime: Date;
+    let tempendTime: Date;
     let entityNumber = 10000;
     export function renderChart() {
         _options.chartStartTime = new Date(_options.chartStartTime.getTime() + 1 * 60 * 1000);
@@ -946,16 +932,14 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
                 pointEvents: [],
                 rangeEvents: [
                     {
-                        // start, end 속성으로 데이터 접근중..
-                        type: "op10",
                         startTime: new Date(_options.chartEndTime.valueOf() - 30 * 60 * 1000),
-                        start: new Date(_options.chartEndTime.valueOf() - 30 * 60 * 1000),
                         endTime: new Date(_options.chartEndTime.valueOf() - 10 * 60 * 1000),
-                        end: new Date(_options.chartEndTime.valueOf() - 10 * 60 * 1000),
+                        type: "op10",
                         entityId: entityNumber
                     },
-                ],
-            }, ..._data.entities
+                ] as any[],
+            } as any,
+            ..._data.entities
         ];
         _chart.setData(_data);
         _chart.render();
