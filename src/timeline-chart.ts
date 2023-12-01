@@ -84,9 +84,14 @@ namespace Services.TimelineChart {
         rowHoverColor?: string;
 
         /**
-        * fab 버튼 클릭시 작동할 스크롤 길이
+        * fab 버튼 클릭시 작동할 세로스크롤 길이
         */
-        fabScrollStep?: number;
+        fabScrollStepY?: number;
+
+        /**
+        * fab 버튼 클릭시 작동할 가로스크롤 길이
+        */
+        fabScrollStepX?: number;
     }
 
     interface ChartState {
@@ -190,9 +195,14 @@ namespace Services.TimelineChart {
         strictTimeRange: boolean;
 
         /**
-         * fab 버튼 클릭시 작동할 스크롤 길이
+         * fab 버튼 클릭시 작동할 세로스크롤 길이
          */
-        fabScrollStep: number;
+        fabScrollStepY: number;
+
+        /**
+         * fab 버튼 클릭시 작동할 가로스크롤 길이
+         */
+        fabScrollStepX: number;
 
         /**
          * 테이블 행에 마우스를 올렸을 때 배경색
@@ -377,7 +387,8 @@ namespace Services.TimelineChart {
             mainTitleRender: null,
             columnTitleRender: null,
             strictTimeRange: false,
-            fabScrollStep: 200,
+            fabScrollStepX: 400,
+            fabScrollStepY: 200,
             tableColumnRender: null,
             entityEventSearchScrollOffset: -100
         }
@@ -630,10 +641,26 @@ namespace Services.TimelineChart {
             let fabTimeoutId: number;
             const fabIntervalTimeout = 30;
             const fabTimeoutTimeout = 300;
-            const shortClickScrollStep = _state.fabScrollStep;
-            const longClickScrollStep = _state.fabScrollStep / 2;
 
-            const addFabClearIntervalHandlers = (btn: HTMLElement) => {
+            const shortStepX = () => _state.fabScrollStepX;
+            const shortStepY = () => _state.fabScrollStepY;
+            const longStepX = () => _state.fabScrollStepX / 2;
+            const longStepY = () => _state.fabScrollStepY / 2;
+
+            const addFabMouseDownHandler = (btn: HTMLElement, shortX: () => number, longX: () => number, shortY: () => number, longY: () => number) => {
+                btn.addEventListener("mousedown", function (e) {
+                    _mainCanvasBoxElement.scrollTo({
+                        top: _mainCanvasBoxElement.scrollTop + shortY(),
+                        left: _mainCanvasBoxElement.scrollLeft + shortX(),
+                        behavior: "smooth"
+                    });
+                    fabTimeoutId = setTimeout(() => {
+                        fabIntervalId = setInterval(() => {
+                            _mainCanvasBoxElement.scrollTop += longY();
+                            _mainCanvasBoxElement.scrollLeft += longX();
+                        }, fabIntervalTimeout);
+                    }, fabTimeoutTimeout);
+                });
                 btn.addEventListener("mouseup", (e) => {
                     clearInterval(fabIntervalId);
                     clearTimeout(fabTimeoutId);
@@ -644,58 +671,10 @@ namespace Services.TimelineChart {
                 });
             }
 
-            _fabUpElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollTo({
-                    top: _mainCanvasBoxElement.scrollTop - shortClickScrollStep,
-                    behavior: "smooth"
-                });
-                fabTimeoutId = setTimeout(() => {
-                    fabIntervalId = setInterval(() => {
-                        _mainCanvasBoxElement.scrollTop -= longClickScrollStep;
-                    }, fabIntervalTimeout);
-                }, fabTimeoutTimeout);
-            });
-
-            _fabDownElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollTo({
-                    top: _mainCanvasBoxElement.scrollTop + shortClickScrollStep,
-                    behavior: "smooth"
-                });
-                fabTimeoutId = setTimeout(() => {
-                    fabIntervalId = setInterval(() => {
-                        _mainCanvasBoxElement.scrollTop += longClickScrollStep;
-                    }, fabIntervalTimeout);
-                }, fabTimeoutTimeout);
-            });
-
-            _fabLeftElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollTo({
-                    left: _mainCanvasBoxElement.scrollLeft - shortClickScrollStep,
-                    behavior: "smooth"
-                });
-                fabTimeoutId = setTimeout(() => {
-                    fabIntervalId = setInterval(() => {
-                        _mainCanvasBoxElement.scrollLeft -= longClickScrollStep;
-                    }, fabIntervalTimeout);
-                }, fabTimeoutTimeout);
-            });
-
-            _fabRightElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollTo({
-                    left: _mainCanvasBoxElement.scrollLeft + shortClickScrollStep,
-                    behavior: "smooth"
-                });
-                fabTimeoutId = setTimeout(() => {
-                    fabIntervalId = setInterval(() => {
-                        _mainCanvasBoxElement.scrollLeft += longClickScrollStep;
-                    }, fabIntervalTimeout);
-                }, fabTimeoutTimeout);
-            });
-
-            addFabClearIntervalHandlers(_fabUpElement);
-            addFabClearIntervalHandlers(_fabDownElement);
-            addFabClearIntervalHandlers(_fabLeftElement);
-            addFabClearIntervalHandlers(_fabRightElement);
+            addFabMouseDownHandler(_fabUpElement, () => 0, () => 0, () => -shortStepY(), () => -longStepY());
+            addFabMouseDownHandler(_fabDownElement, () => 0, () => 0, () => shortStepY(), () => longStepY());
+            addFabMouseDownHandler(_fabLeftElement, () => -shortStepX(), () => -longStepX(), () => 0, () => 0);
+            addFabMouseDownHandler(_fabRightElement, () => shortStepX(), () => longStepX(), () => 0, () => 0);
         }
 
         function setOptions(options: ChartOptions) {
