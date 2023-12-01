@@ -314,10 +314,10 @@ namespace Services.TimelineChart {
                             <div class="${CLS_MAIN_CANVAS_BOX}">
                                 <div class="${CLS_MAIN_CANVAS}"></div>
                             </div>
-                            <button class="${CLS_FAB_UP}">↑</button>
-                            <button class="${CLS_FAB_DOWN}">↓</button>
-                            <button class="${CLS_FAB_LEFT}">←</button>
-                            <button class="${CLS_FAB_RIGHT}">→</button>
+                            <div class="${CLS_FAB_UP}"></div>
+                            <div class="${CLS_FAB_DOWN}"></div>
+                            <div class="${CLS_FAB_LEFT}"></div>
+                            <div class="${CLS_FAB_RIGHT}"></div>
                         <div>
                     </div>
                 </div>

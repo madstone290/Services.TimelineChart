@@ -239,7 +239,9 @@ img {
     border-radius: 50%;
     font-size: 24px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    background-image: url("../asset/image/arrow-up-solid.svg");
+    background-repeat: no-repeat;
+    background-position: center 50%;
 }
 
 
@@ -255,7 +257,9 @@ img {
     border-radius: 50%;
     font-size: 24px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    background-image: url("../asset/image/arrow-down-solid.svg");
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 
@@ -271,9 +275,10 @@ img {
     border-radius: 50%;
     font-size: 24px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    background-image: url("../asset/image/arrow-left-solid.svg");
+    background-repeat: no-repeat;
+    background-position: center;
 }
-
 
 .tc-fab-right {
     position: absolute;
@@ -287,5 +292,7 @@ img {
     border-radius: 50%;
     font-size: 24px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    background-image: url("../asset/image/arrow-right-solid.svg");
+    background-repeat: no-repeat;
+    background-position: center;
 }
