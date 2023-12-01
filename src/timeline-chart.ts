@@ -77,15 +77,16 @@ namespace Services.TimelineChart {
         mainTitleRender?: (containerEl: HTMLElement) => void;
         columnTitleRender?: (containerEl: HTMLElement) => void;
         tableColumnRender?: (containerEl: HTMLElement) => void;
-        /**
-        * fab 버튼 클릭시 작동할 스크롤 길이
-        */
-        fabScrollLength?: number;
 
         /**
          * 테이블 행에 마우스를 올렸을 때 배경색
          */
         rowHoverColor?: string;
+
+        /**
+        * fab 버튼 클릭시 작동할 스크롤 길이
+        */
+        fabScrollStep?: number;
     }
 
     interface ChartState {
@@ -626,44 +627,57 @@ namespace Services.TimelineChart {
 
             // fab buttons event. scroll main canvas
             let fabIntervalId: number;
-            const fabTimeout = 100;
+            let fabTimeoutId: number;
+            const fabIntervalTimeout = 50;
+            const fabTimeoutTimeout = 300;
 
             const addFabClearIntervalHandlers = (btn: HTMLElement) => {
                 btn.addEventListener("mouseup", (e) => {
                     clearInterval(fabIntervalId);
+                    clearTimeout(fabTimeoutId);
                 });
                 btn.addEventListener("mouseleave", (e) => {
                     clearInterval(fabIntervalId);
+                    clearTimeout(fabTimeoutId);
                 });
             }
 
             _fabUpElement.addEventListener("mousedown", (e) => {
-                clearInterval(fabIntervalId);
                 _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
-                fabIntervalId = setInterval(() => {
-                    _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
-                }, fabTimeout);
+                
+                fabTimeoutId = setTimeout(() => {
+                    fabIntervalId = setInterval(() => {
+                        _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
+                    }, fabIntervalTimeout);
+                }, fabTimeoutTimeout);
             });
 
             _fabDownElement.addEventListener("mousedown", (e) => {
                 _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
-                fabIntervalId = setInterval(() => {
-                    _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
-                }, fabTimeout);
+
+                fabTimeoutId = setTimeout(() => {
+                    fabIntervalId = setInterval(() => {
+                        _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
+                    }, fabIntervalTimeout);
+                }, fabTimeoutTimeout);
             });
 
             _fabLeftElement.addEventListener("mousedown", (e) => {
                 _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
-                fabIntervalId = setInterval(() => {
-                    _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
-                }, fabTimeout);
+                fabTimeoutId = setTimeout(() => {
+                    fabIntervalId = setInterval(() => {
+                        _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
+                    }, fabIntervalTimeout);
+                }, fabTimeoutTimeout);
             });
 
             _fabRightElement.addEventListener("mousedown", (e) => {
                 _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
-                fabIntervalId = setInterval(() => {
-                    _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
-                }, fabTimeout);
+                fabTimeoutId = setTimeout(() => {
+                    fabIntervalId = setInterval(() => {
+                        _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
+                    }, fabIntervalTimeout);
+                }, fabTimeoutTimeout);
             });
 
             addFabClearIntervalHandlers(_fabUpElement);

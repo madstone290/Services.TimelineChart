@@ -749,7 +749,6 @@ namespace Services.TimelineChart.Samples.StyledSample {
         addHoverColor(boxElement, COLOR_SELECTED_EVENT);
     };
     const sidePointEventRender = function (event: PointEvent, canvasElement: HTMLElement, containerElement: HTMLElement) {
-        console.log(event);
         const imgElement = document.createElement("img");
         imgElement.classList.add(CLS_SIDE_POINT_EVENT_BOX);
         imgElement.src = WARNING_IMG_SRC;
@@ -924,7 +923,8 @@ namespace Services.TimelineChart.Samples.StyledSample {
             mainTitleRender: mainTitleRender,
             tableColumnRender: tableColumnRender,
             columnTitleRender: columnTitleRender,
-            rowHoverColor: "#ccc"
+            rowHoverColor: "#ccc",
+            fabScrollStep: 100
         };
 
         const chart = Services.TimelineChart.TimelineChart();
