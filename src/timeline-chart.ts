@@ -628,8 +628,10 @@ namespace Services.TimelineChart {
             // fab buttons event. scroll main canvas
             let fabIntervalId: number;
             let fabTimeoutId: number;
-            const fabIntervalTimeout = 50;
+            const fabIntervalTimeout = 30;
             const fabTimeoutTimeout = 300;
+            const shortClickScrollStep = _state.fabScrollStep;
+            const longClickScrollStep = _state.fabScrollStep / 2;
 
             const addFabClearIntervalHandlers = (btn: HTMLElement) => {
                 btn.addEventListener("mouseup", (e) => {
@@ -643,39 +645,49 @@ namespace Services.TimelineChart {
             }
 
             _fabUpElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
-                
+                _mainCanvasBoxElement.scrollTo({
+                    top: _mainCanvasBoxElement.scrollTop - shortClickScrollStep,
+                    behavior: "smooth"
+                });
                 fabTimeoutId = setTimeout(() => {
                     fabIntervalId = setInterval(() => {
-                        _mainCanvasBoxElement.scrollTop -= _state.fabScrollStep;
+                        _mainCanvasBoxElement.scrollTop -= longClickScrollStep;
                     }, fabIntervalTimeout);
                 }, fabTimeoutTimeout);
             });
 
             _fabDownElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
-
+                _mainCanvasBoxElement.scrollTo({
+                    top: _mainCanvasBoxElement.scrollTop + shortClickScrollStep,
+                    behavior: "smooth"
+                });
                 fabTimeoutId = setTimeout(() => {
                     fabIntervalId = setInterval(() => {
-                        _mainCanvasBoxElement.scrollTop += _state.fabScrollStep;
+                        _mainCanvasBoxElement.scrollTop += longClickScrollStep;
                     }, fabIntervalTimeout);
                 }, fabTimeoutTimeout);
             });
 
             _fabLeftElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
+                _mainCanvasBoxElement.scrollTo({
+                    left: _mainCanvasBoxElement.scrollLeft - shortClickScrollStep,
+                    behavior: "smooth"
+                });
                 fabTimeoutId = setTimeout(() => {
                     fabIntervalId = setInterval(() => {
-                        _mainCanvasBoxElement.scrollLeft -= _state.fabScrollStep;
+                        _mainCanvasBoxElement.scrollLeft -= longClickScrollStep;
                     }, fabIntervalTimeout);
                 }, fabTimeoutTimeout);
             });
 
             _fabRightElement.addEventListener("mousedown", (e) => {
-                _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
+                _mainCanvasBoxElement.scrollTo({
+                    left: _mainCanvasBoxElement.scrollLeft + shortClickScrollStep,
+                    behavior: "smooth"
+                });
                 fabTimeoutId = setTimeout(() => {
                     fabIntervalId = setInterval(() => {
-                        _mainCanvasBoxElement.scrollLeft += _state.fabScrollStep;
+                        _mainCanvasBoxElement.scrollLeft += longClickScrollStep;
                     }, fabIntervalTimeout);
                 }, fabTimeoutTimeout);
             });

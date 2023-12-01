@@ -924,7 +924,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             tableColumnRender: tableColumnRender,
             columnTitleRender: columnTitleRender,
             rowHoverColor: "#ccc",
-            fabScrollStep: 100
+            fabScrollStep: 200
         };
 
         const chart = Services.TimelineChart.TimelineChart();
