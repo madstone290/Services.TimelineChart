@@ -759,7 +759,7 @@ namespace Services.TimelineChart {
                     _state.minCellWidth = cellWidth;
                     _state.maxCellWidth = cellWidth * _state.maxZoomScale;
 
-                    _renderColumnHeader();
+                    _resizeColumnHeaders();
                     _resetCanvasSize();
                     _renderCanvas();
                     _renderIntersectingEntitiList();
@@ -862,8 +862,13 @@ namespace Services.TimelineChart {
             }
         }
 
+        let _headerElements = new Map<number, HTMLElement>();
+        let _headerRightBorderEl: HTMLElement;
+        
         function _renderColumnHeader() {
             _columnHeaderElement.replaceChildren();
+            _headerElements.clear();
+            _headerRightBorderEl = null;
 
             let startTime = _state.chartRenderStartTime;
             let endTime = _state.chartRenderEndTime;
@@ -879,6 +884,8 @@ namespace Services.TimelineChart {
                 containerElement.style.width = `${_state.cellWidth}px`;
                 _state.headerCellRender(currentTime, containerElement);
                 _columnHeaderElement.appendChild(containerElement);
+                _headerElements.set(cellIndex, containerElement);
+
                 currentTime = new Date(currentTime.getTime() + dateTimeService.toTime(_state.cellMinutes));
                 cellIndex++;
             }
@@ -888,7 +895,16 @@ namespace Services.TimelineChart {
             rightBorder.style.width = `1px`;
             rightBorder.style.height = `100%`;
             rightBorder.style.left = `${cellIndex * _state.cellWidth}px`;
+            _headerRightBorderEl = rightBorder;
             _columnHeaderElement.appendChild(rightBorder);
+        }
+
+        function _resizeColumnHeaders() {
+            for(const [index, el] of _headerElements) {
+                el.style.left = `${index * _state.cellWidth}px`;
+                el.style.width = `${_state.cellWidth}px`;
+            }
+            _headerRightBorderEl.style.left = `${_state.headerCellCount * _state.cellWidth}px`;
         }
 
         /**
@@ -1416,7 +1432,9 @@ namespace Services.TimelineChart {
 
             // 차트 렌더링을 새로 진행한다.
             // 엔티티리스트는 동적으로 렌더링이 진행되므로 새로 그리지 않는다.
-            _renderColumnHeader();
+            
+            _resizeColumnHeaders();
+
             _resetCanvasSize();
             _renderCanvas();
 
