@@ -18,6 +18,18 @@ namespace Services.TimelineChart {
         rangeEvents: RangeEvent[];
     }
 
+
+    interface PointEventContainer {
+        time: number;
+        containerEl: HTMLElement;
+    }
+
+    interface RangeEventContainer {
+        start: number;
+        duration: number;
+        containerEl: HTMLElement;
+    }
+
     export interface ChartData {
 
         entities: Entity[];
@@ -234,6 +246,9 @@ namespace Services.TimelineChart {
          * 최근 렌더링 시간
          */
         lastRenderTime: Date;
+
+        pointEventContainers: PointEventContainer[];
+        rangeEventContainers: RangeEventContainer[];
     }
 
     export const TimelineChart = function () {
@@ -712,6 +727,10 @@ namespace Services.TimelineChart {
             });
 
             _mainCanvasElement.addEventListener("click", (e) => {
+                const targetEl = e.target as HTMLElement;
+                if (targetEl.classList.contains(CLS_CONTEXT_MENU_ITEM_ZOOM_IN) || targetEl.classList.contains(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)) {
+                    return;
+                }
                 _contextMenuEl.style.display = "none";
             });
 
@@ -749,6 +768,7 @@ namespace Services.TimelineChart {
 
             function mainCanvasBoxresizeCallback() {
                 console.log("mainCanvasBoxresizeCallback");
+                return;
                 // relocate fab buttons
                 const mainCanvasBoxRect = _mainCanvasBoxElement.getBoundingClientRect();
 
@@ -765,8 +785,6 @@ namespace Services.TimelineChart {
 
                     //_renderCanvas();
                     _resizeCanvas();
-
-
 
                     _renderIntersectingEntitiList();
                 }
@@ -850,8 +868,8 @@ namespace Services.TimelineChart {
             _resizeSideCanvas();
             _resizeSidePointEvents();
 
-            _renderMainCanvas();
-            _renderGlobalRangeEvents();
+            _refreshMainCanvas();
+            _refreshGlobalRangeEvents();
         }
 
         function _renderMainTitle() {
@@ -1015,11 +1033,6 @@ namespace Services.TimelineChart {
             }
         }
 
-        interface PointEventContainer {
-            timeInMinutes: number;
-            containerEl: HTMLElement;
-        }
-
         let _sidePointEventContainers = new Array<PointEventContainer>();
         function _renderSidePointEvents() {
             if (_data.sidePointEvents != null && _data.sidePointEvents.length > 0) {
@@ -1048,7 +1061,7 @@ namespace Services.TimelineChart {
                 _state.sidePointEventRender(event, _sideCanvasElement, containerElement);
             _sideCanvasElement.appendChild(containerElement);
             _sidePointEventContainers.push({
-                timeInMinutes: time,
+                time: time,
                 containerEl: containerElement
             });
         }
@@ -1057,8 +1070,8 @@ namespace Services.TimelineChart {
 
             const width = _state.sideCanvasContentHeight;
             for (const container of _sidePointEventContainers) {
-                const time = container.timeInMinutes;
-                
+                const time = container.time;
+
                 const center = time * _state.cellWidth / _state.cellMinutes;
                 const top = (_state.sideCanvasHeight - _state.sideCanvasContentHeight) / 2;
 
@@ -1076,6 +1089,10 @@ namespace Services.TimelineChart {
                 _renderMainCanvasVLine();
         }
 
+        function _refreshMainCanvas() {
+            _refreshMainCanvasVLines();
+        }
+
         function _renderContextMenu() {
             _contextMenuEl = document.createElement("div");
             _contextMenuEl.classList.add(CLS_CONTEXT_MENU);
@@ -1084,6 +1101,7 @@ namespace Services.TimelineChart {
             zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM);
             zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_IN);
             zoomInItem.addEventListener("click", (e) => {
+                // todo : context menu 위치를 클릭한 위치에 맞춰 변경해야 한다.
                 _zoomInCanvas();
             });
 
@@ -1091,6 +1109,7 @@ namespace Services.TimelineChart {
             zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM);
             zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT);
             zoomOutItem.addEventListener("click", (e) => {
+                // todo : context menu 위치를 클릭한 위치에 맞춰 변경해야 한다.
                 _zoomOutCanvas();
             });
 
@@ -1106,6 +1125,7 @@ namespace Services.TimelineChart {
             _mainCanvasElement.appendChild(_contextMenuEl);
         }
 
+        let _mainCanvasVLines: HTMLElement[] = [];
         function _renderMainCanvasVLine() {
             const canvasWidth = _mainCanvasElement.scrollWidth;
             const lineGap = _state.cellWidth;
@@ -1121,6 +1141,14 @@ namespace Services.TimelineChart {
                 line.style.height = `${lineHeight}px`;
 
                 _mainCanvasElement.appendChild(line);
+                _mainCanvasVLines.push(line);
+            }
+        }
+
+        function _refreshMainCanvasVLines() {
+            for (let i = 0; i < _mainCanvasVLines.length; i++) {
+                const line = _mainCanvasVLines[i];
+                line.style.left = `${(i + 1) * _state.cellWidth}px`;
             }
         }
 
@@ -1129,23 +1157,37 @@ namespace Services.TimelineChart {
          */
         let _intersectingEntityContainers = new Map<number, EntityRow>();
 
-        function _renderEntity(entityContainer: EntityRow) {
-            const { index, entity, containerEl, lastRenderTime } = entityContainer;
-            const shouldRender = lastRenderTime == null || lastRenderTime <= _state.lastZoomTime;
-            if (!shouldRender)
-                return;
 
-            containerEl.replaceChildren();
+
+
+        let _entityRows = new Array<EntityRow>();
+
+        function _renderEntityRow(entityContainer: EntityRow) {
+            const { index, entity, containerEl, lastRenderTime } = entityContainer;
             _state.tableRowRender(entity, containerEl);
-            _renderEntityEvents(entity, index);
+            _renderEntityEvents(entity, index, entityContainer);
 
             if (_state.hasHorizontalLine) {
-                const mainCanvasItem = document.createElement("div");
-                mainCanvasItem.classList.add(CLS_MAIN_CANVAS_H_BORDER);
-                mainCanvasItem.style.top = `${_state.cellHeight * (index)}px`;
-                _mainCanvasElement.appendChild(mainCanvasItem);
+                const mainCanvasHLine = document.createElement("div");
+                mainCanvasHLine.classList.add(CLS_MAIN_CANVAS_H_BORDER);
+                mainCanvasHLine.style.top = `${_state.cellHeight * (index)}px`;
+                _mainCanvasElement.appendChild(mainCanvasHLine);
+                entityContainer.hLine = mainCanvasHLine;
             }
             entityContainer.lastRenderTime = new Date();
+            _entityRows.push(entityContainer);
+        }
+
+        function _refreshEntityRow(entityRow: EntityRow) {
+            const { index, entity, containerEl, lastRenderTime } = entityRow;
+            entityRow.hLine.style.top = `${_state.cellHeight * (index)}px`;
+            _refreshEntityEvents(entityRow);
+            entityRow.lastRenderTime = new Date();
+        }
+
+        function _refreshEntityEvents(entityRow: EntityRow) {
+            _refreshEntityPointEvents(entityRow);
+            _refreshEntityRangeEvents(entityRow);
         }
 
         const callback: IntersectionObserverCallback = (changedEntries: IntersectionObserverEntry[]) => {
@@ -1158,10 +1200,14 @@ namespace Services.TimelineChart {
                 else
                     _intersectingEntityContainers.delete(entityContainer.index);
 
-                if (entry.isIntersecting) {
-                    _renderEntity(entityContainer);
-                }
 
+                if (entityContainer.lastRenderTime == null) {
+                    // 최초 렌더링
+                    _renderEntityRow(entityContainer);
+                } else if (entityContainer.lastRenderTime <= _state.lastZoomTime) {
+                    // 리페인트
+                    _refreshEntityRow(entityContainer);
+                }
             });
         }
         const options: IntersectionObserverInit = {
@@ -1218,7 +1264,9 @@ namespace Services.TimelineChart {
                     containerEl: containerEl,
                     entity: _data.entities[i],
                     lastRenderTime: null,
-                    hLine: null
+                    hLine: null,
+                    pointEventContainers: [],
+                    rangeEventContainers: [],
                 });
 
                 _intersecionObserver.observe(containerEl);
@@ -1295,22 +1343,35 @@ namespace Services.TimelineChart {
             _intersecionObserver.disconnect();
         }
 
-        function _renderEntityEvents(entity: Entity, rowIndex: number) {
+        function _renderEntityEvents(entity: Entity, rowIndex: number, entityRow: EntityRow) {
             const pointEvents = entity.pointEvents;
             if (pointEvents != null && pointEvents.length > 0) {
                 for (const event of pointEvents) {
-                    _renderEntityPointEvent(event, rowIndex);
+                    _renderEntityPointEvent(event, rowIndex, entityRow);
                 }
             }
             const rangeEvents = entity.rangeEvents;
             if (rangeEvents != null && rangeEvents.length > 0) {
                 for (const event of rangeEvents) {
-                    _renderEntityRangeEvent(event, rowIndex);
+                    _renderEntityRangeEvent(event, rowIndex, entityRow);
                 }
             }
         }
 
-        function _renderEntityPointEvent(event: PointEvent, rowIndex: number) {
+        function _refreshEntityPointEvents(entityRow: EntityRow) {
+            for (const container of entityRow.pointEventContainers) {
+                const time = container.time;
+
+                const center = time * _state.cellWidth / _state.cellMinutes;
+                const top = (_state.cellHeight * entityRow.index) + ((_state.cellHeight - _state.cellContentHeight) / 2) - 1;
+
+                const containerEl = container.containerEl;
+                containerEl.style.left = `${center - (_state.cellContentHeight / 2)}px`;
+                containerEl.style.top = `${top}px`;
+            }
+        }
+
+        function _renderEntityPointEvent(event: PointEvent, rowIndex: number, entityRow: EntityRow) {
             const evtStartTime = event.time;
             if (!isTimeInRange(evtStartTime))
                 return;
@@ -1329,9 +1390,25 @@ namespace Services.TimelineChart {
                 _state.entityPointEventRender(event, _mainCanvasElement, containerElement);
 
             _mainCanvasElement.appendChild(containerElement);
+            entityRow.pointEventContainers.push({
+                time: time,
+                containerEl: containerElement
+            });
         }
 
-        function _renderEntityRangeEvent(event: RangeEvent, rowIndex: number) {
+        function _refreshEntityRangeEvents(entityRow: EntityRow) {
+            for (const container of entityRow.rangeEventContainers) {
+                const startTime = container.start;
+                const duration = container.duration;
+
+                const left = startTime * _state.cellWidth / _state.cellMinutes;
+                const width = duration * _state.cellWidth / _state.cellMinutes;
+                container.containerEl.style.left = `${left}px`;
+                container.containerEl.style.width = `${width}px`;
+            }
+        }
+
+        function _renderEntityRangeEvent(event: RangeEvent, rowIndex: number, entityRow: EntityRow) {
             const eventStartTime = event.startTime;
             const eventEndTime = event.endTime;
             if (!isTimeInRange(eventStartTime, eventEndTime))
@@ -1356,6 +1433,11 @@ namespace Services.TimelineChart {
                 _state.entityRangeEventRender(event, _mainCanvasElement, containerElement);
 
             _mainCanvasElement.appendChild(containerElement);
+            entityRow.rangeEventContainers.push({
+                start: startTime,
+                duration: duration,
+                containerEl: containerElement
+            });
         }
 
         function _renderGlobalRangeEvents() {
@@ -1363,6 +1445,19 @@ namespace Services.TimelineChart {
                 for (const event of _data.globalRangeEvents) {
                     _renderGlobalRangeEvent(event);
                 }
+            }
+        }
+
+
+
+        let _globalRangeEventContainers = new Array<RangeEventContainer>();
+
+        function _refreshGlobalRangeEvents() {
+            for (const container of _globalRangeEventContainers) {
+                const left = container.start * _state.cellWidth / _state.cellMinutes;
+                const width = container.duration * _state.cellWidth / _state.cellMinutes;
+                container.containerEl.style.left = `${left}px`;
+                container.containerEl.style.width = `${width}px`;
             }
         }
 
@@ -1387,6 +1482,11 @@ namespace Services.TimelineChart {
                 _state.globalRangeEventRender(event, _mainCanvasElement, containerElement);
 
             _mainCanvasElement.appendChild(containerElement);
+            _globalRangeEventContainers.push({
+                start: startTime,
+                duration: duration,
+                containerEl: containerElement
+            });
         }
 
         function _zoomInCanvas(pivotPointX?: number, pivotPointY?: number) {
@@ -1496,7 +1596,6 @@ namespace Services.TimelineChart {
 
             _resetCanvasSize();
 
-            //_renderCanvas();
             _resizeCanvas();
 
             // 현재 보여지는 엔티티 리스트만 다시 그린다.
@@ -1509,7 +1608,7 @@ namespace Services.TimelineChart {
 
         function _renderIntersectingEntitiList() {
             for (const [index, entityContainer] of _intersectingEntityContainers.entries()) {
-                _renderEntity(entityContainer);
+                _refreshEntityRow(entityContainer);
             }
         }
 
