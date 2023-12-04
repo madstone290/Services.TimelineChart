@@ -748,6 +748,7 @@ namespace Services.TimelineChart {
             _state.zoomStepY = options.zoomStepY ?? _state.cellHeight / 5;
 
             function mainCanvasBoxresizeCallback() {
+                console.log("mainCanvasBoxresizeCallback");
                 // relocate fab buttons
                 const mainCanvasBoxRect = _mainCanvasBoxElement.getBoundingClientRect();
 
@@ -761,7 +762,12 @@ namespace Services.TimelineChart {
 
                     _resizeColumnHeaders();
                     _resetCanvasSize();
-                    _renderCanvas();
+
+                    //_renderCanvas();
+                    _resizeCanvas();
+
+
+
                     _renderIntersectingEntitiList();
                 }
             }
@@ -838,6 +844,16 @@ namespace Services.TimelineChart {
             _renderGlobalRangeEvents();
         }
 
+        function _resizeCanvas() {
+            _state.lastZoomTime = new Date();
+
+            _resizeSideCanvas();
+            _resizeSidePointEvents();
+
+            _renderMainCanvas();
+            _renderGlobalRangeEvents();
+        }
+
         function _renderMainTitle() {
             _mainTitleElement.replaceChildren();
             if (_state.mainTitleRender != null) {
@@ -864,7 +880,7 @@ namespace Services.TimelineChart {
 
         let _headerElements = new Map<number, HTMLElement>();
         let _headerRightBorderEl: HTMLElement;
-        
+
         function _renderColumnHeader() {
             _columnHeaderElement.replaceChildren();
             _headerElements.clear();
@@ -900,7 +916,7 @@ namespace Services.TimelineChart {
         }
 
         function _resizeColumnHeaders() {
-            for(const [index, el] of _headerElements) {
+            for (const [index, el] of _headerElements) {
                 el.style.left = `${index * _state.cellWidth}px`;
                 el.style.width = `${_state.cellWidth}px`;
             }
@@ -958,6 +974,8 @@ namespace Services.TimelineChart {
             _mainCanvasElement.style.height = `${canvasHeight}px`;
         }
 
+
+        let _sideCanvasVLines: HTMLElement[] = []; //new Array<HTMLElement>();
         /**
          * 보조 캔버스를 그린다.
          */
@@ -966,23 +984,43 @@ namespace Services.TimelineChart {
             if (_state.hasVerticalLine)
                 _renderSideCanvasVerticalLine();
         }
+
         function _renderSideCanvasVerticalLine() {
             const canvasWidth = _sideCanvasElement.scrollWidth;
-            const lineGap = _state.cellWidth;
-            const lineHeight = _state.sideCanvasHeight;
-            const vLineCount = Math.ceil(canvasWidth / lineGap);
+            const vLineCount = Math.ceil(canvasWidth / _state.cellWidth);
 
             let left = 0;
-            for (let i = 1; i <= vLineCount; i++) {
-                left += lineGap;
+            for (let i = 0; i < vLineCount; i++) {
+                left += _state.cellWidth;
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
-                line.style.height = `${lineHeight}px`;
+                line.style.height = `${_state.sideCanvasHeight}px`;
                 line.style.left = `${left}px`;
                 _sideCanvasElement.appendChild(line);
+                _sideCanvasVLines.push(line);
+            }
+            console.log(_sideCanvasVLines);
+        }
+
+        function _resizeSideCanvas() {
+            _resizeSideCanvasVerticalLine();
+        }
+
+        function _resizeSideCanvasVerticalLine() {
+            let left = 0;
+            for (let i = 0; i < _sideCanvasVLines.length; i++) {
+                left += _state.cellWidth;
+                const line = _sideCanvasVLines[i];
+                line.style.left = `${left}px`;
             }
         }
 
+        interface PointEventContainer {
+            timeInMinutes: number;
+            containerEl: HTMLElement;
+        }
+
+        let _sidePointEventContainers = new Array<PointEventContainer>();
         function _renderSidePointEvents() {
             if (_data.sidePointEvents != null && _data.sidePointEvents.length > 0) {
                 for (const event of _data.sidePointEvents) {
@@ -990,6 +1028,7 @@ namespace Services.TimelineChart {
                 }
             }
         }
+
         function _renderSidePointEvent(event: PointEvent) {
             const evtStartTime = event.time;
             if (!isTimeInRange(evtStartTime))
@@ -1008,7 +1047,27 @@ namespace Services.TimelineChart {
             if (_state.sidePointEventRender != null)
                 _state.sidePointEventRender(event, _sideCanvasElement, containerElement);
             _sideCanvasElement.appendChild(containerElement);
+            _sidePointEventContainers.push({
+                timeInMinutes: time,
+                containerEl: containerElement
+            });
         }
+
+        function _resizeSidePointEvents() {
+
+            const width = _state.sideCanvasContentHeight;
+            for (const container of _sidePointEventContainers) {
+                const time = container.timeInMinutes;
+                
+                const center = time * _state.cellWidth / _state.cellMinutes;
+                const top = (_state.sideCanvasHeight - _state.sideCanvasContentHeight) / 2;
+
+                const containerEl = container.containerEl;
+                containerEl.style.left = `${center - (width / 2)}px`;
+                containerEl.style.top = `${top}px`;
+            }
+        }
+
 
         function _renderMainCanvas() {
             _mainCanvasElement.replaceChildren();
@@ -1432,11 +1491,13 @@ namespace Services.TimelineChart {
 
             // 차트 렌더링을 새로 진행한다.
             // 엔티티리스트는 동적으로 렌더링이 진행되므로 새로 그리지 않는다.
-            
+
             _resizeColumnHeaders();
 
             _resetCanvasSize();
-            _renderCanvas();
+
+            //_renderCanvas();
+            _resizeCanvas();
 
             // 현재 보여지는 엔티티 리스트만 다시 그린다.
             _renderIntersectingEntitiList();
