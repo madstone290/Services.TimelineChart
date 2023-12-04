@@ -474,6 +474,10 @@ namespace Services.TimelineChart {
          * 메인캔버스 수직 경계선 엘리먼트 목록
          */
         let _mainCanvasVLines: HTMLElement[] = [];
+        /**
+         * 글로벌 레인지 이벤트 엘리먼트 목록
+         */
+        let _globalRangeEventItems = new Array<RangeEventItem>();
 
         const dateTimeService = function () {
             function toMinutes(time: number) {
@@ -734,14 +738,21 @@ namespace Services.TimelineChart {
             addFabMouseDownHandler(_fabRightElement, () => shortStepX(), () => longStepX(), () => 0, () => 0);
         }
 
+        function _getPositionOfMainCanvas(e: MouseEvent) {
+            const rect = _mainCanvasElement.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            return { x, y };
+        }
+
         function _addContextMenuEventListeners() {
             // 모바일 기기에서 contextmenu 이벤트가 정상적으로 발생하는 지 확인 필요. 
             // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
             _mainCanvasElement.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
-                console.log("contextmenu", e);
-                _contextMenuEl.style.left = `${e.clientX - 300 + _mainCanvasBoxElement.scrollLeft}px`;
-                _contextMenuEl.style.top = `${e.clientY - 126 + _mainCanvasBoxElement.scrollTop}px`;
+                const { x, y } = _getPositionOfMainCanvas(e);
+                _contextMenuEl.style.left = `${x}px`;
+                _contextMenuEl.style.top = `${y}px`;
                 _contextMenuEl.style.display = "block";
             });
 
@@ -750,9 +761,6 @@ namespace Services.TimelineChart {
             _mainCanvasElement.addEventListener("touchstart", (e) => {
                 touchTimer = setTimeout(() => {
                     console.log("long touch", e);
-                    // _contextMenuEl.style.left = `${e.touches[0].clientX - 300}px`;
-                    // _contextMenuEl.style.top = `${e.touches[0].clientY - 126}px`;
-                    // _contextMenuEl.style.display = "block";
                 }, longTouchDuration);
             });
             _mainCanvasElement.addEventListener("touchend", (e) => {
@@ -995,8 +1003,6 @@ namespace Services.TimelineChart {
             _mainCanvasElement.style.height = `${canvasHeight}px`;
         }
 
-
-
         /**
          * 보조 캔버스를 그린다.
          */
@@ -1115,16 +1121,16 @@ namespace Services.TimelineChart {
             zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM);
             zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_IN);
             zoomInItem.addEventListener("click", (e) => {
-                // todo : context menu 위치를 클릭한 위치에 맞춰 변경해야 한다.
-                _zoomInCanvas();
+                const { x, y } = _getPositionOfMainCanvas(e);
+                _zoomInCanvas(x, y);
             });
 
             const zoomOutItem = document.createElement("div");
             zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM);
             zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT);
             zoomOutItem.addEventListener("click", (e) => {
-                // todo : context menu 위치를 클릭한 위치에 맞춰 변경해야 한다.
-                _zoomOutCanvas();
+                const { x, y } = _getPositionOfMainCanvas(e);
+                _zoomOutCanvas(x, y);
             });
 
             const closeItem = document.createElement("div");
@@ -1137,6 +1143,10 @@ namespace Services.TimelineChart {
             _contextMenuEl.appendChild(zoomOutItem);
             _contextMenuEl.appendChild(closeItem);
             _mainCanvasElement.appendChild(_contextMenuEl);
+        }
+
+        function _refreshContextMenu(){
+            
         }
 
         function _renderMainCanvasVLine() {
@@ -1166,9 +1176,9 @@ namespace Services.TimelineChart {
         }
 
         function _renderEntityRow(entityRow: EntityRow) {
-            const { index, entity, containerEl, lastRenderTime } = entityRow;
+            const { index, entity, containerEl } = entityRow;
             _state.tableRowRender(entity, containerEl);
-            _renderEntityEvents(entity, index, entityRow);
+            _renderEntityEvents(entity, entityRow);
 
             if (_state.hasHorizontalLine) {
                 const mainCanvasHLine = document.createElement("div");
@@ -1340,17 +1350,17 @@ namespace Services.TimelineChart {
             });
         }
 
-        function _renderEntityEvents(entity: Entity, rowIndex: number, entityRow: EntityRow) {
+        function _renderEntityEvents(entity: Entity, entityRow: EntityRow) {
             const pointEvents = entity.pointEvents;
             if (pointEvents != null && pointEvents.length > 0) {
                 for (const event of pointEvents) {
-                    _renderEntityPointEvent(event, rowIndex, entityRow);
+                    _renderEntityPointEvent(event, entityRow);
                 }
             }
             const rangeEvents = entity.rangeEvents;
             if (rangeEvents != null && rangeEvents.length > 0) {
                 for (const event of rangeEvents) {
-                    _renderEntityRangeEvent(event, rowIndex, entityRow);
+                    _renderEntityRangeEvent(event, entityRow);
                 }
             }
         }
@@ -1368,8 +1378,10 @@ namespace Services.TimelineChart {
             }
         }
 
-        function _renderEntityPointEvent(event: PointEvent, rowIndex: number, entityRow: EntityRow) {
+        function _renderEntityPointEvent(event: PointEvent, entityRow: EntityRow) {
             const evtStartTime = event.time;
+            const rowIndex = entityRow.index;
+
             if (!isTimeInRange(evtStartTime))
                 return;
             const [renderStartTime] = trucateTimeRange(evtStartTime);
@@ -1405,9 +1417,11 @@ namespace Services.TimelineChart {
             }
         }
 
-        function _renderEntityRangeEvent(event: RangeEvent, rowIndex: number, entityRow: EntityRow) {
+        function _renderEntityRangeEvent(event: RangeEvent, entityRow: EntityRow) {
             const eventStartTime = event.startTime;
             const eventEndTime = event.endTime;
+            const rowIndex = entityRow.index;
+
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
             const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
@@ -1445,12 +1459,8 @@ namespace Services.TimelineChart {
             }
         }
 
-
-
-        let _globalRangeEventContainers = new Array<RangeEventItem>();
-
         function _refreshGlobalRangeEvents() {
-            for (const container of _globalRangeEventContainers) {
+            for (const container of _globalRangeEventItems) {
                 const left = container.startTime * _state.cellWidth / _state.cellMinutes;
                 const width = container.duration * _state.cellWidth / _state.cellMinutes;
                 container.containerEl.style.left = `${left}px`;
@@ -1479,7 +1489,7 @@ namespace Services.TimelineChart {
                 _state.globalRangeEventRender(event, _mainCanvasElement, containerElement);
 
             _mainCanvasElement.appendChild(containerElement);
-            _globalRangeEventContainers.push({
+            _globalRangeEventItems.push({
                 startTime: startTime,
                 duration: duration,
                 containerEl: containerElement
@@ -1605,7 +1615,6 @@ namespace Services.TimelineChart {
             _refreshSideCanvas();
             _refreshMainCanvas();
         }
-
 
         return {
             create,
