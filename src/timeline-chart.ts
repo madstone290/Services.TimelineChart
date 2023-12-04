@@ -271,8 +271,6 @@ namespace Services.TimelineChart {
         const CLS_MAIN_CANVAS_BOX = "tc-main-canvas-box";
         const CLS_MAIN_CANVAS = "tc-main-canvas";
 
-
-
         const CLS_SIDE_CANVASE_V_BORDER = "tc-side-canvas-v-border";
         const CLS_SIDE_CANVAS_POINT_EVENT = "tc-side-canvas-point-event";
 
@@ -281,6 +279,12 @@ namespace Services.TimelineChart {
         const CLS_MAIN_CANVAS_ENTITY_POINT_EVENT = "tc-main-canvas-entity-point-event";
         const CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT = "tc-main-canvas-entity-range-event";
         const CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT = "tc-main-canvas-global-range-event";
+
+        const CLS_CONTEXT_MENU = "tc-context-menu";
+        const CLS_CONTEXT_MENU_ITEM = "tc-context-menu-item";
+        const CLS_CONTEXT_MENU_ITEM_ZOOM_IN = "tc-context-menu-item-zoom-in";
+        const CLS_CONTEXT_MENU_ITEM_ZOOM_OUT = "tc-context-menu-item-zoom-out";
+        const CLS_CONTEXT_MENU_ITEM_CLOSE = "tc-context-menu-item-close";
 
         const CLS_FAB_UP = "tc-fab-up";
         const CLS_FAB_DOWN = "tc-fab-down";
@@ -323,7 +327,8 @@ namespace Services.TimelineChart {
                         </div>
                         <div class="${CLS_MAIN_BOX}">
                             <div class="${CLS_MAIN_CANVAS_BOX}">
-                                <div class="${CLS_MAIN_CANVAS}"></div>
+                                <div class="${CLS_MAIN_CANVAS}">
+                                </div>
                             </div>
                             <div class="${CLS_FAB_UP}"></div>
                             <div class="${CLS_FAB_DOWN}"></div>
@@ -419,6 +424,7 @@ namespace Services.TimelineChart {
         let _fabDownElement: HTMLElement;
         let _fabLeftElement: HTMLElement;
         let _fabRightElement: HTMLElement;
+        let _contextMenuEl: HTMLElement;
 
         const dateTimeService = function () {
             function toMinutes(time: number) {
@@ -636,6 +642,8 @@ namespace Services.TimelineChart {
                 document.body.style.cursor = "default";
             });
 
+            _addContextMenuEventListeners();
+
             // fab buttons event. scroll main canvas
             let fabIntervalId: number;
             let fabTimeoutId: number;
@@ -677,6 +685,38 @@ namespace Services.TimelineChart {
             addFabMouseDownHandler(_fabRightElement, () => shortStepX(), () => longStepX(), () => 0, () => 0);
         }
 
+        function _addContextMenuEventListeners() {
+            // 모바일 기기에서 contextmenu 이벤트가 정상적으로 발생하는 지 확인 필요. 
+            // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
+            _mainCanvasElement.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                console.log("contextmenu", e);
+                _contextMenuEl.style.left = `${e.clientX - 300 + _mainCanvasBoxElement.scrollLeft}px`;
+                _contextMenuEl.style.top = `${e.clientY - 126 + _mainCanvasBoxElement.scrollTop}px`;
+                _contextMenuEl.style.display = "block";
+            });
+
+            let touchTimer: number;
+            let longTouchDuration = 300;
+            _mainCanvasElement.addEventListener("touchstart", (e) => {
+                touchTimer = setTimeout(() => {
+                    console.log("long touch", e);
+                    // _contextMenuEl.style.left = `${e.touches[0].clientX - 300}px`;
+                    // _contextMenuEl.style.top = `${e.touches[0].clientY - 126}px`;
+                    // _contextMenuEl.style.display = "block";
+                }, longTouchDuration);
+            });
+            _mainCanvasElement.addEventListener("touchend", (e) => {
+                if (touchTimer)
+                    clearTimeout(touchTimer);
+            });
+
+            _mainCanvasElement.addEventListener("click", (e) => {
+                _contextMenuEl.style.display = "none";
+            });
+
+
+        }
         function setOptions(options: ChartOptions) {
             Object.entries(options)
                 .filter(([key, value]) => value !== undefined)
@@ -956,9 +996,41 @@ namespace Services.TimelineChart {
 
         function _renderMainCanvas() {
             _mainCanvasElement.replaceChildren();
+            _renderContextMenu();
             if (_state.hasVerticalLine)
                 _renderMainCanvasVLine();
         }
+
+        function _renderContextMenu() {
+            _contextMenuEl = document.createElement("div");
+            _contextMenuEl.classList.add(CLS_CONTEXT_MENU);
+
+            const zoomInItem = document.createElement("div");
+            zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM);
+            zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_IN);
+            zoomInItem.addEventListener("click", (e) => {
+                _zoomInCanvas();
+            });
+
+            const zoomOutItem = document.createElement("div");
+            zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM);
+            zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT);
+            zoomOutItem.addEventListener("click", (e) => {
+                _zoomOutCanvas();
+            });
+
+            const closeItem = document.createElement("div");
+            closeItem.classList.add(CLS_CONTEXT_MENU_ITEM);
+            closeItem.classList.add(CLS_CONTEXT_MENU_ITEM_CLOSE);
+            closeItem.addEventListener("click", (e) => {
+                _contextMenuEl.style.display = "none";
+            });
+            _contextMenuEl.appendChild(zoomInItem);
+            _contextMenuEl.appendChild(zoomOutItem);
+            _contextMenuEl.appendChild(closeItem);
+            _mainCanvasElement.appendChild(_contextMenuEl);
+        }
+
         function _renderMainCanvasVLine() {
             const canvasWidth = _mainCanvasElement.scrollWidth;
             const lineGap = _state.cellWidth;

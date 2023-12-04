@@ -296,3 +296,40 @@ img {
     background-repeat: no-repeat;
     background-position: center;
 }
+
+.tc-context-menu {
+    position: absolute;
+    background-color: #ffffff;
+    border: 1px solid #999999;
+    border-radius: 4px;
+    left: 100px;
+    top: 100px;
+    z-index: 100;
+    display: none;
+}
+
+.tc-context-menu-item {
+    width: 60PX;
+    height: 40px;
+    cursor: pointer;
+}
+.tc-context-menu-item:hover {
+    background-color: #dddddd;
+}
+
+.tc-context-menu-item-zoom-in {
+    background-image: url("../asset/image/zoom-in.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+.tc-context-menu-item-zoom-out {
+    background-image: url("../asset/image/zoom-out.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.tc-context-menu-item-close {
+    background-image: url("../asset/image/close.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+}
