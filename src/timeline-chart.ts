@@ -1193,20 +1193,22 @@ namespace Services.TimelineChart {
         const callback: IntersectionObserverCallback = (changedEntries: IntersectionObserverEntry[]) => {
             changedEntries.forEach((entry: IntersectionObserverEntry, i: number) => {
                 const containerEl = entry.target as HTMLElement;
-                const entityContainer = _entityContainers.get(containerEl);
+                const entityRow = _entityContainers.get(containerEl);
 
-                if (entry.isIntersecting)
-                    _intersectingEntityContainers.set(entityContainer.index, entityContainer);
-                else
-                    _intersectingEntityContainers.delete(entityContainer.index);
-
-
-                if (entityContainer.lastRenderTime == null) {
-                    // 최초 렌더링
-                    _renderEntityRow(entityContainer);
-                } else if (entityContainer.lastRenderTime <= _state.lastZoomTime) {
-                    // 리페인트
-                    _refreshEntityRow(entityContainer);
+                if (entry.isIntersecting) {
+                    if (entityRow.lastRenderTime == null) {
+                        // 최초 렌더링
+                        console.log("_renderEntityRow", entityRow);
+                        _renderEntityRow(entityRow);
+                    } else if (entityRow.lastRenderTime <= _state.lastZoomTime) {
+                        // 리페인트
+                        console.log("_refreshEntityRow", entityRow);
+                        _refreshEntityRow(entityRow);
+                    }
+                    _intersectingEntityContainers.set(entityRow.index, entityRow);
+                }
+                else {
+                    _intersectingEntityContainers.delete(entityRow.index);
                 }
             });
         }
