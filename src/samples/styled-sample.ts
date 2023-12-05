@@ -92,6 +92,11 @@ namespace Services.TimelineChart.Samples.StyledSample {
                     description: "도색불량",
                     time: new Date(Date.parse("2020-01-01T04:45:00")),
                     entityId: 1,
+                },
+                {
+                    description: "도색불량",
+                    time: new Date(Date.parse("2020-01-01T07:01:00")),
+                    entityId: 1,
                 }
             ],
             rangeEvents: [
@@ -99,6 +104,12 @@ namespace Services.TimelineChart.Samples.StyledSample {
                     type: "op10",
                     start: new Date(Date.parse("2020-01-01T01:00:50")),
                     end: new Date(Date.parse("2020-01-01T01:20:00")),
+                    entityId: 1,
+                },
+                {
+                    type: "op10",
+                    start: new Date(Date.parse("2020-01-01T07:00:50")),
+                    end: new Date(Date.parse("2020-01-01T07:01:00")),
                     entityId: 1,
                 },
                 {
@@ -908,7 +919,8 @@ namespace Services.TimelineChart.Samples.StyledSample {
             cellHeight: cellHeight,
             paddingCellCount: 1,
             leftPanelWidth: 300,
-            cellContentHeightRatio: 0.5,
+            mainRangeContentRatio: 0.7,
+            mainPointContentRatio: 0.4,
             maxZoomScale: 5,
             hasHorizontalLine: true,
             hasVerticalLine: true,

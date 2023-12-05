@@ -1,3 +1,4 @@
+const DEBUG = true;
 namespace Services.TimelineChart {
 
     /**
@@ -110,7 +111,8 @@ namespace Services.TimelineChart {
         cellMinutes?: number;
         cellWidth?: number;
         cellHeight?: number;
-        cellContentHeightRatio?: number;
+        mainRangeContentRatio?: number;
+        mainPointContentRatio?: number;
         minZoomScale?: number;
         maxZoomScale?: number;
         hasHorizontalLine?: boolean;
@@ -333,7 +335,8 @@ namespace Services.TimelineChart {
         const CLS_CONTEXT_MENU_ITEM_CLOSE = "tc-context-menu-item-close";
 
         const VAR_CELL_HEIGHT = "--tc-cell-height";
-        const VAR_CELL_CONTENT_HEIGHT = "--tc-cell-content-height";
+        const VAR_MAIN_POINT_CONTENT_HEIGHT = "--tc-main-point-content-height";
+        const VAR_MAIN_RANGE_CONTENT_HEIGHT = "--tc-main-range-content-height";
         const VAR_SCROLL_WIDTH = "--tc-scroll-width";
 
         const VAR_CHART_HEIGHT = "--tc-height";
@@ -527,20 +530,29 @@ namespace Services.TimelineChart {
          * 버튼 클릭시 작동할 세로스크롤 길이
          */
         let _buttonScrollStepY: number = 200;
-
         /**
          * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
          */
         let _controllerLocation: controllerLocation;
-
+        /**
+         * 컨트롤러 위치 클래스 맵
+         */
         let _controllerLocationClassMap = new Map<controllerLocation, string>([
             ["topLeft", CLS_CONTEXT_MENU_TOP_LEFT],
             ["topRight", CLS_CONTEXT_MENU_TOP_RIGHT],
             ["bottomLeft", CLS_CONTEXT_MENU_BOTTOM_LEFT],
             ["bottomRight", CLS_CONTEXT_MENU_BOTTOM_RIGHT]
         ]);
+        /**
+         * 메인 캔버스 레인지 이벤트의 컨텐츠 영역의 높이 비율
+         */
+        let _mainRangeContentRatio: number = 0.8;
+        /**
+         * 메인 캔버스 포인트 이벤트의 컨텐츠 영역의 높이 비율
+         */
+        let _mainPointContentRatio: number = 0.6;
 
-        const cssService = function () {
+        const css = function () {
             function getVariable(name: string) {
                 return getComputedStyle(_rootElement).getPropertyValue(name);
             }
@@ -570,13 +582,11 @@ namespace Services.TimelineChart {
 
             function getColumnPanelHeight() { return getColumnTitleHeight() + getColumnHeaderHeight() + getSideCanvasHeight(); }
 
-            function getCellHeight() { return parseInt(getVariable(VAR_CELL_HEIGHT)); }
             function setCellHeight(height: number) { setVariable(VAR_CELL_HEIGHT, `${height}px`); }
-
-            function getCellContentHeight() { return parseInt(getVariable(VAR_CELL_CONTENT_HEIGHT)); }
-            function setCellContentHeight(height: number) { setVariable(VAR_CELL_CONTENT_HEIGHT, `${height}px`); }
-
             function setScrollWidth(width: number) { setVariable(VAR_SCROLL_WIDTH, `${width}px`); }
+
+            function setMainRangeContentHeight(height: number) { setVariable(VAR_MAIN_RANGE_CONTENT_HEIGHT, `${height}px`); }
+            function setMainPointContentHeight(height: number) { setVariable(VAR_MAIN_POINT_CONTENT_HEIGHT, `${height}px`); }
 
             return {
                 getVariable,
@@ -598,12 +608,11 @@ namespace Services.TimelineChart {
                 setSideCanvasContentHeight,
                 getColumnPanelHeight,
 
-                getCellHeight,
                 setCellHeight,
-                getCellContentHeight,
-                setCellContentHeight,
 
-                setScrollWidth
+                setScrollWidth,
+                setMainRangeContentHeight,
+                setMainPointContentHeight
             }
         }();
 
@@ -648,33 +657,33 @@ namespace Services.TimelineChart {
         function _setChartSize(width: number, height: number) {
             _state.chartWidth = width;
             _state.chartHeight = height;
-            cssService.setChartWidth(width);
-            cssService.setChartHeight(height);
+            css.setChartWidth(width);
+            css.setChartHeight(height);
         }
 
         function _setLeftPanelWidth(width: number) {
             _state.leftPanelWidth = width;
-            cssService.setLeftPanelWidth(width);
+            css.setLeftPanelWidth(width);
         }
 
         function _setColumnTitleHeight(height: number) {
             _state.columnTitleHeight = height;
-            cssService.setColumnTitleHeight(height);
+            css.setColumnTitleHeight(height);
         }
 
         function _setColumnHeaderHeight(height: number) {
             _state.columnHeaderHeight = height;
-            cssService.setColumnHeaderHeight(height);
+            css.setColumnHeaderHeight(height);
         }
 
         function _setSideCanvasHeight(height: number) {
             _state.sideCanvasHeight = height;
-            cssService.setSideCanvasHeight(height);
+            css.setSideCanvasHeight(height);
         }
 
         function _setSideCanvasContentHeight(height: number) {
             _state.sideCanvasContentHeight = height;
-            cssService.setSideCanvasContentHeight(height);
+            css.setSideCanvasContentHeight(height);
         }
 
         function _setCellWidth(width: number) {
@@ -683,17 +692,15 @@ namespace Services.TimelineChart {
 
         function _setCellHeight(height: number) {
             _state.cellHeight = height;
-            cssService.setCellHeight(height);
-        }
-
-        function _setCellContentHeight(height: number) {
-            _state.cellContentHeight = height;
-            cssService.setCellContentHeight(height);
+            //todo _cellHeight = height;
+            css.setCellHeight(height);
+            css.setMainRangeContentHeight(height * _mainRangeContentRatio);
+            css.setMainPointContentHeight(height * _mainPointContentRatio);
         }
 
         function _setScrollWidth(width: number) {
             _state.scrollWidth = width;
-            cssService.setScrollWidth(width);
+            css.setScrollWidth(width);
         }
 
         /**
@@ -733,6 +740,13 @@ namespace Services.TimelineChart {
             const clientX = rect.left + rect.width / 2;
             const clientY = rect.top + rect.height / 2;
             return { clientX, clientY };
+        }
+
+        function _getMainRangeContentHeight() {
+            return _state.cellHeight * _mainRangeContentRatio;
+        }
+        function _getMainPointContentHeight() {
+            return _state.cellHeight * _mainPointContentRatio;
         }
 
         /**
@@ -865,7 +879,9 @@ namespace Services.TimelineChart {
             // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
             // 고정 컨트롤러가 아닌 경우에만 컨텍스트 메뉴 팝업 적용.
             _mainCanvasElement.addEventListener("contextmenu", (e) => {
-                e.preventDefault();
+                if (!DEBUG) {
+                    e.preventDefault();
+                }
                 if (_fixedController)
                     return;
                 const { x, y } = _getPositionInMainCanvasBox(e.clientX, e.clientY);
@@ -910,7 +926,8 @@ namespace Services.TimelineChart {
             _buttonScrollStepX = options.buttonScrollStepX ?? _buttonScrollStepX;
             _buttonScrollStepY = options.buttonScrollStepY ?? _buttonScrollStepY;
             _controllerLocation = options.controllerLocation ?? _controllerLocation;
-
+            _mainRangeContentRatio = options.mainRangeContentRatio ?? _mainRangeContentRatio;
+            _mainPointContentRatio = options.mainPointContentRatio ?? _mainPointContentRatio;
 
             _setLeftPanelWidth(options.leftPanelWidth ?? _state.leftPanelWidth);
             _setColumnTitleHeight(options.columnTitleHeight ?? _state.columnTitleHeight);
@@ -919,11 +936,10 @@ namespace Services.TimelineChart {
             _setSideCanvasContentHeight(_state.cellHeight * (options.sideCanvasContentHeightRatio ?? _state.sideCanvasContentHeightRatio));
             _setCellWidth(options.cellWidth ?? _state.cellWidth);
             _setCellHeight(options.cellHeight ?? _state.cellHeight);
-            _setCellContentHeight(_state.cellHeight * (options.cellContentHeightRatio ?? _state.cellContentHeightRatio));
-            _setScrollWidth(_state.scrollWidth);
 
+            _setScrollWidth(_state.scrollWidth);
             _state.sideCanvasContentHeight = _state.sideCanvasContentHeightRatio * _state.sideCanvasHeight;
-            _state.cellContentHeight = _state.cellContentHeightRatio * _state.cellHeight;
+
 
             _state.chartRenderStartTime = new Date(_state.chartStartTime.getTime() - toTime(_state.cellMinutes * _state.paddingCellCount))
             _state.chartRenderEndTime = new Date(_state.chartEndTime.getTime() + toTime(_state.cellMinutes * _state.paddingCellCount))
@@ -1451,12 +1467,11 @@ namespace Services.TimelineChart {
         function _refreshEntityPointEvents(entityRow: EntityRow) {
             for (const container of entityRow.pointEventContainers) {
                 const time = container.startTime;
-
                 const center = time * _state.cellWidth / _state.cellMinutes;
-                const top = (_state.cellHeight * entityRow.index) + ((_state.cellHeight - _state.cellContentHeight) / 2) - 1;
-
+                const contentHeight = _getMainPointContentHeight();
+                const top = (_state.cellHeight * entityRow.index) + ((_state.cellHeight - contentHeight) / 2) - 1;
                 const containerEl = container.containerEl;
-                containerEl.style.left = `${center - (_state.cellContentHeight / 2)}px`;
+                containerEl.style.left = `${center - (contentHeight / 2)}px`;
                 containerEl.style.top = `${top}px`;
             }
         }
@@ -1472,8 +1487,9 @@ namespace Services.TimelineChart {
             const containerElement = document.createElement("div");
             const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const center = time * _state.cellWidth / _state.cellMinutes;
-            const top = (_state.cellHeight * rowIndex) + ((_state.cellHeight - _state.cellContentHeight) / 2) - 1;
-            const width = _state.cellContentHeight;
+            const contentHeight = _getMainPointContentHeight();
+            const top = (_state.cellHeight * rowIndex) + ((_state.cellHeight - contentHeight) / 2) - 1;
+            const width = contentHeight;
             containerElement.style.left = `${center - (width / 2)}px`;
             containerElement.style.top = `${top}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_POINT_EVENT);
@@ -1515,7 +1531,7 @@ namespace Services.TimelineChart {
             const left = startTime * _state.cellWidth / _state.cellMinutes;
             const width = duration * _state.cellWidth / _state.cellMinutes;
             const top = (_state.cellHeight * rowIndex)
-                + (_state.cellHeight - _state.cellContentHeight) / 2
+                + (_state.cellHeight - _getMainRangeContentHeight()) / 2
                 - 1;
 
             containerElement.style.left = `${left}px`;
@@ -1629,9 +1645,7 @@ namespace Services.TimelineChart {
                 const prevCellHeight = _state.cellHeight;
                 const newCellHeight = _originalCellHeight * scale;
                 const newCellContentHeight = _state.cellContentHeightRatio * newCellHeight;
-                cssService.setCellHeight(newCellHeight);
-                cssService.setCellContentHeight(newCellContentHeight);
-
+                _setCellHeight(newCellHeight);
                 if (pivotPointY) {
                     const scrollOffset = pivotPointY - scrollTop;
                     const newPivotPointY = pivotPointY * newCellContentHeight / prevCellHeight; // 기준점까지의 거리

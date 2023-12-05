@@ -529,7 +529,7 @@ namespace Services.TimelineChart.Samples.BaseSample {
             cellMinutes: cellMinutes,
             cellWidth: cellWidth,
             cellHeight: cellHeight,
-            cellContentHeightRatio: 0.6,
+            mainRangeContentRatio: 0.6,
             hasHorizontalLine: true,
             hasVerticalLine: true,
             maxZoomScale: 10,

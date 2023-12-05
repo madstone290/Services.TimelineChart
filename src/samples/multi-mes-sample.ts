@@ -681,7 +681,7 @@ namespace Services.TimelineChart.Samples.MultiMesSample {
             cellMinutes: cellMinutes,
             cellWidth: cellWidth,
             cellHeight: cellHeight,
-            cellContentHeightRatio: 0.5,
+            mainRangeContentRatio: 0.5,
             hasHorizontalLine: true,
             hasVerticalLine: true,
             sidePointEventRender: machinePointEventRender,

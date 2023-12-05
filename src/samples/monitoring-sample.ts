@@ -886,7 +886,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             cellWidth: cellWidth,
             cellHeight: cellHeight,
             paddingCellCount: 1,
-            cellContentHeightRatio: 0.5,
+            mainRangeContentRatio: 0.5,
             maxZoomScale: 10,
             hasHorizontalLine: true,
             hasVerticalLine: true,
