@@ -924,8 +924,8 @@ namespace Services.TimelineChart.Samples.StyledSample {
             tableColumnRender: tableColumnRender,
             columnTitleRender: columnTitleRender,
             rowHoverColor: "#ccc",
-            fabScrollStepX: 400,
-            fabScrollStepY: 400,
+            buttonScrollStepX: 400,
+            buttonScrollStepY: 400,
             fixedController: true
         };
 

@@ -143,14 +143,14 @@ namespace Services.TimelineChart {
         rowHoverColor?: string;
 
         /**
-        * fab 버튼 클릭시 작동할 세로스크롤 길이
+        * 버튼 클릭시 작동할 세로스크롤 길이
         */
-        fabScrollStepY?: number;
+        buttonScrollStepY?: number;
 
         /**
-        * fab 버튼 클릭시 작동할 가로스크롤 길이
+        * 버튼 클릭시 작동할 가로스크롤 길이
         */
-        fabScrollStepX?: number;
+        buttonScrollStepX?: number;
 
         /**
          * 컨트롤러 고정 여부
@@ -174,10 +174,6 @@ namespace Services.TimelineChart {
         cellMinutes: number;
         cellWidth: number;
         cellHeight: number;
-        // minCellWidth: number;
-        // minCellHeight: number;
-        // maxCellWidth: number;
-        // maxCellHeight: number;
         currentZoomScale: number;
         chartHeight: number;
         chartWidth: number;
@@ -247,14 +243,14 @@ namespace Services.TimelineChart {
         strictTimeRange: boolean;
 
         /**
-         * fab 버튼 클릭시 작동할 세로스크롤 길이
+         * 버튼 클릭시 작동할 세로스크롤 길이
          */
-        fabScrollStepY: number;
+        buttonScrollStepY: number;
 
         /**
-         * fab 버튼 클릭시 작동할 가로스크롤 길이
+         * 버튼 클릭시 작동할 가로스크롤 길이
          */
-        fabScrollStepX: number;
+        buttonScrollStepX: number;
 
         /**
          * 테이블 행에 마우스를 올렸을 때 배경색
@@ -427,8 +423,8 @@ namespace Services.TimelineChart {
             mainTitleRender: null,
             columnTitleRender: null,
             strictTimeRange: false,
-            fabScrollStepX: 400,
-            fabScrollStepY: 200,
+            buttonScrollStepX: 400,
+            buttonScrollStepY: 200,
             tableColumnRender: null,
             entityEventSearchScrollOffset: -100
         }
@@ -512,6 +508,15 @@ namespace Services.TimelineChart {
          * 컨트롤러 고정 여부
          */
         let _fixedController: boolean = true;
+        /**
+         * 버튼 클릭시 작동할 가로스크롤 길이
+         */
+        let _buttonScrollStepX: number = 400;
+        /**
+         * 버튼 클릭시 작동할 세로스크롤 길이
+         */
+        let _buttonScrollStepY: number = 200;
+
 
 
         const dateTimeService = function () {
@@ -768,10 +773,10 @@ namespace Services.TimelineChart {
             const fabIntervalTimeout = 30;
             const fabTimeoutTimeout = 300;
 
-            const shortStepX = () => _state.fabScrollStepX;
-            const shortStepY = () => _state.fabScrollStepY;
-            const longStepX = () => _state.fabScrollStepX / 2;
-            const longStepY = () => _state.fabScrollStepY / 2;
+            const shortStepX = () => _state.buttonScrollStepX;
+            const shortStepY = () => _state.buttonScrollStepY;
+            const longStepX = () => _state.buttonScrollStepX / 2;
+            const longStepY = () => _state.buttonScrollStepY / 2;
 
             const addDirectionDownHandler = (btn: HTMLElement, shortX: () => number, longX: () => number, shortY: () => number, longY: () => number) => {
                 btn.addEventListener("mousedown", function (e) {
@@ -871,7 +876,9 @@ namespace Services.TimelineChart {
         function setOptions(options: ChartOptions) {
             _originalCellWidth = options.cellWidth ?? _state.cellWidth;
             _originalCellHeight = options.cellHeight ?? _state.cellHeight;
-            _fixedController = options.fixedController ?? true;
+            _fixedController ??= options.fixedController;
+            _buttonScrollStepX ??= options.buttonScrollStepX;
+            _buttonScrollStepY ??= options.buttonScrollStepY;
 
             Object.entries(options)
                 .filter(([key, value]) => value !== undefined)
@@ -948,7 +955,7 @@ namespace Services.TimelineChart {
          */
         function render() {
             // 렌더링 전 적용할 설정을 적용한다.
-            if(_fixedController) {
+            if (_fixedController) {
                 _contextMenuEl.classList.add(CLS_CONTEXT_MENU_FIXED);
             }
 
