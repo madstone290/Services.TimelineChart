@@ -900,10 +900,10 @@ namespace Services.TimelineChart {
         function setOptions(options: ChartOptions) {
             _originalCellWidth = options.cellWidth ?? _state.cellWidth;
             _originalCellHeight = options.cellHeight ?? _state.cellHeight;
-            _fixedController ??= options.fixedController;
-            _buttonScrollStepX ??= options.buttonScrollStepX;
-            _buttonScrollStepY ??= options.buttonScrollStepY;
-            _controllerLocation ??= options.controllerLocation;
+            _fixedController = options.fixedController ?? _fixedController;
+            _buttonScrollStepX = options.buttonScrollStepX ?? _buttonScrollStepX;
+            _buttonScrollStepY = options.buttonScrollStepY ?? _buttonScrollStepY;
+            _controllerLocation = options.controllerLocation ?? _controllerLocation;
 
             Object.entries(options)
                 .filter(([key, value]) => value !== undefined)
