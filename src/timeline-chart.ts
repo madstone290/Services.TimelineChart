@@ -898,6 +898,12 @@ namespace Services.TimelineChart {
         }
 
         function setOptions(options: ChartOptions) {
+            Object.entries(options)
+                .filter(([key, value]) => value !== undefined)
+                .forEach(([key, value]) => {
+                    (_state as any)[key] = value;
+                });
+
             _originalCellWidth = options.cellWidth ?? _state.cellWidth;
             _originalCellHeight = options.cellHeight ?? _state.cellHeight;
             _fixedController = options.fixedController ?? _fixedController;
@@ -905,11 +911,6 @@ namespace Services.TimelineChart {
             _buttonScrollStepY = options.buttonScrollStepY ?? _buttonScrollStepY;
             _controllerLocation = options.controllerLocation ?? _controllerLocation;
 
-            Object.entries(options)
-                .filter(([key, value]) => value !== undefined)
-                .forEach(([key, value]) => {
-                    (_state as any)[key] = value;
-                });
 
             _setLeftPanelWidth(options.leftPanelWidth ?? _state.leftPanelWidth);
             _setColumnTitleHeight(options.columnTitleHeight ?? _state.columnTitleHeight);
