@@ -79,6 +79,8 @@ namespace Services.TimelineChart {
         rangeEventContainers: RangeEventItem[];
     }
 
+    type controllerLocation = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
+
     export interface ChartData {
 
         entities: Entity[];
@@ -156,6 +158,11 @@ namespace Services.TimelineChart {
          * 컨트롤러 고정 여부
          */
         fixedController?: boolean;
+
+        /**
+         * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
+         */
+        controllerLocation?: controllerLocation;
     }
 
     interface ChartState {
@@ -309,6 +316,10 @@ namespace Services.TimelineChart {
 
         const CLS_CONTEXT_MENU = "tc-context-menu";
         const CLS_CONTEXT_MENU_FIXED = "tc-context-menu-fixed";
+        const CLS_CONTEXT_MENU_TOP_LEFT = "tc-context-menu-top-left"
+        const CLS_CONTEXT_MENU_TOP_RIGHT = "tc-context-menu-top-right"
+        const CLS_CONTEXT_MENU_BOTTOM_LEFT = "tc-context-menu-bottom-left";
+        const CLS_CONTEXT_MENU_BOTTOM_RIGHT = "tc-context-menu-bottom-right";
         const CLS_CONTEXT_MENU_CLOSED = "tc-context-menu-closed";
         const CLS_CONTEXT_MENU_GROUP1 = "tc-context-menu-group1";
         const CLS_CONTEXT_MENU_GROUP2 = "tc-context-menu-group2";
@@ -517,8 +528,17 @@ namespace Services.TimelineChart {
          */
         let _buttonScrollStepY: number = 200;
 
+        /**
+         * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
+         */
+        let _controllerLocation: controllerLocation;
 
-
+        let _controllerLocationClassMap = new Map<controllerLocation, string>([
+            ["topLeft", CLS_CONTEXT_MENU_TOP_LEFT],
+            ["topRight", CLS_CONTEXT_MENU_TOP_RIGHT],
+            ["bottomLeft", CLS_CONTEXT_MENU_BOTTOM_LEFT],
+            ["bottomRight", CLS_CONTEXT_MENU_BOTTOM_RIGHT]
+        ]);
 
         const cssService = function () {
             function getVariable(name: string) {
@@ -883,6 +903,7 @@ namespace Services.TimelineChart {
             _fixedController ??= options.fixedController;
             _buttonScrollStepX ??= options.buttonScrollStepX;
             _buttonScrollStepY ??= options.buttonScrollStepY;
+            _controllerLocation ??= options.controllerLocation;
 
             Object.entries(options)
                 .filter(([key, value]) => value !== undefined)
@@ -961,6 +982,8 @@ namespace Services.TimelineChart {
             // 렌더링 전 적용할 설정을 적용한다.
             if (_fixedController) {
                 _contextMenuEl.classList.add(CLS_CONTEXT_MENU_FIXED);
+                const locationClass = _controllerLocationClassMap.get(_controllerLocation);
+                _contextMenuEl.classList.add(locationClass);
             }
 
             _renderMainTitle();

@@ -237,9 +237,27 @@ img {
     display: none;
     flex-direction: row;
 }
-
 .tc-context-menu-fixed {
     display: flex;
+}
+
+.tc-context-menu-top-left {
+    display: flex;
+    top: 2px;
+    left: 2px;
+}
+
+.tc-context-menu-top-right {
+    top: 2px;
+    right: calc(var(--tc-scroll-width) + 2px);
+}
+
+.tc-context-menu-bottom-left {
+    bottom: calc(var(--tc-scroll-height) + 2px);
+    left: 2px;
+}
+
+.tc-context-menu-bottom-right {
     bottom: calc(var(--tc-scroll-height) + 2px);
     right: calc(var(--tc-scroll-width) + 2px);
 }
