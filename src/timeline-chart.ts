@@ -356,6 +356,11 @@ namespace Services.TimelineChart {
                                 <div class="${CLS_MAIN_CANVAS}">
                                 </div>
                             </div>
+                            <div class="${CLS_CONTEXT_MENU}">
+                                <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_IN}"></div>
+                                <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_OUT}"></div>
+                                <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_CLOSE}"></div>
+                            </div>
                             <div class="${CLS_FAB_UP}"></div>
                             <div class="${CLS_FAB_DOWN}"></div>
                             <div class="${CLS_FAB_LEFT}"></div>
@@ -428,11 +433,15 @@ namespace Services.TimelineChart {
         let _sideCanvasElement: HTMLElement;
         let _mainCanvasBoxElement: HTMLElement;
         let _mainCanvasElement: HTMLElement;
+        let _contextMenuEl: HTMLElement;
+        let _zoomInMenuItemEl: HTMLElement;
+        let _zoomOutMenuItemEl: HTMLElement;
+        let _closeMenuItemEl: HTMLElement;
         let _fabUpElement: HTMLElement;
         let _fabDownElement: HTMLElement;
         let _fabLeftElement: HTMLElement;
         let _fabRightElement: HTMLElement;
-        let _contextMenuEl: HTMLElement;
+
 
         let _sideCanvasVLines: HTMLElement[] = [];
         let _sidePointEventItems = new Array<PointEventItem>();
@@ -591,10 +600,18 @@ namespace Services.TimelineChart {
             _sideCanvasElement = container.getElementsByClassName(CLS_SIDE_CANVAS)[0] as HTMLElement;
             _mainCanvasBoxElement = container.getElementsByClassName(CLS_MAIN_CANVAS_BOX)[0] as HTMLElement;
             _mainCanvasElement = container.getElementsByClassName(CLS_MAIN_CANVAS)[0] as HTMLElement;
+
+            _contextMenuEl = container.getElementsByClassName(CLS_CONTEXT_MENU)[0] as HTMLElement;
+            _zoomInMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_IN)[0] as HTMLElement;
+            _zoomOutMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)[0] as HTMLElement;
+            _closeMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_CLOSE)[0] as HTMLElement;
+            _addContextMenuEventListeners();
+
             _fabUpElement = container.getElementsByClassName(CLS_FAB_UP)[0] as HTMLElement;
             _fabDownElement = container.getElementsByClassName(CLS_FAB_DOWN)[0] as HTMLElement;
             _fabLeftElement = container.getElementsByClassName(CLS_FAB_LEFT)[0] as HTMLElement;
             _fabRightElement = container.getElementsByClassName(CLS_FAB_RIGHT)[0] as HTMLElement;
+
 
             _addEventListeners();
 
@@ -653,6 +670,69 @@ namespace Services.TimelineChart {
             cssService.setScrollWidth(width);
         }
 
+        function _getPositionInContainer(e: MouseEvent, container: HTMLElement) {
+            const rect = container.getBoundingClientRect();
+            console.log(rect, e);
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            return { x, y };
+        }
+
+        function _getPositionInMainCanvas(e: MouseEvent) {
+            return _getPositionInContainer(e, _mainCanvasElement);
+        }
+
+        function _getPositionInMainCanvasBox(e: MouseEvent) {
+            return _getPositionInContainer(e, _mainCanvasBoxElement);
+        }
+
+        function _addContextMenuEventListeners() {
+            _zoomInMenuItemEl.addEventListener("click", (e) => {
+                const { x, y } = _getPositionInMainCanvas(e);
+                _zoomIn(x, y);
+            });
+
+            _zoomOutMenuItemEl.addEventListener("click", (e) => {
+                const { x, y } = _getPositionInMainCanvas(e);
+                _zoomOut(x, y);
+            });
+
+            _closeMenuItemEl.addEventListener("click", (e) => {
+                _contextMenuEl.style.display = "none";
+            });
+
+            // 모바일 기기에서 contextmenu 이벤트가 정상적으로 발생하는 지 확인 필요. 
+            // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
+            _mainCanvasElement.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                const { x, y } = _getPositionInMainCanvasBox(e);
+                _contextMenuEl.style.left = `${x}px`;
+                _contextMenuEl.style.top = `${y}px`;
+                _contextMenuEl.style.display = "block";
+            });
+
+            let touchTimer: number;
+            let longTouchDuration = 300;
+            _mainCanvasElement.addEventListener("touchstart", (e) => {
+                touchTimer = setTimeout(() => {
+                    console.log("long touch", e);
+                }, longTouchDuration);
+            });
+            _mainCanvasElement.addEventListener("touchend", (e) => {
+                if (touchTimer)
+                    clearTimeout(touchTimer);
+            });
+
+            _mainCanvasElement.addEventListener("click", (e) => {
+                const targetEl = e.target as HTMLElement;
+                if (targetEl == _zoomInMenuItemEl || targetEl == _zoomOutMenuItemEl) {
+                    return;
+                }
+                _contextMenuEl.style.display = "none";
+            });
+
+        }
+
 
         function _addEventListeners() {
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
@@ -706,8 +786,6 @@ namespace Services.TimelineChart {
                 document.body.style.cursor = "default";
             });
 
-            _addContextMenuEventListeners();
-
             // fab buttons event. scroll main canvas
             let fabIntervalId: number;
             let fabTimeoutId: number;
@@ -749,48 +827,6 @@ namespace Services.TimelineChart {
             addFabMouseDownHandler(_fabRightElement, () => shortStepX(), () => longStepX(), () => 0, () => 0);
         }
 
-        function _getPositionOfMainCanvas(e: MouseEvent) {
-            const rect = _mainCanvasElement.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            return { x, y };
-        }
-
-        function _addContextMenuEventListeners() {
-            // 모바일 기기에서 contextmenu 이벤트가 정상적으로 발생하는 지 확인 필요. 
-            // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
-            _mainCanvasElement.addEventListener("contextmenu", (e) => {
-                e.preventDefault();
-                const { x, y } = _getPositionOfMainCanvas(e);
-                const time = x / _state.cellWidth * _state.cellMinutes;
-                _contextMenuEl.style.left = `${x}px`;
-                _contextMenuEl.style.top = `${y}px`;
-                _contextMenuEl.style.display = "block";
-                (_contextMenuEl as any).tag = time;
-            });
-
-            let touchTimer: number;
-            let longTouchDuration = 300;
-            _mainCanvasElement.addEventListener("touchstart", (e) => {
-                touchTimer = setTimeout(() => {
-                    console.log("long touch", e);
-                }, longTouchDuration);
-            });
-            _mainCanvasElement.addEventListener("touchend", (e) => {
-                if (touchTimer)
-                    clearTimeout(touchTimer);
-            });
-
-            _mainCanvasElement.addEventListener("click", (e) => {
-                const targetEl = e.target as HTMLElement;
-                if (targetEl.classList.contains(CLS_CONTEXT_MENU_ITEM_ZOOM_IN) || targetEl.classList.contains(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)) {
-                    return;
-                }
-                _contextMenuEl.style.display = "none";
-            });
-
-
-        }
         function setOptions(options: ChartOptions) {
             _originalCellWidth = options.cellWidth ?? _state.cellWidth;
             _originalCellHeight = options.cellHeight ?? _state.cellHeight;
@@ -1101,7 +1137,6 @@ namespace Services.TimelineChart {
 
         function _renderMainCanvas() {
             _mainCanvasElement.replaceChildren();
-            _renderContextMenu();
             if (_state.hasVerticalLine)
                 _renderMainCanvasVLine();
             _renderGlobalRangeEvents();
@@ -1111,55 +1146,12 @@ namespace Services.TimelineChart {
             _refreshMainCanvasVLines();
             _refreshGlobalRangeEvents();
             _refreshIntersectingEntitiList();
-            _refreshContextMenu();
         }
 
         function _refreshIntersectingEntitiList() {
             for (const [_, entityRow] of _intersectingEntityRows.entries()) {
                 _refreshEntityRow(entityRow);
             }
-        }
-
-        function _renderContextMenu() {
-            _contextMenuEl = document.createElement("div");
-            _contextMenuEl.classList.add(CLS_CONTEXT_MENU);
-
-            const zoomInItem = document.createElement("div");
-            zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM);
-            zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_IN);
-            zoomInItem.addEventListener("click", (e) => {
-                const { x, y } = _getPositionOfMainCanvas(e);
-                _zoomIn(x, y);
-            });
-
-            const zoomOutItem = document.createElement("div");
-            zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM);
-            zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT);
-            zoomOutItem.addEventListener("click", (e) => {
-                const { x, y } = _getPositionOfMainCanvas(e);
-                _zoomOut(x, y);
-            });
-
-            const closeItem = document.createElement("div");
-            closeItem.classList.add(CLS_CONTEXT_MENU_ITEM);
-            closeItem.classList.add(CLS_CONTEXT_MENU_ITEM_CLOSE);
-            closeItem.addEventListener("click", (e) => {
-                _contextMenuEl.style.display = "none";
-            });
-            _contextMenuEl.appendChild(zoomInItem);
-            _contextMenuEl.appendChild(zoomOutItem);
-            _contextMenuEl.appendChild(closeItem);
-            _mainCanvasElement.appendChild(_contextMenuEl);
-        }
-
-        function _refreshContextMenu() {
-            console.log("_refreshContextMenu", _contextMenuEl.style.left, _prevZoomScale, _currZoomScale);
-            const time = (_contextMenuEl as any).tag;
-            const left = time * _state.cellWidth / _state.cellMinutes;
-            // const prevLeft = _contextMenuEl.style.left;
-            // const zoomDiff = _currZoomScale - _prevZoomScale;
-            // const newLeft = parseFloat(prevLeft) * (1 + zoomDiff);
-            _contextMenuEl.style.left = `${left}px`;
         }
 
         function _renderMainCanvasVLine() {
