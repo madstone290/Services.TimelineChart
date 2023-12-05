@@ -605,15 +605,15 @@ namespace Services.TimelineChart {
             _zoomInMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_IN)[0] as HTMLElement;
             _zoomOutMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)[0] as HTMLElement;
             _closeMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_CLOSE)[0] as HTMLElement;
-            _addContextMenuEventListeners();
 
             _fabUpElement = container.getElementsByClassName(CLS_FAB_UP)[0] as HTMLElement;
             _fabDownElement = container.getElementsByClassName(CLS_FAB_DOWN)[0] as HTMLElement;
             _fabLeftElement = container.getElementsByClassName(CLS_FAB_LEFT)[0] as HTMLElement;
             _fabRightElement = container.getElementsByClassName(CLS_FAB_RIGHT)[0] as HTMLElement;
 
-
-            _addEventListeners();
+            _addCanvasBasicEventListeners();
+            _addContextMenuEventListeners();
+            _addFabEventListeners();
 
             // 컨테이너 크기에 맞춰 차트 크기를 조정한다.
             _setChartSize(container.clientWidth, container.clientHeight);
@@ -672,7 +672,6 @@ namespace Services.TimelineChart {
 
         function _getPositionInContainer(e: MouseEvent, container: HTMLElement) {
             const rect = container.getBoundingClientRect();
-            console.log(rect, e);
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             return { x, y };
@@ -686,55 +685,10 @@ namespace Services.TimelineChart {
             return _getPositionInContainer(e, _mainCanvasBoxElement);
         }
 
-        function _addContextMenuEventListeners() {
-            _zoomInMenuItemEl.addEventListener("click", (e) => {
-                const { x, y } = _getPositionInMainCanvas(e);
-                _zoomIn(x, y);
-            });
-
-            _zoomOutMenuItemEl.addEventListener("click", (e) => {
-                const { x, y } = _getPositionInMainCanvas(e);
-                _zoomOut(x, y);
-            });
-
-            _closeMenuItemEl.addEventListener("click", (e) => {
-                _contextMenuEl.style.display = "none";
-            });
-
-            // 모바일 기기에서 contextmenu 이벤트가 정상적으로 발생하는 지 확인 필요. 
-            // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
-            _mainCanvasElement.addEventListener("contextmenu", (e) => {
-                e.preventDefault();
-                const { x, y } = _getPositionInMainCanvasBox(e);
-                _contextMenuEl.style.left = `${x}px`;
-                _contextMenuEl.style.top = `${y}px`;
-                _contextMenuEl.style.display = "block";
-            });
-
-            let touchTimer: number;
-            let longTouchDuration = 300;
-            _mainCanvasElement.addEventListener("touchstart", (e) => {
-                touchTimer = setTimeout(() => {
-                    console.log("long touch", e);
-                }, longTouchDuration);
-            });
-            _mainCanvasElement.addEventListener("touchend", (e) => {
-                if (touchTimer)
-                    clearTimeout(touchTimer);
-            });
-
-            _mainCanvasElement.addEventListener("click", (e) => {
-                const targetEl = e.target as HTMLElement;
-                if (targetEl == _zoomInMenuItemEl || targetEl == _zoomOutMenuItemEl) {
-                    return;
-                }
-                _contextMenuEl.style.display = "none";
-            });
-
-        }
-
-
-        function _addEventListeners() {
+        /**
+         * 캔버스 기본 이벤트 리스너를 추가한다.(스크롤, 마우스드래그, 마우스휠)
+         */
+        function _addCanvasBasicEventListeners() {
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
                 // 가로스크롤 동기화
                 _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
@@ -785,7 +739,9 @@ namespace Services.TimelineChart {
             document.body.addEventListener("keyup", (e) => {
                 document.body.style.cursor = "default";
             });
+        }
 
+        function _addFabEventListeners() {
             // fab buttons event. scroll main canvas
             let fabIntervalId: number;
             let fabTimeoutId: number;
@@ -825,6 +781,52 @@ namespace Services.TimelineChart {
             addFabMouseDownHandler(_fabDownElement, () => 0, () => 0, () => shortStepY(), () => longStepY());
             addFabMouseDownHandler(_fabLeftElement, () => -shortStepX(), () => -longStepX(), () => 0, () => 0);
             addFabMouseDownHandler(_fabRightElement, () => shortStepX(), () => longStepX(), () => 0, () => 0);
+        }
+
+        function _addContextMenuEventListeners() {
+            _zoomInMenuItemEl.addEventListener("click", (e) => {
+                const { x, y } = _getPositionInMainCanvas(e);
+                _zoomIn(x, y);
+            });
+
+            _zoomOutMenuItemEl.addEventListener("click", (e) => {
+                const { x, y } = _getPositionInMainCanvas(e);
+                _zoomOut(x, y);
+            });
+
+            _closeMenuItemEl.addEventListener("click", (e) => {
+                _contextMenuEl.style.display = "none";
+            });
+
+            // 모바일 기기에서 contextmenu 이벤트가 정상적으로 발생하는 지 확인 필요. 
+            // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
+            _mainCanvasElement.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                const { x, y } = _getPositionInMainCanvasBox(e);
+                _contextMenuEl.style.left = `${x}px`;
+                _contextMenuEl.style.top = `${y}px`;
+                _contextMenuEl.style.display = "block";
+            });
+
+            let touchTimer: number;
+            let longTouchDuration = 300;
+            _mainCanvasElement.addEventListener("touchstart", (e) => {
+                touchTimer = setTimeout(() => {
+                    console.log("long touch", e);
+                }, longTouchDuration);
+            });
+            _mainCanvasElement.addEventListener("touchend", (e) => {
+                if (touchTimer)
+                    clearTimeout(touchTimer);
+            });
+
+            _mainCanvasElement.addEventListener("click", (e) => {
+                const targetEl = e.target as HTMLElement;
+                if (targetEl == _zoomInMenuItemEl || targetEl == _zoomOutMenuItemEl) {
+                    return;
+                }
+                _contextMenuEl.style.display = "none";
+            });
         }
 
         function setOptions(options: ChartOptions) {
@@ -958,9 +960,7 @@ namespace Services.TimelineChart {
             _state.headerCellCount = headerCellCount;
             if (_state.columnAutoWidth === true) {
                 _originalCellWidth = _mainCanvasBoxElement.clientWidth / headerCellCount;
-                console.log("cellWidth", _originalCellWidth);
             }
-
 
             let cellIndex = 0;
             let currentTime = startTime;
@@ -1528,7 +1528,6 @@ namespace Services.TimelineChart {
                 scale = _minZoomScale;
             if (_maxZoomScale <= scale)
                 scale = _maxZoomScale;
-            console.log("zoom", scale, _minZoomScale, _maxZoomScale);
 
             // 줌 후 스크롤 위치 계산
             let scrollLeft = _mainCanvasBoxElement.scrollLeft;
