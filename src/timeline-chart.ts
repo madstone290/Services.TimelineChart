@@ -21,9 +21,9 @@ namespace Services.TimelineChart {
 
     interface PointEventItem {
         /**
-         * 차트 시작 시간으로부터의 시간(분)
+         * 이벤트 시간
          */
-        startTime: number;
+        time: Date;
         /**
          * 이벤트 컨테이너 엘리먼트
          */
@@ -32,13 +32,13 @@ namespace Services.TimelineChart {
 
     interface RangeEventItem {
         /**
-         * 차트 시작 시간으로부터의 시간(분)
+         * 이벤트 시작시간
          */
-        startTime: number;
+        startTime: Date;
         /**
-         * 이벤트 지속시간(분)
+         * 이벤트 종료시간
          */
-        duration: number;
+        endTime: Date;
         /**
         * 이벤트 컨테이너 엘리먼트
         */
@@ -1192,44 +1192,46 @@ namespace Services.TimelineChart {
         }
 
         function _renderSidePointEvent(event: PointEvent) {
-            const evtStartTime = event.time;
-            if (!isTimeInRange(evtStartTime))
+            const eventTime = event.time;
+            if (!isTimeInRange(eventTime))
                 return;
-            const [renderStartTime] = trucateTimeRange(evtStartTime);
-
             const containerElement = document.createElement("div");
-            const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
-            const center = time * _state.cellWidth / _state.cellMinutes;
-            const top = (_state.sideCanvasHeight - _state.sideCanvasContentHeight) / 2;
-            const width = _state.sideCanvasContentHeight;
-            containerElement.style.left = `${center - (width / 2)}px`;
+            const { top, left } = __calcSidePointEventPosition(eventTime);
             containerElement.style.top = `${top}px`;
+            containerElement.style.left = `${left}px`;
             containerElement.classList.add(CLS_SIDE_CANVAS_POINT_EVENT);
 
             if (_state.sidePointEventRender != null)
                 _state.sidePointEventRender(event, _sideCanvasElement, containerElement);
             _sideCanvasElement.appendChild(containerElement);
             _sidePointEventItems.push({
-                startTime: time,
+                time: eventTime,
                 containerEl: containerElement
             });
         }
 
         function _refreshSidePointEvents() {
-
-            const width = _state.sideCanvasContentHeight;
             for (const container of _sidePointEventItems) {
-                const time = container.startTime;
-
-                const center = time * _state.cellWidth / _state.cellMinutes;
-                const top = (_state.sideCanvasHeight - _state.sideCanvasContentHeight) / 2;
-
+                const time = container.time;
                 const containerEl = container.containerEl;
-                containerEl.style.left = `${center - (width / 2)}px`;
+                const { top, left } = __calcSidePointEventPosition(time);
                 containerEl.style.top = `${top}px`;
+                containerEl.style.left = `${left}px`;
             }
         }
 
+        function __calcSidePointEventPosition(eventTime: Date) {
+            const [renderStartTime] = trucateTimeRange(eventTime);
+            const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const center = time * _state.cellWidth / _state.cellMinutes;
+            const top = (_state.sideCanvasHeight - _state.sideCanvasContentHeight) / 2;
+            const width = _state.sideCanvasContentHeight;
+            const left = center - (width / 2);
+            return {
+                left: left,
+                top: top
+            }
+        }
 
         function _renderMainCanvas() {
             _mainCanvasElement.replaceChildren();
@@ -1466,32 +1468,24 @@ namespace Services.TimelineChart {
 
         function _refreshEntityPointEvents(entityRow: EntityRow) {
             for (const container of entityRow.pointEventContainers) {
-                const time = container.startTime;
-                const center = time * _state.cellWidth / _state.cellMinutes;
-                const contentHeight = _getMainPointContentHeight();
-                const top = (_state.cellHeight * entityRow.index) + ((_state.cellHeight - contentHeight) / 2) - 1;
+                const eventTime = container.time;
+                const rowIndex = entityRow.index;
                 const containerEl = container.containerEl;
-                containerEl.style.left = `${center - (contentHeight / 2)}px`;
+                const { top, left } = _calcPointEventPosition(eventTime, rowIndex);
                 containerEl.style.top = `${top}px`;
+                containerEl.style.left = `${left}px`;
             }
         }
 
         function _renderEntityPointEvent(event: PointEvent, entityRow: EntityRow) {
-            const evtStartTime = event.time;
+            const eventTime = event.time;
             const rowIndex = entityRow.index;
-
-            if (!isTimeInRange(evtStartTime))
+            if (!isTimeInRange(eventTime))
                 return;
-            const [renderStartTime] = trucateTimeRange(evtStartTime);
-
             const containerElement = document.createElement("div");
-            const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
-            const center = time * _state.cellWidth / _state.cellMinutes;
-            const contentHeight = _getMainPointContentHeight();
-            const top = (_state.cellHeight * rowIndex) + ((_state.cellHeight - contentHeight) / 2) - 1;
-            const width = contentHeight;
-            containerElement.style.left = `${center - (width / 2)}px`;
+            const { top, left } = _calcPointEventPosition(eventTime, rowIndex);
             containerElement.style.top = `${top}px`;
+            containerElement.style.left = `${left}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_POINT_EVENT);
 
             if (_state.entityPointEventRender != null)
@@ -1499,33 +1493,38 @@ namespace Services.TimelineChart {
 
             _mainCanvasElement.appendChild(containerElement);
             entityRow.pointEventContainers.push({
-                startTime: time,
+                time: eventTime,
                 containerEl: containerElement
             });
+        }
+
+        function _calcPointEventPosition(eventTime: Date, rowIndex: number): { top: number, left: number } {
+            const [renderStartTime] = trucateTimeRange(eventTime);
+            const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const center = time * _state.cellWidth / _state.cellMinutes;
+            const contentHeight = _getMainPointContentHeight();
+            const top = (_state.cellHeight * rowIndex) + ((_state.cellHeight - contentHeight) / 2) - 1;
+            const width = contentHeight;
+            const left = center - (width / 2);
+            return {
+                left: left,
+                top: top,
+            };
         }
 
         function _refreshEntityRangeEvents(entityRow: EntityRow) {
             for (const container of entityRow.rangeEventContainers) {
                 const startTime = container.startTime;
-                const duration = container.duration;
-
-                const left = startTime * _state.cellWidth / _state.cellMinutes;
-                const width = duration * _state.cellWidth / _state.cellMinutes;
+                const endTime = container.endTime;
+                const rowIndex = entityRow.index;
+                const { top, left, width } = _calcRangeEventPosition(startTime, endTime, rowIndex);
                 container.containerEl.style.left = `${left}px`;
                 container.containerEl.style.width = `${width}px`;
             }
         }
 
-        function _renderEntityRangeEvent(event: RangeEvent, entityRow: EntityRow) {
-            const eventStartTime = event.startTime;
-            const eventEndTime = event.endTime;
-            const rowIndex = entityRow.index;
-
-            if (!isTimeInRange(eventStartTime, eventEndTime))
-                return;
+        function _calcRangeEventPosition(eventStartTime: Date, eventEndTime: Date, rowIndex: number): { top: number, left: number, width: number } {
             const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
-
-            const containerElement = document.createElement("div");
             const startTime = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const duration = toMinutes(renderEndTime.valueOf() - renderStartTime.valueOf());
             const left = startTime * _state.cellWidth / _state.cellMinutes;
@@ -1533,7 +1532,23 @@ namespace Services.TimelineChart {
             const top = (_state.cellHeight * rowIndex)
                 + (_state.cellHeight - _getMainRangeContentHeight()) / 2
                 - 1;
+            return {
+                left: left,
+                top: top,
+                width: width
+            };
+        }
 
+        function _renderEntityRangeEvent(event: RangeEvent, entityRow: EntityRow) {
+            const startTime = event.startTime;
+            const endTime = event.endTime;
+            const rowIndex = entityRow.index;
+
+            if (!isTimeInRange(startTime, endTime))
+                return;
+
+            const containerElement = document.createElement("div");
+            const { top, left, width } = _calcRangeEventPosition(startTime, endTime, rowIndex);
             containerElement.style.left = `${left}px`;
             containerElement.style.top = `${top}px`;
             containerElement.style.width = `${width}px`;
@@ -1545,7 +1560,7 @@ namespace Services.TimelineChart {
             _mainCanvasElement.appendChild(containerElement);
             entityRow.rangeEventContainers.push({
                 startTime: startTime,
-                duration: duration,
+                endTime: endTime,
                 containerEl: containerElement
             });
         }
@@ -1560,8 +1575,9 @@ namespace Services.TimelineChart {
 
         function _refreshGlobalRangeEvents() {
             for (const container of _globalRangeEventItems) {
-                const left = container.startTime * _state.cellWidth / _state.cellMinutes;
-                const width = container.duration * _state.cellWidth / _state.cellMinutes;
+                const startTime = container.startTime;
+                const endTime = container.endTime;
+                const { top, left, width } = _calcRangeEventPosition(startTime, endTime, 0);
                 container.containerEl.style.left = `${left}px`;
                 container.containerEl.style.width = `${width}px`;
             }
@@ -1572,14 +1588,9 @@ namespace Services.TimelineChart {
             const eventEndTime = event.endTime;
             if (!isTimeInRange(eventStartTime, eventEndTime))
                 return;
-            const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
 
+            const { top, left, width } = _calcRangeEventPosition(eventStartTime, eventEndTime, 0);
             const containerElement = document.createElement("div");
-            const startTime = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
-            const duration = toMinutes(renderEndTime.valueOf() - renderStartTime.valueOf());
-            const left = startTime * _state.cellWidth / _state.cellMinutes;
-            const width = duration * _state.cellWidth / _state.cellMinutes;
-
             containerElement.style.left = `${left}px`;
             containerElement.style.width = `${width}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT);
@@ -1589,8 +1600,8 @@ namespace Services.TimelineChart {
 
             _mainCanvasElement.appendChild(containerElement);
             _globalRangeEventItems.push({
-                startTime: startTime,
-                duration: duration,
+                startTime: eventStartTime,
+                endTime: eventEndTime,
                 containerEl: containerElement
             });
         }
