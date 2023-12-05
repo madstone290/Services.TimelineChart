@@ -151,6 +151,11 @@ namespace Services.TimelineChart {
         * fab 버튼 클릭시 작동할 가로스크롤 길이
         */
         fabScrollStepX?: number;
+
+        /**
+         * 컨트롤러 고정 여부
+         */
+        fixedController?: boolean;
     }
 
     interface ChartState {
@@ -307,6 +312,8 @@ namespace Services.TimelineChart {
         const CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT = "tc-main-canvas-global-range-event";
 
         const CLS_CONTEXT_MENU = "tc-context-menu";
+        const CLS_CONTEXT_MENU_FIXED = "tc-context-menu-fixed";
+        const CLS_CONTEXT_MENU_CLOSED = "tc-context-menu-closed";
         const CLS_CONTEXT_MENU_GROUP1 = "tc-context-menu-group1";
         const CLS_CONTEXT_MENU_GROUP2 = "tc-context-menu-group2";
         const CLS_CONTEXT_MENU_ITEM = "tc-context-menu-item";
@@ -317,11 +324,6 @@ namespace Services.TimelineChart {
         const CLS_CONTEXT_MENU_ITEM_ZOOM_IN = "tc-context-menu-item-zoom-in";
         const CLS_CONTEXT_MENU_ITEM_ZOOM_OUT = "tc-context-menu-item-zoom-out";
         const CLS_CONTEXT_MENU_ITEM_CLOSE = "tc-context-menu-item-close";
-
-        const CLS_FAB_UP = "tc-fab-up";
-        const CLS_FAB_DOWN = "tc-fab-down";
-        const CLS_FAB_LEFT = "tc-fab-left";
-        const CLS_FAB_RIGHT = "tc-fab-right";
 
         const VAR_CELL_HEIGHT = "--tc-cell-height";
         const VAR_CELL_CONTENT_HEIGHT = "--tc-cell-content-height";
@@ -506,6 +508,10 @@ namespace Services.TimelineChart {
          * 현재 줌 속도
          */
         let _zoomVelocity = 0;
+        /**
+         * 컨트롤러 고정 여부
+         */
+        let _fixedController: boolean = true;
 
 
         const dateTimeService = function () {
@@ -619,8 +625,8 @@ namespace Services.TimelineChart {
             _zoomOutMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)[0] as HTMLElement;
             _closeMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_CLOSE)[0] as HTMLElement;
 
-            _addCanvasBasicEventListeners();
-            _addContextMenuEventListeners();
+            _initCanvasBasicEventListeners();
+            _initContextMenuElements();
 
             // 컨테이너 크기에 맞춰 차트 크기를 조정한다.
             _setChartSize(container.clientWidth, container.clientHeight);
@@ -677,25 +683,32 @@ namespace Services.TimelineChart {
             cssService.setScrollWidth(width);
         }
 
-        function _getPositionInContainer(e: MouseEvent, container: HTMLElement) {
+        function _getPositionInContainer(clientX: number, clientY: number, container: HTMLElement) {
             const rect = container.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
             return { x, y };
         }
 
-        function _getPositionInMainCanvas(e: MouseEvent) {
-            return _getPositionInContainer(e, _mainCanvasElement);
+        function _getPositionInMainCanvas(clientX: number, clientY: number) {
+            return _getPositionInContainer(clientX, clientY, _mainCanvasElement);
         }
 
-        function _getPositionInMainCanvasBox(e: MouseEvent) {
-            return _getPositionInContainer(e, _mainCanvasBoxElement);
+        function _getPositionInMainCanvasBox(clientX: number, clientY: number) {
+            return _getPositionInContainer(clientX, clientY, _mainCanvasBoxElement);
+        }
+
+        function _getClientCenterPositionInMainCanvasBox() {
+            const rect = _mainCanvasBoxElement.getBoundingClientRect();
+            const clientX = rect.left + rect.width / 2;
+            const clientY = rect.top + rect.height / 2;
+            return { clientX, clientY };
         }
 
         /**
          * 캔버스 기본 이벤트 리스너를 추가한다.(스크롤, 마우스드래그, 마우스휠)
          */
-        function _addCanvasBasicEventListeners() {
+        function _initCanvasBasicEventListeners() {
             _mainCanvasBoxElement.addEventListener("scroll", (e) => {
                 // 가로스크롤 동기화
                 _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
@@ -748,7 +761,7 @@ namespace Services.TimelineChart {
             });
         }
 
-        function _addContextMenuEventListeners() {
+        function _initContextMenuElements() {
             // fab buttons event. scroll main canvas
             let fabIntervalId: number;
             let fabTimeoutId: number;
@@ -789,28 +802,43 @@ namespace Services.TimelineChart {
             addDirectionDownHandler(_leftMenuItemEl, () => -shortStepX(), () => -longStepX(), () => 0, () => 0);
             addDirectionDownHandler(_rightMenuItemEl, () => shortStepX(), () => longStepX(), () => 0, () => 0);
 
-
-
-
             _zoomInMenuItemEl.addEventListener("click", (e) => {
-                const { x, y } = _getPositionInMainCanvas(e);
-                _zoomIn(x, y);
+                if (_fixedController) {
+                    const { clientX, clientY } = _getClientCenterPositionInMainCanvasBox();
+                    const { x, y } = _getPositionInMainCanvas(clientX, clientY);
+                    _zoomIn(x, y);
+                } else {
+                    const { x, y } = _getPositionInMainCanvas(e.clientX, e.clientY);
+                    _zoomIn(x, y);
+                }
             });
-
             _zoomOutMenuItemEl.addEventListener("click", (e) => {
-                const { x, y } = _getPositionInMainCanvas(e);
-                _zoomOut(x, y);
+                if (_fixedController) {
+                    const { clientX, clientY } = _getClientCenterPositionInMainCanvasBox();
+                    const { x, y } = _getPositionInMainCanvas(clientX, clientY);
+                    _zoomOut(x, y);
+                } else {
+                    const { x, y } = _getPositionInMainCanvas(e.clientX, e.clientY);
+                    _zoomOut(x, y);
+                }
+            });
+            _closeMenuItemEl.addEventListener("click", (e) => {
+                if (_fixedController) {
+                    _contextMenuEl.classList.toggle(CLS_CONTEXT_MENU_CLOSED);
+                } else {
+                    _contextMenuEl.style.display = "none";
+                }
             });
 
-            _closeMenuItemEl.addEventListener("click", (e) => {
-                _contextMenuEl.style.display = "none";
-            });
 
             // 모바일 기기에서 contextmenu 이벤트가 정상적으로 발생하는 지 확인 필요. 
             // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
+            // 고정 컨트롤러가 아닌 경우에만 컨텍스트 메뉴 팝업 적용.
             _mainCanvasElement.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
-                const { x, y } = _getPositionInMainCanvasBox(e);
+                if (_fixedController)
+                    return;
+                const { x, y } = _getPositionInMainCanvasBox(e.clientX, e.clientY);
                 _contextMenuEl.style.left = `${x}px`;
                 _contextMenuEl.style.top = `${y}px`;
                 _contextMenuEl.style.display = "flex";
@@ -829,17 +857,21 @@ namespace Services.TimelineChart {
             });
 
             _mainCanvasElement.addEventListener("click", (e) => {
+                if (_fixedController)
+                    return;
                 const targetEl = e.target as HTMLElement;
                 if (targetEl == _zoomInMenuItemEl || targetEl == _zoomOutMenuItemEl) {
                     return;
                 }
                 _contextMenuEl.style.display = "none";
             });
+
         }
 
         function setOptions(options: ChartOptions) {
             _originalCellWidth = options.cellWidth ?? _state.cellWidth;
             _originalCellHeight = options.cellHeight ?? _state.cellHeight;
+            _fixedController = options.fixedController ?? true;
 
             Object.entries(options)
                 .filter(([key, value]) => value !== undefined)
@@ -915,6 +947,11 @@ namespace Services.TimelineChart {
          * 차트를 그린다.
          */
         function render() {
+            // 렌더링 전 적용할 설정을 적용한다.
+            if(_fixedController) {
+                _contextMenuEl.classList.add(CLS_CONTEXT_MENU_FIXED);
+            }
+
             _renderMainTitle();
             _renderTableColumn();
             _renderColumnTitle();
