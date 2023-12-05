@@ -375,10 +375,6 @@ namespace Services.TimelineChart {
                                     <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_CLOSE}"></div>
                                 </div>
                             </div>
-                            <div class="${CLS_FAB_UP}"></div>
-                            <div class="${CLS_FAB_DOWN}"></div>
-                            <div class="${CLS_FAB_LEFT}"></div>
-                            <div class="${CLS_FAB_RIGHT}"></div>
                         <div>
                     </div>
                 </div>
@@ -455,11 +451,6 @@ namespace Services.TimelineChart {
         let _zoomInMenuItemEl: HTMLElement;
         let _zoomOutMenuItemEl: HTMLElement;
         let _closeMenuItemEl: HTMLElement;
-        let _fabUpElement: HTMLElement;
-        let _fabDownElement: HTMLElement;
-        let _fabLeftElement: HTMLElement;
-        let _fabRightElement: HTMLElement;
-
 
         let _sideCanvasVLines: HTMLElement[] = [];
         let _sidePointEventItems = new Array<PointEventItem>();
@@ -628,14 +619,8 @@ namespace Services.TimelineChart {
             _zoomOutMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)[0] as HTMLElement;
             _closeMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_CLOSE)[0] as HTMLElement;
 
-            _fabUpElement = container.getElementsByClassName(CLS_FAB_UP)[0] as HTMLElement;
-            _fabDownElement = container.getElementsByClassName(CLS_FAB_DOWN)[0] as HTMLElement;
-            _fabLeftElement = container.getElementsByClassName(CLS_FAB_LEFT)[0] as HTMLElement;
-            _fabRightElement = container.getElementsByClassName(CLS_FAB_RIGHT)[0] as HTMLElement;
-
             _addCanvasBasicEventListeners();
             _addContextMenuEventListeners();
-            _addFabEventListeners();
 
             // 컨테이너 크기에 맞춰 차트 크기를 조정한다.
             _setChartSize(container.clientWidth, container.clientHeight);
@@ -761,48 +746,6 @@ namespace Services.TimelineChart {
             document.body.addEventListener("keyup", (e) => {
                 document.body.style.cursor = "default";
             });
-        }
-
-        function _addFabEventListeners() {
-            // fab buttons event. scroll main canvas
-            let fabIntervalId: number;
-            let fabTimeoutId: number;
-            const fabIntervalTimeout = 30;
-            const fabTimeoutTimeout = 300;
-
-            const shortStepX = () => _state.fabScrollStepX;
-            const shortStepY = () => _state.fabScrollStepY;
-            const longStepX = () => _state.fabScrollStepX / 2;
-            const longStepY = () => _state.fabScrollStepY / 2;
-
-            const addFabMouseDownHandler = (btn: HTMLElement, shortX: () => number, longX: () => number, shortY: () => number, longY: () => number) => {
-                btn.addEventListener("mousedown", function (e) {
-                    _mainCanvasBoxElement.scrollTo({
-                        top: _mainCanvasBoxElement.scrollTop + shortY(),
-                        left: _mainCanvasBoxElement.scrollLeft + shortX(),
-                        behavior: "smooth"
-                    });
-                    fabTimeoutId = setTimeout(() => {
-                        fabIntervalId = setInterval(() => {
-                            _mainCanvasBoxElement.scrollTop += longY();
-                            _mainCanvasBoxElement.scrollLeft += longX();
-                        }, fabIntervalTimeout);
-                    }, fabTimeoutTimeout);
-                });
-                btn.addEventListener("mouseup", (e) => {
-                    clearInterval(fabIntervalId);
-                    clearTimeout(fabTimeoutId);
-                });
-                btn.addEventListener("mouseleave", (e) => {
-                    clearInterval(fabIntervalId);
-                    clearTimeout(fabTimeoutId);
-                });
-            }
-
-            addFabMouseDownHandler(_fabUpElement, () => 0, () => 0, () => -shortStepY(), () => -longStepY());
-            addFabMouseDownHandler(_fabDownElement, () => 0, () => 0, () => shortStepY(), () => longStepY());
-            addFabMouseDownHandler(_fabLeftElement, () => -shortStepX(), () => -longStepX(), () => 0, () => 0);
-            addFabMouseDownHandler(_fabRightElement, () => shortStepX(), () => longStepX(), () => 0, () => 0);
         }
 
         function _addContextMenuEventListeners() {
