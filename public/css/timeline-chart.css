@@ -307,13 +307,61 @@ img {
     top: 100px;
     z-index: 100;
     display: none;
+    flex-direction: row;
 }
 
+.tc-context-menu-group1 {
+    display: grid;
+    grid-template-rows: auto auto;
+    grid-template-columns: auto auto auto;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+}
+
+.tc-context-menu-group2 {
+    display: block;
+}
+
+
 .tc-context-menu-item {
-    width: 60PX;
+    width: 40PX;
     height: 40px;
     cursor: pointer;
 }
+
+.tc-context-menu-item-up {
+    grid-row: 1;
+    grid-column: 2;
+    background-image: url("../asset/image/arrow-up-dark.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.tc-context-menu-item-down {
+    grid-row: 3;
+    grid-column: 2;
+    background-image: url("../asset/image/arrow-down-dark.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.tc-context-menu-item-left {
+    grid-row: 2;
+    grid-column: 1;
+    background-image: url("../asset/image/arrow-left-dark.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.tc-context-menu-item-right {
+    grid-row: 2;
+    grid-column: 3;
+    background-image: url("../asset/image/arrow-right-dark.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
 .tc-context-menu-item:hover {
     background-color: #dddddd;
 }
@@ -323,6 +371,7 @@ img {
     background-repeat: no-repeat;
     background-position: center;
 }
+
 .tc-context-menu-item-zoom-out {
     background-image: url("../asset/image/zoom-out.svg");
     background-repeat: no-repeat;

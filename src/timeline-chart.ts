@@ -307,7 +307,13 @@ namespace Services.TimelineChart {
         const CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT = "tc-main-canvas-global-range-event";
 
         const CLS_CONTEXT_MENU = "tc-context-menu";
+        const CLS_CONTEXT_MENU_GROUP1 = "tc-context-menu-group1";
+        const CLS_CONTEXT_MENU_GROUP2 = "tc-context-menu-group2";
         const CLS_CONTEXT_MENU_ITEM = "tc-context-menu-item";
+        const CLS_CONTEXT_MENU_ITEM_UP = "tc-context-menu-item-up";
+        const CLS_CONTEXT_MENU_ITEM_DOWN = "tc-context-menu-item-down";
+        const CLS_CONTEXT_MENU_ITEM_LEFT = "tc-context-menu-item-left";
+        const CLS_CONTEXT_MENU_ITEM_RIGHT = "tc-context-menu-item-right";
         const CLS_CONTEXT_MENU_ITEM_ZOOM_IN = "tc-context-menu-item-zoom-in";
         const CLS_CONTEXT_MENU_ITEM_ZOOM_OUT = "tc-context-menu-item-zoom-out";
         const CLS_CONTEXT_MENU_ITEM_CLOSE = "tc-context-menu-item-close";
@@ -357,9 +363,17 @@ namespace Services.TimelineChart {
                                 </div>
                             </div>
                             <div class="${CLS_CONTEXT_MENU}">
-                                <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_IN}"></div>
-                                <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_OUT}"></div>
-                                <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_CLOSE}"></div>
+                                <div class="${CLS_CONTEXT_MENU_GROUP1}">
+                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_UP}"></div>
+                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_DOWN}"></div>
+                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_LEFT}"></div>
+                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_RIGHT}"></div>
+                                </div>
+                                <div class="${CLS_CONTEXT_MENU_GROUP2}">
+                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_IN}"></div>
+                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_OUT}"></div>
+                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_CLOSE}"></div>
+                                </div>
                             </div>
                             <div class="${CLS_FAB_UP}"></div>
                             <div class="${CLS_FAB_DOWN}"></div>
@@ -434,6 +448,10 @@ namespace Services.TimelineChart {
         let _mainCanvasBoxElement: HTMLElement;
         let _mainCanvasElement: HTMLElement;
         let _contextMenuEl: HTMLElement;
+        let _upMenuItemEl: HTMLElement;
+        let _downMenuItemEl: HTMLElement;
+        let _leftMenuItemEl: HTMLElement;
+        let _rightMenuItemEl: HTMLElement;
         let _zoomInMenuItemEl: HTMLElement;
         let _zoomOutMenuItemEl: HTMLElement;
         let _closeMenuItemEl: HTMLElement;
@@ -602,6 +620,10 @@ namespace Services.TimelineChart {
             _mainCanvasElement = container.getElementsByClassName(CLS_MAIN_CANVAS)[0] as HTMLElement;
 
             _contextMenuEl = container.getElementsByClassName(CLS_CONTEXT_MENU)[0] as HTMLElement;
+            _upMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_UP)[0] as HTMLElement;
+            _downMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_DOWN)[0] as HTMLElement;
+            _leftMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_LEFT)[0] as HTMLElement;
+            _rightMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_RIGHT)[0] as HTMLElement;
             _zoomInMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_IN)[0] as HTMLElement;
             _zoomOutMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)[0] as HTMLElement;
             _closeMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_CLOSE)[0] as HTMLElement;
@@ -784,6 +806,49 @@ namespace Services.TimelineChart {
         }
 
         function _addContextMenuEventListeners() {
+            // fab buttons event. scroll main canvas
+            let fabIntervalId: number;
+            let fabTimeoutId: number;
+            const fabIntervalTimeout = 30;
+            const fabTimeoutTimeout = 300;
+
+            const shortStepX = () => _state.fabScrollStepX;
+            const shortStepY = () => _state.fabScrollStepY;
+            const longStepX = () => _state.fabScrollStepX / 2;
+            const longStepY = () => _state.fabScrollStepY / 2;
+
+            const addDirectionDownHandler = (btn: HTMLElement, shortX: () => number, longX: () => number, shortY: () => number, longY: () => number) => {
+                btn.addEventListener("mousedown", function (e) {
+                    _mainCanvasBoxElement.scrollTo({
+                        top: _mainCanvasBoxElement.scrollTop + shortY(),
+                        left: _mainCanvasBoxElement.scrollLeft + shortX(),
+                        behavior: "smooth"
+                    });
+                    fabTimeoutId = setTimeout(() => {
+                        fabIntervalId = setInterval(() => {
+                            _mainCanvasBoxElement.scrollTop += longY();
+                            _mainCanvasBoxElement.scrollLeft += longX();
+                        }, fabIntervalTimeout);
+                    }, fabTimeoutTimeout);
+                });
+                btn.addEventListener("mouseup", (e) => {
+                    clearInterval(fabIntervalId);
+                    clearTimeout(fabTimeoutId);
+                });
+                btn.addEventListener("mouseleave", (e) => {
+                    clearInterval(fabIntervalId);
+                    clearTimeout(fabTimeoutId);
+                });
+            }
+
+            addDirectionDownHandler(_upMenuItemEl, () => 0, () => 0, () => -shortStepY(), () => -longStepY());
+            addDirectionDownHandler(_downMenuItemEl, () => 0, () => 0, () => shortStepY(), () => longStepY());
+            addDirectionDownHandler(_leftMenuItemEl, () => -shortStepX(), () => -longStepX(), () => 0, () => 0);
+            addDirectionDownHandler(_rightMenuItemEl, () => shortStepX(), () => longStepX(), () => 0, () => 0);
+
+
+
+
             _zoomInMenuItemEl.addEventListener("click", (e) => {
                 const { x, y } = _getPositionInMainCanvas(e);
                 _zoomIn(x, y);
@@ -805,7 +870,7 @@ namespace Services.TimelineChart {
                 const { x, y } = _getPositionInMainCanvasBox(e);
                 _contextMenuEl.style.left = `${x}px`;
                 _contextMenuEl.style.top = `${y}px`;
-                _contextMenuEl.style.display = "block";
+                _contextMenuEl.style.display = "flex";
             });
 
             let touchTimer: number;
@@ -1558,6 +1623,9 @@ namespace Services.TimelineChart {
                     scrollTop = newPivotPointY - scrollOffset;
                 }
             }
+
+
+
             // 일부 렌더링에는 마지막 줌 시간이 필요하므로 미리 저장해둔다.
             _state.lastZoomTime = new Date();
             _refresh();
