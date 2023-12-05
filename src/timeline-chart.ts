@@ -113,8 +113,6 @@ namespace Services.TimelineChart {
         maxZoomScale?: number;
         hasHorizontalLine?: boolean;
         hasVerticalLine?: boolean;
-        zoomStepX?: number;
-        zoomStepY?: number;
         /**
          * 컬럼 너비를 자동으로 맞출지 여부. true인 경우 셀너비 옵션이 무시된다. 현재 차트 너비에 맞춰 셀너비를 조절한다.
          */
@@ -171,13 +169,11 @@ namespace Services.TimelineChart {
         cellMinutes: number;
         cellWidth: number;
         cellHeight: number;
-        minCellWidth: number;
-        minCellHeight: number;
-        maxCellWidth: number;
-        maxCellHeight: number;
+        // minCellWidth: number;
+        // minCellHeight: number;
+        // maxCellWidth: number;
+        // maxCellHeight: number;
         currentZoomScale: number;
-        minZoomScale: number;
-        maxZoomScale: number;
         chartHeight: number;
         chartWidth: number;
         cellContentHeightRatio: number;
@@ -215,16 +211,6 @@ namespace Services.TimelineChart {
          * 차트 렌더링 종료 시간
          */
         chartRenderEndTime: Date;
-
-        /**
-         * 셀 너비 조절 단위. 마우스 휠을 이용해 셀 크기를 조절할 때 사용한다.
-         */
-        zoomStepY: number;
-
-        /**
-         * 셀 높이 조절 단위. 마우스 휠을 이용해 셀 크기를 조절할 때 사용한다.
-         */
-        zoomStepX: number;
 
         /**
          * x축 줌 속도. 
@@ -395,16 +381,10 @@ namespace Services.TimelineChart {
             cellMinutes: 30,
             cellWidth: 40,
             cellHeight: 40,
-            minCellWidth: 40,
-            minCellHeight: 40,
-            maxCellWidth: 40 * 3,
-            maxCellHeight: 40 * 3,
             chartHeight: 0,
             chartWidth: 0,
             cellContentHeightRatio: 0.8,
             currentZoomScale: 1,
-            minZoomScale: 0.5,
-            maxZoomScale: 3,
             headerTimeFormat: null,
             headerCellRender: null,
             tableRowRender: null,
@@ -416,8 +396,6 @@ namespace Services.TimelineChart {
             hasVerticalLine: true,
             chartRenderStartTime: new Date(),
             chartRenderEndTime: new Date(),
-            zoomStepX: 10,
-            zoomStepY: 10,
             zoomVelocityX: 0,
             zoomVelocityY: 0,
             prevZoomDirection: null,
@@ -478,6 +456,39 @@ namespace Services.TimelineChart {
          * 글로벌 레인지 이벤트 엘리먼트 목록
          */
         let _globalRangeEventItems = new Array<RangeEventItem>();
+        /**
+         * 원본 셀 너비.
+         */
+        let _originalCellWidth = 0;
+        /**
+         * 원본 셀 높이.
+         */
+        let _originalCellHeight = 0;
+        /**
+         * 현재 Y축 줌값.
+         */
+        let _currZoomScale = 1;
+        /**
+         * 이전 X축 줌값.
+         */
+        let _prevZoomScale = 1;
+        /**
+         * 최대 X축 줌값.
+         */
+        let _minZoomScale = 1;
+        /**
+         * 최소 Y축 줌값.
+         */
+        let _maxZoomScale = 5;
+        /**
+         * 기본 줌 스텝.
+         */
+        let _defaultZoomStep = 0.1;
+        /**
+         * 현재 줌 속도
+         */
+        let _zoomVelocity = 0;
+
 
         const dateTimeService = function () {
             function toMinutes(time: number) {
@@ -751,9 +762,11 @@ namespace Services.TimelineChart {
             _mainCanvasElement.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
                 const { x, y } = _getPositionOfMainCanvas(e);
+                const time = x / _state.cellWidth * _state.cellMinutes;
                 _contextMenuEl.style.left = `${x}px`;
                 _contextMenuEl.style.top = `${y}px`;
                 _contextMenuEl.style.display = "block";
+                (_contextMenuEl as any).tag = time;
             });
 
             let touchTimer: number;
@@ -779,6 +792,9 @@ namespace Services.TimelineChart {
 
         }
         function setOptions(options: ChartOptions) {
+            _originalCellWidth = options.cellWidth ?? _state.cellWidth;
+            _originalCellHeight = options.cellHeight ?? _state.cellHeight;
+
             Object.entries(options)
                 .filter(([key, value]) => value !== undefined)
                 .forEach(([key, value]) => {
@@ -795,34 +811,20 @@ namespace Services.TimelineChart {
             _setCellContentHeight(_state.cellHeight * (options.cellContentHeightRatio ?? _state.cellContentHeightRatio));
             _setScrollWidth(_state.scrollWidth);
 
-            _state.minCellWidth = _state.cellWidth * _state.minZoomScale;
-            _state.maxCellWidth = _state.cellWidth * _state.maxZoomScale;
-            _state.minCellHeight = _state.cellHeight * _state.minZoomScale;
-            _state.maxCellHeight = _state.cellHeight * _state.maxZoomScale;
-
             _state.sideCanvasContentHeight = _state.sideCanvasContentHeightRatio * _state.sideCanvasHeight;
             _state.cellContentHeight = _state.cellContentHeightRatio * _state.cellHeight;
 
             _state.chartRenderStartTime = new Date(_state.chartStartTime.getTime() - dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
             _state.chartRenderEndTime = new Date(_state.chartEndTime.getTime() + dateTimeService.toTime(_state.cellMinutes * _state.paddingCellCount))
-            _state.zoomStepX = options.zoomStepX ?? _state.cellWidth / 5;
-            _state.zoomStepY = options.zoomStepY ?? _state.cellHeight / 5;
 
             function mainCanvasBoxresizeCallback() {
                 if (_state.columnAutoWidth) {
                     // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
                     const canvasWidth = _mainCanvasBoxElement.clientWidth;
-                    const cellWidth = canvasWidth / _state.headerCellCount;
-
+                    _originalCellWidth = canvasWidth / _state.headerCellCount;
+                    const cellWidth = _originalCellWidth * _currZoomScale;
                     _setCellWidth(cellWidth);
-                    console.log(cellWidth);
-                    _state.minCellWidth = cellWidth;
-                    _state.maxCellWidth = cellWidth * _state.maxZoomScale;
-
-                    _updateElementSize();
-                    _refreshColumnHeaders();
-                    _refreshSideCanvas();
-                    _refreshMainCanvas();
+                    _refresh();
                 }
             }
 
@@ -918,6 +920,11 @@ namespace Services.TimelineChart {
             let endTime = _state.chartRenderEndTime;
             let headerCellCount = (endTime.valueOf() - startTime.valueOf()) / dateTimeService.toTime(_state.cellMinutes);
             _state.headerCellCount = headerCellCount;
+            if (_state.columnAutoWidth === true) {
+                _originalCellWidth = _mainCanvasBoxElement.clientWidth / headerCellCount;
+                console.log("cellWidth", _originalCellWidth);
+            }
+
 
             let cellIndex = 0;
             let currentTime = startTime;
@@ -977,10 +984,10 @@ namespace Services.TimelineChart {
                     return;
                 }
                 if (e.deltaY > 0) {
-                    _zoomOutCanvas(pivotPoint.x, pivotPoint.y);
+                    _zoomOut(pivotPoint.x, pivotPoint.y);
                 }
                 else {
-                    _zoomInCanvas(pivotPoint.x, pivotPoint.y);
+                    _zoomIn(pivotPoint.x, pivotPoint.y);
                 }
             }
         }
@@ -995,7 +1002,6 @@ namespace Services.TimelineChart {
              */
             const canvasWidth = _state.cellWidth * _state.headerCellCount;
             const canvasHeight = _state.cellHeight * _data.entities.length;
-            console.log(canvasWidth, canvasHeight);
 
             _columnHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
             _sideCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
@@ -1105,6 +1111,7 @@ namespace Services.TimelineChart {
             _refreshMainCanvasVLines();
             _refreshGlobalRangeEvents();
             _refreshIntersectingEntitiList();
+            _refreshContextMenu();
         }
 
         function _refreshIntersectingEntitiList() {
@@ -1122,7 +1129,7 @@ namespace Services.TimelineChart {
             zoomInItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_IN);
             zoomInItem.addEventListener("click", (e) => {
                 const { x, y } = _getPositionOfMainCanvas(e);
-                _zoomInCanvas(x, y);
+                _zoomIn(x, y);
             });
 
             const zoomOutItem = document.createElement("div");
@@ -1130,7 +1137,7 @@ namespace Services.TimelineChart {
             zoomOutItem.classList.add(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT);
             zoomOutItem.addEventListener("click", (e) => {
                 const { x, y } = _getPositionOfMainCanvas(e);
-                _zoomOutCanvas(x, y);
+                _zoomOut(x, y);
             });
 
             const closeItem = document.createElement("div");
@@ -1145,8 +1152,14 @@ namespace Services.TimelineChart {
             _mainCanvasElement.appendChild(_contextMenuEl);
         }
 
-        function _refreshContextMenu(){
-            
+        function _refreshContextMenu() {
+            console.log("_refreshContextMenu", _contextMenuEl.style.left, _prevZoomScale, _currZoomScale);
+            const time = (_contextMenuEl as any).tag;
+            const left = time * _state.cellWidth / _state.cellMinutes;
+            // const prevLeft = _contextMenuEl.style.left;
+            // const zoomDiff = _currZoomScale - _prevZoomScale;
+            // const newLeft = parseFloat(prevLeft) * (1 + zoomDiff);
+            _contextMenuEl.style.left = `${left}px`;
         }
 
         function _renderMainCanvasVLine() {
@@ -1210,11 +1223,9 @@ namespace Services.TimelineChart {
                 if (entry.isIntersecting) {
                     if (entityRow.lastRenderTime == null) {
                         // 최초 렌더링
-                        console.log("_renderEntityRow", entityRow);
                         _renderEntityRow(entityRow);
                     } else if (entityRow.lastRenderTime <= _state.lastZoomTime) {
                         // 리페인트
-                        console.log("_refreshEntityRow", entityRow);
                         _refreshEntityRow(entityRow);
                     }
                     _intersectingEntityRows.set(entityRow.index, entityRow);
@@ -1496,114 +1507,75 @@ namespace Services.TimelineChart {
             });
         }
 
-        function _zoomInCanvas(pivotPointX?: number, pivotPointY?: number) {
+        function _zoomIn(pivotPointX?: number, pivotPointY?: number) {
             const shouldReset = _state.prevZoomDirection == "out" ||
                 _state.accelResetTimeout < new Date().valueOf() - _state.lastZoomTime.valueOf();
             if (shouldReset) {
-                _state.zoomVelocityX = 0;
-                _state.zoomVelocityY = 0;
+                _zoomVelocity = 0;
             }
-
-            _state.zoomVelocityX += _state.zoomStepY;
-            _state.zoomVelocityY += _state.zoomStepX;
-
-            let cellWidth = _state.cellWidth + _state.zoomVelocityX;
-            if (_state.maxCellWidth < cellWidth) {
-                cellWidth = _state.maxCellWidth;
-            }
-            let cellHeight = _state.cellHeight + _state.zoomVelocityY;
-            if (_state.maxCellHeight < cellHeight) {
-                cellHeight = _state.maxCellHeight;
-            }
-
-            _zoomCanvas(
-                cellWidth,
-                cellHeight,
-                pivotPointX,
-                pivotPointY);
-
+            _zoomVelocity += _defaultZoomStep;
+            const nextZoomScaleX = _currZoomScale + _zoomVelocity;
+            _zoom(nextZoomScaleX, pivotPointX, pivotPointY);
             _state.prevZoomDirection = "in";
         }
 
-        function _zoomOutCanvas(pivotPointX?: number, pivotPointY?: number) {
+        function _zoomOut(pivotPointX?: number, pivotPointY?: number) {
             const shouldReset = _state.prevZoomDirection == "in" ||
                 _state.accelResetTimeout < new Date().valueOf() - _state.lastZoomTime.valueOf();
             if (shouldReset) {
-                _state.zoomVelocityX = 0;
-                _state.zoomVelocityY = 0;
+                _zoomVelocity = 0;
             }
-            _state.zoomVelocityX -= _state.zoomStepY;
-            _state.zoomVelocityY -= _state.zoomStepX;
-            let cellWidth = _state.cellWidth + _state.zoomVelocityX;
-            if (cellWidth < _state.minCellWidth)
-                cellWidth = _state.minCellWidth;
-
-            let cellHeight = _state.cellHeight + _state.zoomVelocityY;
-            if (cellHeight < _state.minCellHeight)
-                cellHeight = _state.minCellHeight;
-
-            _zoomCanvas(
-                cellWidth,
-                cellHeight,
-                pivotPointX,
-                pivotPointY);
-
+            _zoomVelocity -= _defaultZoomStep;
+            const nextZoomScale = _currZoomScale + _zoomVelocity;
+            _zoom(nextZoomScale, pivotPointX, pivotPointY);
             _state.prevZoomDirection = "out";
         }
 
-        /**
-         * 셀크기 변경을 통해 캔버스 줌을 적용한다.
-         * @param cellWidth 셀 너비
-         * @param cellHeight 셀 높이
-         * @param pivotPointX 스크롤 x기준 위치
-         * @param pivotPointY 스크롤 y기준 위치
-         */
-        function _zoomCanvas(cellWidth: number, cellHeight: number, pivotPointX?: number, pivotPointY?: number) {
-            if (cellWidth < _state.minCellWidth || cellHeight < _state.minCellHeight) {
-                return;
-            }
-            if (cellHeight > _state.maxCellHeight || cellWidth > _state.maxCellWidth) {
-                return;
-            }
-            if (cellWidth == _state.cellWidth && cellHeight == _state.cellHeight) {
-                return;
-            }
+        function _zoom(scale: number, pivotPointX?: number, pivotPointY?: number) {
+            if (scale <= _minZoomScale)
+                scale = _minZoomScale;
+            if (_maxZoomScale <= scale)
+                scale = _maxZoomScale;
+            console.log("zoom", scale, _minZoomScale, _maxZoomScale);
 
             // 줌 후 스크롤 위치 계산
             let scrollLeft = _mainCanvasBoxElement.scrollLeft;
             let scrollTop = _mainCanvasBoxElement.scrollTop;
 
             if (_state.hZoomEnabled) {
+                const newCellWidth = _originalCellWidth * scale;
+                const prevCellWidth = _state.cellWidth;
+                _state.cellWidth = newCellWidth;
+
                 if (pivotPointX) {
                     const scrollOffset = pivotPointX - scrollLeft;
-                    const prevCellWidth = _state.cellWidth;
-                    const newPivotPointX = pivotPointX * cellWidth / prevCellWidth; // 기준점까지의 거리
+                    const newPivotPointX = pivotPointX * newCellWidth / prevCellWidth; // 기준점까지의 거리
                     scrollLeft = newPivotPointX - scrollOffset;
                 }
-                _state.cellWidth = cellWidth;
-            }
 
+            }
             if (_state.vZoomEnabled) {
+                const prevCellHeight = _state.cellHeight;
+                const newCellHeight = _originalCellHeight * scale;
+                const newCellContentHeight = _state.cellContentHeightRatio * newCellHeight;
+                cssService.setCellHeight(newCellHeight);
+                cssService.setCellContentHeight(newCellContentHeight);
+
                 if (pivotPointY) {
                     const scrollOffset = pivotPointY - scrollTop;
-                    const prevCellHeight = _state.cellHeight;
-                    const newPivotPointY = pivotPointY * cellHeight / prevCellHeight; // 기준점까지의 거리
+                    const newPivotPointY = pivotPointY * newCellContentHeight / prevCellHeight; // 기준점까지의 거리
                     scrollTop = newPivotPointY - scrollOffset;
                 }
-                _state.cellHeight = cellHeight;
-                _state.cellContentHeight = _state.cellContentHeightRatio * _state.cellHeight;
-                cssService.setCellHeight(_state.cellHeight);
-                cssService.setCellContentHeight(_state.cellContentHeight);
             }
-
             // 일부 렌더링에는 마지막 줌 시간이 필요하므로 미리 저장해둔다.
             _state.lastZoomTime = new Date();
-
             _refresh();
-
             // keep scroll position
             _mainCanvasBoxElement.scrollLeft = scrollLeft;
             _mainCanvasBoxElement.scrollTop = scrollTop;
+
+            _prevZoomScale = _currZoomScale;
+            _currZoomScale = scale;
         }
 
         /**

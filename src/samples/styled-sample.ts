@@ -891,7 +891,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             })
         };
         const cellMinutes = 10;
-        const cellWidth = 100;
+        const cellWidth = 30;
         const cellHeight = 30;
         const options: Services.TimelineChart.ChartOptions = {
             mainTitle: "XXX H/L LH Line 03",
