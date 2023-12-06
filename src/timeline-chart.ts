@@ -533,7 +533,7 @@ namespace Services.TimelineChart {
         /**
          * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
          */
-        let _controllerLocation: controllerLocation;
+        let _controllerLocation: controllerLocation = "bottomRight";
         /**
          * 컨트롤러 위치 클래스 맵
          */
