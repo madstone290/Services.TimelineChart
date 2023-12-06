@@ -928,6 +928,7 @@ namespace Services.TimelineChart {
             _controllerLocation = options.controllerLocation ?? _controllerLocation;
             _mainRangeContentRatio = options.mainRangeContentRatio ?? _mainRangeContentRatio;
             _mainPointContentRatio = options.mainPointContentRatio ?? _mainPointContentRatio;
+            _maxZoomScale = options.maxZoomScale ?? _maxZoomScale;
 
             _setLeftPanelWidth(options.leftPanelWidth ?? _state.leftPanelWidth);
             _setColumnTitleHeight(options.columnTitleHeight ?? _state.columnTitleHeight);
