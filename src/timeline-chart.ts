@@ -1154,6 +1154,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderSideCanvasVerticalLine() {
+            _sideCanvasVLines.length = 0;
             const canvasWidth = _sideCanvasElement.scrollWidth;
             const vLineCount = Math.ceil(canvasWidth / _state.cellWidth);
 
@@ -1254,6 +1255,7 @@ namespace Services.TimelineChart {
         }
 
         function _renderMainCanvasVLine() {
+            _mainCanvasVLines.length = 0;
             const canvasWidth = _mainCanvasElement.scrollWidth;
             const lineGap = _state.cellWidth;
             const lineHeight = _mainCanvasElement.scrollHeight;
