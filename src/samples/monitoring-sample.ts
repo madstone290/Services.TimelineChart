@@ -911,17 +911,17 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
         _chart.setData(_data);
         _chart.render();
 
-        tempstartTime = _options.chartStartTime;
-        tempendTime = _options.chartEndTime;
+        startTime = _options.chartStartTime;
+        endTime = _options.chartEndTime;
     }
 
-    let tempstartTime: Date;
-    let tempendTime: Date;
     let entityNumber = 10000;
+    let startTime: Date;
+    let endTime: Date;
     export function renderChart() {
-        _options.chartStartTime = new Date(_options.chartStartTime.getTime() + 1 * 60 * 1000);
-        _options.chartEndTime = new Date(_options.chartEndTime.getTime() + 1 * 60 * 1000);
-        _chart.setOptions(_options);
+        startTime = new Date(startTime.getTime() + 1 * 60 * 1000);
+        endTime = new Date(endTime.getTime() + 1 * 60 * 1000);
+        _chart.setChartTimeRange(startTime, endTime);
 
         _data.entities = [
             {
@@ -932,8 +932,8 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
                 pointEvents: [],
                 rangeEvents: [
                     {
-                        startTime: new Date(_options.chartEndTime.valueOf() - 30 * 60 * 1000),
-                        endTime: new Date(_options.chartEndTime.valueOf() - 10 * 60 * 1000),
+                        startTime: new Date(endTime.valueOf() - 30 * 60 * 1000),
+                        endTime: new Date(endTime.valueOf() - 10 * 60 * 1000),
                         type: "op10",
                         entityId: entityNumber
                     },
@@ -1005,8 +1005,8 @@ window.addEventListener("load", () => {
         }, 3000);
     };
 
-    window.addEventListener("click", setControlling);
-    window.addEventListener("wheel", setControlling);
-    window.addEventListener("keydown", setControlling);
-    window.addEventListener("mousemove", setControlling);
+    // window.addEventListener("click", setControlling);
+    // window.addEventListener("wheel", setControlling);
+    // window.addEventListener("keydown", setControlling);
+    // window.addEventListener("mousemove", setControlling);
 });

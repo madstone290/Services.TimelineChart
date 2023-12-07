@@ -968,6 +968,13 @@ namespace Services.TimelineChart {
             });
         }
 
+        function setChartTimeRange(startTime: Date, endTime: Date) {
+            _state.chartStartTime = startTime;
+            _state.chartEndTime = endTime;
+            _state.chartRenderStartTime = new Date(startTime.getTime() - toTime(_state.cellMinutes * _state.paddingCellCount))
+            _state.chartRenderEndTime = new Date(endTime.getTime() + toTime(_state.cellMinutes * _state.paddingCellCount))
+        }
+
         function setData(data: ChartData) {
             _data = data;
         }
@@ -1694,6 +1701,7 @@ namespace Services.TimelineChart {
             create,
             render,
             setOptions,
+            setChartTimeRange,
             setData
         }
     };
