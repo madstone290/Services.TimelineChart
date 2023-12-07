@@ -510,6 +510,58 @@ namespace Services.TimelineChart.Samples.StyledSample {
         ["op140", "#8866d3"],
         ["op150", "#bb9f7b"]
     ]);
+
+
+    const eventColors = [
+        {
+            start: "#134E5E",
+            end: "#71B280"
+        },
+        {
+            start: "#5C258D",
+            end: "#4389A2",
+        },
+        {
+            start: "#1CD8D2",
+            end: "#93EDC7"
+        },
+        {
+            start: "#DC2424",
+            end: "#4A569D"
+        },
+        {
+            start: "#FF8008",
+            end: "#FFC837s"
+        },
+        {
+            start: "#EB3349",
+            end: "#F45C43"
+        },
+        {
+            start: "#1D2B64",
+            end: "#F8CDDA"
+        }
+    ];
+
+
+    const entityRangeEventEndColors = new Map([
+        ["op10", "#71B280"],
+        ["op20", "#f1a83a"],
+        ["op30", "#77bc57"],
+        ["op40", "#ff8fd3"],
+        ["op50", "#d7bdff"],
+        ["op60", "#2500c7"],
+        ["op70", "#445735"],
+        ["op80", "#296080"],
+        ["op90", "#ff7526"],
+        ["op100", "#5391ff"],
+        ["op110", "#ff4199"],
+        ["op120", "#8d3f59"],
+        ["op130", "#94deeb"],
+        ["op140", "#8866d3"],
+        ["op150", "#bb9f7b"]
+    ]);
+
     const globalRangeEventColors = new Map([
         ["pause", "#d9d9d9"],
         ["fault", "#E7FF26"],
@@ -718,6 +770,13 @@ namespace Services.TimelineChart.Samples.StyledSample {
         const boxElement = document.createElement("div");
         boxElement.classList.add(CLS_ENTITY_RANGE_EVENT_BOX);
         boxElement.style.backgroundColor = entityRangeEventColors.get(event.type);
+
+        // let colorIndex = Array.from(entityRangeEventColors.keys()).indexOf(event.type);
+        // colorIndex %= eventColors.length;
+        // const startColor = eventColors[colorIndex].start;
+        // const endColor = eventColors[colorIndex].end;
+        // boxElement.style.backgroundImage = `linear-gradient(to right, ${startColor}, ${endColor})`;
+
         containerElement.appendChild(boxElement);
 
         const tooltipElement = document.createElement("div");
