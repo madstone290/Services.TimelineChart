@@ -933,8 +933,12 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
                 rangeEvents: [
                     {
                         startTime: new Date(endTime.valueOf() - 30 * 60 * 1000),
-                        endTime: new Date(endTime.valueOf() - 10 * 60 * 1000),
-                        type: "op10",
+                        // endTime: new Date(endTime.valueOf() - 10 * 60 * 1000),
+                        // random endtime
+                        endTime: new Date(endTime.valueOf() - (Math.floor(Math.random() * 100 / 3)) * 60 * 1000),
+
+                        //type: "op10",
+                        type: "op" + Math.floor(Math.random() * 15) * 10,
                         entityId: entityNumber
                     },
                 ] as any[],
@@ -986,7 +990,7 @@ window.addEventListener("load", () => {
     let intervalId = 0;
     intervalId = setInterval(() => {
         refresh();
-    }, 2000);
+    }, 1000);
 
 
     let timeoutId = 0;
