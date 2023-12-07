@@ -445,6 +445,11 @@ namespace Services.TimelineChart {
 
         let _sideCanvasVLines: HTMLElement[] = [];
         let _sidePointEventItems = new Array<PointEventItem>();
+
+        /**
+         * 교차 관찰자. 엔티티 행의 가시성을 관찰한다.
+         */
+        let _intersecionObserver: IntersectionObserver;
         /**
          * 현재 리스트에 보여지는 엔티티의 인덱스
          */
@@ -950,21 +955,6 @@ namespace Services.TimelineChart {
             _setScrollWidth(_state.scrollWidth);
             _state.sideCanvasContentHeight = _state.sideCanvasContentHeightRatio * _state.sideCanvasHeight;
 
-            function mainCanvasBoxresizeCallback() {
-                if (_state.columnAutoWidth) {
-                    // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
-                    const canvasWidth = _mainCanvasBoxElement.clientWidth;
-                    _originalCellWidth = canvasWidth / _state.headerCellCount;
-                    const cellWidth = _originalCellWidth * _currZoomScale;
-                    _setCellWidth(cellWidth);
-                    _refresh();
-                }
-            }
-
-            _mainCanvasBoxResizeObserver?.disconnect();
-            _mainCanvasBoxResizeObserver = new ResizeObserver(mainCanvasBoxresizeCallback);
-            _mainCanvasBoxResizeObserver.observe(_mainCanvasBoxElement);
-
             _state.headerTimeFormat = options.headerTimeFormat ?? ((time: Date) => { return time.toLocaleString(); });
             _state.headerCellRender = options.headerCellRender ?? ((time: Date, containerElement: HTMLElement) => {
                 const div = document.createElement("div");
@@ -1027,8 +1017,34 @@ namespace Services.TimelineChart {
             _renderMainCanvas();
             _startRenderEntityRow();
 
+            _startResizeObserver();
+
             // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
             _mainCanvasBoxElement.scrollTo(_mainCanvasBoxElement.scrollLeft, _mainCanvasBoxElement.scrollTop - 1);
+        }
+
+        /**
+         * 캔버스 박스의 크기가 변경될 경우 셀 너비를 재계산한다.
+         */
+        function _mainCanvasBoxResizeCallback() {
+            if (_state.columnAutoWidth) {
+                // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
+                const canvasWidth = _mainCanvasBoxElement.clientWidth;
+                _originalCellWidth = canvasWidth / _state.headerCellCount;
+                const cellWidth = _originalCellWidth * _currZoomScale;
+                _setCellWidth(cellWidth);
+                _refresh();
+            }
+        }
+
+        /**
+         * 캔버스박스의 크기변화를 관찰한다. 
+         */
+        function _startResizeObserver() {
+            _mainCanvasBoxResizeObserver?.disconnect();
+            _mainCanvasBoxResizeObserver = new ResizeObserver(_mainCanvasBoxResizeCallback);
+            _mainCanvasBoxResizeObserver.observe(_mainCanvasBoxElement);
+
         }
 
         function _renderMainTitle() {
@@ -1347,12 +1363,14 @@ namespace Services.TimelineChart {
          */
         function _startRenderEntityRow() {
             _entityTableBoxElement.replaceChildren();
+            _intersecionObserver?.disconnect();
+            _intersectingEntityRows.clear();
 
             const options: IntersectionObserverInit = {
                 root: _entityTableBoxElement,
                 threshold: 0,
             };
-            const intersecionObserver = new IntersectionObserver(callback, options);
+            _intersecionObserver = new IntersectionObserver(callback, options);
 
             const canvasHeight = _mainCanvasElement.scrollHeight;
             const cellHeight = _cellHeight;
@@ -1396,7 +1414,7 @@ namespace Services.TimelineChart {
                     pointEventContainers: [],
                     rangeEventContainers: [],
                 });
-                intersecionObserver.observe(containerEl);
+                _intersecionObserver.observe(containerEl);
             }
         }
 
