@@ -227,7 +227,7 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: row;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     padding: 4px;
     font-size: 12px;
     white-space: nowrap;
@@ -241,6 +241,7 @@
     flex-direction: row;
     padding: 4px;
     background-color: white;
+    flex-wrap: wrap;
 }
 
 .tr-legend-right-box {
@@ -249,6 +250,7 @@
     justify-content: flex-end;
     padding: 4px;
     flex: 1;
+    flex-wrap: nowrap;
 }
 
 .tr-legend-item {
