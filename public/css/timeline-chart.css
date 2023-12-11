@@ -56,6 +56,10 @@ img {
     border-color: var(--tc-line-color);
 }
 
+.tc-left-panel * {
+    user-select: text;
+}
+
 .tc-maintitle {
     height: var(--tc-column-title-height);
     border-width: 0px 0px 1px 0px;
