@@ -1018,11 +1018,11 @@ namespace Services.TimelineChart.Samples.StyledSample {
     }
 
     let isMainCanvasCostomized = false;
-    function customizeMainCanvas(canvasEl: HTMLElement) {
+    function customizeElements(elements: { rootElement: HTMLElement }) {
         if (isMainCanvasCostomized)
             return;
 
-        canvasEl.addEventListener("click", (e) => {
+        elements.rootElement.addEventListener("click", (e) => {
             for (const [containerEl, tooltipEl] of _fixedTooltipMap.entries()) {
                 _hideTooltip(tooltipEl);
             }
@@ -1107,7 +1107,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             buttonScrollStepY: 400,
             fixedController: false,
             controllerLocation: "topRight",
-            customizeMainCanvas: customizeMainCanvas
+            customizeElements: customizeElements
         };
 
         const chart = Services.TimelineChart.TimelineChart();
