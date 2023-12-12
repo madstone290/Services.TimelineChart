@@ -766,7 +766,11 @@ namespace Services.TimelineChart.Samples.StyledSample {
                 _fixedTooltipMap.set(element, tooltipElement);
             }
         });
+        // 툴팁에서 발생한 이벤트 전파를 막아 캔버스 이동, 툴팁 숨김 기능이 동작하지 않도록 한다.
         tooltipElement.addEventListener("click", (e) => {
+            e.stopPropagation();
+        });
+        tooltipElement.addEventListener("mousemove", (e) => {
             e.stopPropagation();
         });
     }
