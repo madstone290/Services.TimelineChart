@@ -675,7 +675,17 @@ namespace Services.TimelineChart.Samples.StyledSample {
         containerElement.appendChild(divElement);
     };
 
-    const relocateTooltip = function (tooltipElement: HTMLElement, e: MouseEvent) {
+
+    function _showTooltip(tooltipElement: HTMLElement) {
+        tooltipElement.style.visibility = "visible";
+        tooltipElement.style.opacity = "1";
+    }
+    function _hideTooltip(tooltipElement: HTMLElement) {
+        tooltipElement.style.visibility = "hidden";
+        tooltipElement.style.opacity = "0";
+    }
+
+    function _relocateTooltip(tooltipElement: HTMLElement, e: MouseEvent) {
         const tooltipOffset = 10;
         let top = e.clientY + tooltipOffset;
         let left = e.clientX + tooltipOffset;
@@ -688,7 +698,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
 
         tooltipElement.style.top = top + "px";
         tooltipElement.style.left = left + "px";
-        
+
         const boundingClientRect = tooltipElement.getBoundingClientRect();
         // detect if the tooltip height is longer than the window height
         const tooltipHeight = boundingClientRect.height;
@@ -717,24 +727,38 @@ namespace Services.TimelineChart.Samples.StyledSample {
      * @param tooltipElement 툴팁 엘리먼트
      */
     function addTooltip(element: HTMLElement, tooltipElement: HTMLElement) {
+        let tooltipFixed = false;
         element.addEventListener("mousemove", (e) => {
             if (e.target !== element) {
                 return;
             }
-            relocateTooltip(tooltipElement, e);
+            if (tooltipFixed)
+                return;
+            _relocateTooltip(tooltipElement, e);
         });
         element.addEventListener("mouseleave", (e) => {
-            tooltipElement.style.visibility = "hidden";
-            tooltipElement.style.opacity = "0";
+            if (tooltipFixed)
+                return;
+            _hideTooltip(tooltipElement);
         });
         element.addEventListener("mouseenter", (e) => {
-            tooltipElement.style.visibility = "visible";
-            tooltipElement.style.opacity = "1";
+            if (tooltipFixed)
+                return;
+            _showTooltip(tooltipElement);
             /**
              * mouseenter이벤트만 발생하고 mousemove이벤트가 발생하지 않는 경우가 있다. ex) 휠스크롤
              * mouseenter이벤트순간부터 툴팁위치를 조정한다.
              */
-            relocateTooltip(tooltipElement, e);
+            _relocateTooltip(tooltipElement, e);
+        });
+        element.addEventListener("click", (e) => {
+            if (tooltipFixed) {
+                _hideTooltip(tooltipElement);
+                tooltipFixed = false;
+            } else {
+                _showTooltip(tooltipElement);
+                tooltipFixed = true;
+            }
         });
     }
 
