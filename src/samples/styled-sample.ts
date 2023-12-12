@@ -1120,7 +1120,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             rowHoverColor: "#ccc",
             buttonScrollStepX: 400,
             buttonScrollStepY: 400,
-            fixedController: false,
+            fixedController: true,
             controllerLocation: "topRight",
             customizeElements: customizeElements
         };

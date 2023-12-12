@@ -828,6 +828,11 @@ namespace Services.TimelineChart {
         }
 
         function _initContextMenuElements() {
+            if (_fixedController) {
+                // 고정 컨트롤러인 경우 컨텍스트 메뉴를 미니 상태로 설정.
+                _contextMenuEl.classList.add(CLS_CONTEXT_MENU_CLOSED);
+            }
+
             // fab buttons event. scroll main canvas
             let fabIntervalId: number;
             let fabTimeoutId: number;
