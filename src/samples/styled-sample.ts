@@ -511,6 +511,35 @@ namespace Services.TimelineChart.Samples.StyledSample {
         ["op150", "#bb9f7b"]
     ]);
 
+    const ERROR_IMG_SRC = "./asset/image/error.svg";
+    const WARNING_IMG_SRC = "./asset/image/warning.svg";
+
+    const CLS_TOOLTIP = "tr-tooltip";
+    const CLS_COLUMN_HEADER_CELL = "tr-column-header-cell";
+    const CLS_ENTITY_POINT_EVENT_BOX = "tr-entity-point-event-box";
+    const CLS_ENTITY_POINT_EVENT_TOOLTIP = "tr-entity-point-event-tooltip";
+    const CLS_ENTITY_POINT_EVENT_TITLE = "tr-entity-point-event-title";
+    const CLS_ENTITY_POINT_EVENT_COLOR_ICON = "tr-entity-point-event-color-icon";
+
+    const CLS_ENTITY_RANGE_EVENT_BOX = "tr-entity-range-event-box";
+    const CLS_ENTITY_RANGE_EVENT_TOOLTIP = "tr-entity-range-event-tooltip";
+    const CLS_ENTITY_RANGE_EVENT_TITLE = "tr-entity-range-event-title";
+    const CLS_ENTITY_RANGE_EVENT_COLOR_ICON = "tr-entity-range-event-color-icon";
+
+
+    const CLS_SIDE_POINT_EVENT_BOX = "tr-side-point-event-box";
+    const CLS_SIDE_POINT_EVENT_TOOLTIP = "tr-side-point-event-tooltip";
+    const CLS_SIDE_POINT_EVENT_TITLE = "tr-side-point-event-title";
+    const CLS_SIDE_POINT_EVENT_COLOR_ICON = "tr-side-point-event-color-icon";
+
+    const CLS_GLOBAL_RANGE_EVENT_BOX = "tr-global-range-event-box";
+    const CLS_GLOBAL_RANGE_EVENT_TOOLTIP = "tr-global-range-event-tooltip";
+    const CLS_GLOBAL_RANGE_EVENT_TITLE = "tr-global-range-event-title";
+    const CLS_GLOBAL_RANGE_EVENT_COLOR_ICON = "tr-global-range-event-color-icon";
+
+
+    const COLOR_SELECTED_EVENT = "#333";
+
 
     const eventColors = [
         {
@@ -575,37 +604,10 @@ namespace Services.TimelineChart.Samples.StyledSample {
         ["barcodeMissing", "바코드 누락"]
     ]);
 
-    const ERROR_IMG_SRC = "./asset/image/error.svg";
-    const WARNING_IMG_SRC = "./asset/image/warning.svg";
-
-
-
-    const CLS_TOOLTIP = "tr-tooltip";
-    const CLS_COLUMN_HEADER_CELL = "tr-column-header-cell";
-    const CLS_ENTITY_POINT_EVENT_BOX = "tr-entity-point-event-box";
-    const CLS_ENTITY_POINT_EVENT_TOOLTIP = "tr-entity-point-event-tooltip";
-    const CLS_ENTITY_POINT_EVENT_TITLE = "tr-entity-point-event-title";
-    const CLS_ENTITY_POINT_EVENT_COLOR_ICON = "tr-entity-point-event-color-icon";
-
-    const CLS_ENTITY_RANGE_EVENT_BOX = "tr-entity-range-event-box";
-    const CLS_ENTITY_RANGE_EVENT_TOOLTIP = "tr-entity-range-event-tooltip";
-    const CLS_ENTITY_RANGE_EVENT_TITLE = "tr-entity-range-event-title";
-    const CLS_ENTITY_RANGE_EVENT_COLOR_ICON = "tr-entity-range-event-color-icon";
-
-
-    const CLS_SIDE_POINT_EVENT_BOX = "tr-side-point-event-box";
-    const CLS_SIDE_POINT_EVENT_TOOLTIP = "tr-side-point-event-tooltip";
-    const CLS_SIDE_POINT_EVENT_TITLE = "tr-side-point-event-title";
-    const CLS_SIDE_POINT_EVENT_COLOR_ICON = "tr-side-point-event-color-icon";
-
-    const CLS_GLOBAL_RANGE_EVENT_BOX = "tr-global-range-event-box";
-    const CLS_GLOBAL_RANGE_EVENT_TOOLTIP = "tr-global-range-event-tooltip";
-    const CLS_GLOBAL_RANGE_EVENT_TITLE = "tr-global-range-event-title";
-    const CLS_GLOBAL_RANGE_EVENT_COLOR_ICON = "tr-global-range-event-color-icon";
-
-
-    const COLOR_SELECTED_EVENT = "#333";
-
+    /**
+     * 고정된 툴팁 목록. key: 툴팁 컨테이너 엘리먼트, value: 툴팁 엘리먼트
+     */
+    const _fixedTooltipMap = new Map<HTMLElement, HTMLElement>();
 
     function getTimeDiff(start: Date, end: Date) {
         const totalMilliseconds = end.getTime() - start.getTime();
@@ -721,28 +723,31 @@ namespace Services.TimelineChart.Samples.StyledSample {
 
     };
 
+    function _isTooltipFixed(tooltipContainerEl: HTMLElement) {
+        return _fixedTooltipMap.has(tooltipContainerEl);
+    }
+
     /**
      * 엘리먼트에 툴팁을 추가한다.
      * @param element 툴팁을 추가할 엘리먼트
      * @param tooltipElement 툴팁 엘리먼트
      */
     function addTooltip(element: HTMLElement, tooltipElement: HTMLElement) {
-        let tooltipFixed = false;
         element.addEventListener("mousemove", (e) => {
             if (e.target !== element) {
                 return;
             }
-            if (tooltipFixed)
+            if (_isTooltipFixed(element))
                 return;
             _relocateTooltip(tooltipElement, e);
         });
         element.addEventListener("mouseleave", (e) => {
-            if (tooltipFixed)
+            if (_isTooltipFixed(element))
                 return;
             _hideTooltip(tooltipElement);
         });
         element.addEventListener("mouseenter", (e) => {
-            if (tooltipFixed)
+            if (_isTooltipFixed(element))
                 return;
             _showTooltip(tooltipElement);
             /**
@@ -752,13 +757,17 @@ namespace Services.TimelineChart.Samples.StyledSample {
             _relocateTooltip(tooltipElement, e);
         });
         element.addEventListener("click", (e) => {
-            if (tooltipFixed) {
+            e.stopPropagation();
+            if (_isTooltipFixed(element)) {
                 _hideTooltip(tooltipElement);
-                tooltipFixed = false;
+                _fixedTooltipMap.delete(element);
             } else {
                 _showTooltip(tooltipElement);
-                tooltipFixed = true;
+                _fixedTooltipMap.set(element, tooltipElement);
             }
+        });
+        tooltipElement.addEventListener("click", (e) => {
+            e.stopPropagation();
         });
     }
 
@@ -1004,6 +1013,20 @@ namespace Services.TimelineChart.Samples.StyledSample {
         containerElement.innerText = "ABC TIME LINE";
     }
 
+    let isMainCanvasCostomized = false;
+    function customizeMainCanvas(canvasEl: HTMLElement) {
+        if (isMainCanvasCostomized)
+            return;
+
+        canvasEl.addEventListener("click", (e) => {
+            for (const [containerEl, tooltipEl] of _fixedTooltipMap.entries()) {
+                _hideTooltip(tooltipEl);
+            }
+            _fixedTooltipMap.clear();
+        });
+        isMainCanvasCostomized = true;
+    }
+
     export function loadSingle() {
         const mesLegend = ChartLegend();
         mesLegend.create(document.getElementById("legend-container"));
@@ -1080,6 +1103,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
             buttonScrollStepY: 400,
             fixedController: false,
             controllerLocation: "topRight",
+            customizeMainCanvas: customizeMainCanvas
         };
 
         const chart = Services.TimelineChart.TimelineChart();

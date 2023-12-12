@@ -141,6 +141,9 @@ namespace Services.TimelineChart {
         columnTitleRender?: (containerEl: HTMLElement) => void;
         tableColumnRender?: (containerEl: HTMLElement) => void;
 
+        customizeMainCanvas?: (canvasEl: HTMLElement) => void;
+
+
         /**
          * 테이블 행에 마우스를 올렸을 때 배경색
          */
@@ -564,6 +567,14 @@ namespace Services.TimelineChart {
          * 셀 높이(px)
          */
         let _cellHeight: number;
+        /**
+         * 메인캔버스에 사용자 코드를 적용한다.
+         */
+        let _customizeMainCanvas: (canvasEl: HTMLElement) => void = (el) => { };
+
+
+
+        
 
         const css = function () {
             function getVariable(name: string) {
@@ -942,6 +953,8 @@ namespace Services.TimelineChart {
             _mainPointContentRatio = options.mainPointContentRatio ?? _mainPointContentRatio;
             _maxZoomScale = options.maxZoomScale ?? _maxZoomScale;
             _cellMinutes = options.cellMinutes ?? _cellMinutes;
+            _customizeMainCanvas = options.customizeMainCanvas ?? _customizeMainCanvas;
+
             _setCellWidth(options.cellWidth ?? _cellWidth);
             _setCellHeight(options.cellHeight ?? _cellHeight);
             setChartTimeRange(options.chartStartTime, options.chartEndTime);
@@ -999,6 +1012,8 @@ namespace Services.TimelineChart {
          * 차트를 그린다.
          */
         function render() {
+            _customizeMainCanvas(_mainCanvasElement);
+
             // 렌더링 전 적용할 설정을 적용한다.
             if (_fixedController) {
                 _contextMenuEl.classList.add(CLS_CONTEXT_MENU_FIXED);
