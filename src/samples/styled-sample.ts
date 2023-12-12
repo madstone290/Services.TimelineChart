@@ -902,10 +902,25 @@ namespace Services.TimelineChart.Samples.StyledSample {
         tooltipElement.appendChild(productElement);
 
         const descElement = document.createElement("div");
-        descElement.innerText = event.description;
+        descElement.innerText =`desc: ` + event.description;
         tooltipElement.appendChild(descElement);
 
-        addTestElementToTooltip(tooltipElement);
+        boxElement.addEventListener("mousemove", async (e) => {
+            if (e.target !== boxElement) {
+                return;
+            }
+            if (!(event as any).additionalInfoLoaded) {
+                (event as any).additionalInfoLoaded = true;
+                setTimeout(() => {
+                    for (let i = 0; i <= 10; i++) {
+                        const iElement = document.createElement("div");
+                        iElement.innerText = i.toString();
+                        tooltipElement.appendChild(iElement);
+                    }
+                    _relocateTooltip(tooltipElement, e);
+                }, 500);
+            }
+        });
 
         addTooltip(boxElement, tooltipElement);
         addHoverColor(boxElement, COLOR_SELECTED_EVENT);
