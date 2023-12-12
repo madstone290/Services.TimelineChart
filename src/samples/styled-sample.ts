@@ -685,8 +685,30 @@ namespace Services.TimelineChart.Samples.StyledSample {
         if (window.innerHeight < e.clientY + tooltipElement.offsetHeight + tooltipOffset) {
             top = window.innerHeight - tooltipElement.offsetHeight - tooltipOffset;
         }
+
         tooltipElement.style.top = top + "px";
         tooltipElement.style.left = left + "px";
+        
+        const boundingClientRect = tooltipElement.getBoundingClientRect();
+        // detect if the tooltip height is longer than the window height
+        const tooltipHeight = boundingClientRect.height;
+        const windowInnerHeight = window.innerHeight - tooltipOffset * 2;
+        if (tooltipHeight >= windowInnerHeight) {
+            tooltipElement.style.maxHeight = windowInnerHeight + "px";
+        } else {
+            tooltipElement.style.maxHeight = "";
+        }
+
+        // detect if the tooltip width is longer than the remaining width from the mouse position
+        const tooltipWidth = boundingClientRect.width;
+        const windowInnerWidth = window.innerWidth - tooltipOffset * 2;
+        const remainingWidth = windowInnerWidth - e.clientX;
+        if (tooltipWidth >= remainingWidth) {
+            tooltipElement.style.maxWidth = remainingWidth + "px";
+        } else {
+            tooltipElement.style.maxWidth = "";
+        }
+
     };
 
     /**
@@ -714,6 +736,35 @@ namespace Services.TimelineChart.Samples.StyledSample {
              */
             relocateTooltip(tooltipElement, e);
         });
+    }
+
+    function addTestElementToTooltip(tooltipElement: HTMLElement) {
+        const testElement = document.createElement("div");
+        testElement.innerText = `
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Morbi tincidunt, quam quis lacinia faucibus, ipsum elit tempus elit, nec consectetur nunc sem eget nisi.
+        1Donec non nisl eget nisi aliquet gravida.
+        2Nulla facilisi.
+        3Donec ac nunc eget nisi aliquet gravida.
+        4Nulla facilisi.
+        5Donec ac nunc eget nisi aliquet gravida.
+        6Nulla facilisi.
+        7Donec ac nunc eget nisi aliquet gravida.
+        8Nulla facilisi.
+        9Donec ac nunc eget nisi aliquet gravida.
+        10Nulla facilisi.
+        11Donec ac nunc eget nisi aliquet gravida.
+        12Nulla facilisi.
+        13Donec ac nunc eget nisi aliquet gravida.
+        14Nulla facilisi.
+        15Donec ac nunc eget nisi aliquet gravida.
+        16Nulla facilisi.
+        17Donec ac nunc eget nisi aliquet gravida.
+        18Nulla facilisi.
+        19Donec ac nunc eget nisi aliquet gravida.
+        20Nulla facilisi.
+        `;
+        tooltipElement.appendChild(testElement);
     }
 
     function addHoverColor(element: HTMLElement, hoverColor: string) {
@@ -762,6 +813,8 @@ namespace Services.TimelineChart.Samples.StyledSample {
         const timeElement = document.createElement("div");
         timeElement.innerText = dayjs(event.time).format("HH:mm:ss");
         tooltipElement.appendChild(timeElement);
+
+        addTestElementToTooltip(tooltipElement);
 
         addTooltip(imgElement, tooltipElement);
         addHoverColor(imgElement, COLOR_SELECTED_EVENT);
@@ -815,6 +868,8 @@ namespace Services.TimelineChart.Samples.StyledSample {
         descElement.innerText = event.description;
         tooltipElement.appendChild(descElement);
 
+        addTestElementToTooltip(tooltipElement);
+
         addTooltip(boxElement, tooltipElement);
         addHoverColor(boxElement, COLOR_SELECTED_EVENT);
     };
@@ -845,6 +900,8 @@ namespace Services.TimelineChart.Samples.StyledSample {
         const timeElement = document.createElement("div");
         timeElement.innerText = dayjs(event.time).format("HH:mm:ss");
         tooltipElement.appendChild(timeElement);
+
+        addTestElementToTooltip(tooltipElement);
 
         addTooltip(imgElement, tooltipElement);
         addHoverColor(imgElement, COLOR_SELECTED_EVENT);
