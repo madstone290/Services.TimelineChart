@@ -27,6 +27,10 @@
     background-color: #8790b1;
 }
 
+.tr-tooltip * {
+    user-select: text;
+}
+
 .tr-main-title {
     border-color: #333c77;
     background-color: #19204d;
