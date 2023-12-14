@@ -992,9 +992,9 @@ namespace Services.TimelineChart.Samples.StyledSample {
         addHoverColor(boxElement, COLOR_SELECTED_EVENT);
     };
 
-    const mainTitleRender = function (containerElement: HTMLElement) {
+    const mainTitleRender = function (containerElement: HTMLElement, title: string) {
         containerElement.classList.add("tr-main-title");
-        containerElement.innerHTML = "ABC H/L LH Line 03";
+        containerElement.innerHTML = title;
     }
 
     const tableColumnRender = function (containerElement: HTMLElement) {
@@ -1027,9 +1027,9 @@ namespace Services.TimelineChart.Samples.StyledSample {
         containerElement.appendChild(item2);
     }
 
-    const columnTitleRender = function (containerElement: HTMLElement) {
+    const columnTitleRender = function (containerElement: HTMLElement, title: string) {
         containerElement.classList.add("tr-column-title");
-        containerElement.innerText = "ABC TIME LINE";
+        containerElement.innerText = title;
     }
 
     let isMainCanvasCostomized = false;
@@ -1087,8 +1087,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         const cellWidth = 30;
         const cellHeight = 30;
         const options: Services.TimelineChart.ChartOptions = {
-            mainTitle: "XXX H/L LH Line 03",
-            //subTitle: "Serial No.",
+            mainTitle: "H/L LH Line 03",
             columnTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T06:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-01T18:00:00")),
