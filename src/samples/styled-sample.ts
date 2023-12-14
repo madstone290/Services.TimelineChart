@@ -275,15 +275,15 @@ namespace Services.TimelineChart.Samples.StyledSample {
                     entityId: 4,
                 },
                 {
-                    type: "op30",
-                    start: new Date(Date.parse("2020-01-01T22:00:00")),
-                    end: new Date(Date.parse("2020-01-01T23:00:00")),
+                    type: "op50",
+                    start: new Date(Date.parse("2020-01-01T10:00:00")),
+                    end: new Date(Date.parse("2020-01-02T10:20:00")),
                     entityId: 4,
                 },
                 {
-                    type: "op40",
-                    start: new Date(Date.parse("2020-01-01T23:00:00")),
-                    end: new Date(Date.parse("2020-01-01T23:50:00")),
+                    type: "op60",
+                    start: new Date(Date.parse("2020-01-01T04:00:00")),
+                    end: new Date(Date.parse("2020-01-01T09:00:00")),
                     entityId: 4,
                 },
             ]

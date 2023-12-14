@@ -992,7 +992,7 @@ namespace Services.TimelineChart {
                 return _chartRenderStartTime <= startTime && startTime <= _chartRenderEndTime;
             }
             else {
-                return _chartStartTime <= endTime && endTime <= _chartEndTime;
+                return _chartStartTime <= endTime && startTime <= _chartEndTime;
             }
         }
 
