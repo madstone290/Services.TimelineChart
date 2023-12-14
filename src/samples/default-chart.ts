@@ -902,7 +902,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         tooltipElement.appendChild(productElement);
 
         const descElement = document.createElement("div");
-        descElement.innerText =`desc: ` + event.description;
+        descElement.innerText = `desc: ` + event.description;
         tooltipElement.appendChild(descElement);
 
         boxElement.addEventListener("mousemove", async (e) => {
@@ -997,20 +997,46 @@ namespace Services.TimelineChart.Samples.StyledSample {
         containerElement.innerHTML = title;
     }
 
+    function _createColumn(containerElement: HTMLElement, caption: string) {
+        const columnEl = document.createElement("div");
+        columnEl.classList.add("tr-table-column");
+
+        const captionEl = document.createElement("div");
+        captionEl.classList.add("tr-table-column-caption");
+        captionEl.innerText = caption;
+        columnEl.appendChild(captionEl);
+
+        const icon = document.createElement("div");
+        icon.classList.add("tr-table-column-icon");
+        columnEl.appendChild(icon);
+
+        let sorted = 0;
+        columnEl.addEventListener("click", (e) => {
+            sorted++;
+            if (sorted == 1) {
+                icon.innerHTML = "&#9660;";
+            } else if (sorted == 2) {
+                icon.innerHTML = "&#9650;";
+            }
+            else {
+                sorted = 0;
+                icon.innerText = "";
+            }
+        });
+
+        containerElement.appendChild(columnEl);
+        return columnEl;
+    }
+
     const tableColumnRender = function (containerElement: HTMLElement) {
         const box = document.createElement("div");
         box.classList.add("tr-table-column-box");
         containerElement.appendChild(box);
 
-        const item1 = document.createElement("div");
-        item1.classList.add("tr-table-column-item");
-        item1.innerText = "Sequnce No.";
-        box.appendChild(item1);
-
-        const item2 = document.createElement("div");
-        item2.classList.add("tr-table-column-item");
-        item2.innerText = "Lot No.";
-        box.appendChild(item2);
+        const column1 = _createColumn(box, "Sequnce No.");
+        box.appendChild(column1);
+        const column2 = _createColumn(box, "Lot No.");
+        box.appendChild(column2);
     }
 
     const tableRowRender = function (entity: any, containerElement: HTMLElement) {
