@@ -1,6 +1,5 @@
 const DEBUG = false;
 namespace Services.TimelineChart {
-
     /**
      * 차트 이벤트.
      */
@@ -140,6 +139,7 @@ namespace Services.TimelineChart {
         mainTitleRender?: (containerEl: HTMLElement) => void;
         columnTitleRender?: (containerEl: HTMLElement) => void;
         tableColumnRender?: (containerEl: HTMLElement) => void;
+
         customizeElements?: (elements: { rootElement: HTMLElement }) => void;
 
 
@@ -311,6 +311,7 @@ namespace Services.TimelineChart {
         const CLS_CONTEXT_MENU_BOTTOM_LEFT = "tc-context-menu-bottom-left";
         const CLS_CONTEXT_MENU_BOTTOM_RIGHT = "tc-context-menu-bottom-right";
         const CLS_CONTEXT_MENU_CLOSED = "tc-context-menu-closed";
+        const CLS_CONTEXT_MENU_COLLAPSED = "tc-context-menu-collapsed";
         const CLS_CONTEXT_MENU_GROUP1 = "tc-context-menu-group1";
         const CLS_CONTEXT_MENU_GROUP2 = "tc-context-menu-group2";
         const CLS_CONTEXT_MENU_ITEM = "tc-context-menu-item";
@@ -828,11 +829,6 @@ namespace Services.TimelineChart {
         }
 
         function _initContextMenuElements() {
-            if (_fixedController) {
-                // 고정 컨트롤러인 경우 컨텍스트 메뉴를 미니 상태로 설정.
-                _contextMenuEl.classList.add(CLS_CONTEXT_MENU_CLOSED);
-            }
-
             // fab buttons event. scroll main canvas
             let fabIntervalId: number;
             let fabTimeoutId: number;
@@ -895,9 +891,9 @@ namespace Services.TimelineChart {
             });
             _closeMenuItemEl.addEventListener("click", (e) => {
                 if (_fixedController) {
-                    _contextMenuEl.classList.toggle(CLS_CONTEXT_MENU_CLOSED);
+                    _contextMenuEl.classList.toggle(CLS_CONTEXT_MENU_COLLAPSED);
                 } else {
-                    _contextMenuEl.style.display = "none";
+                    _contextMenuEl.classList.toggle(CLS_CONTEXT_MENU_CLOSED);
                 }
             });
 
@@ -914,7 +910,7 @@ namespace Services.TimelineChart {
                 const { x, y } = _getPositionInMainCanvasBox(e.clientX, e.clientY);
                 _contextMenuEl.style.left = `${x}px`;
                 _contextMenuEl.style.top = `${y}px`;
-                _contextMenuEl.style.display = "flex";
+                _contextMenuEl.classList.remove(CLS_CONTEXT_MENU_CLOSED);
             });
 
             let touchTimer: number;
@@ -936,7 +932,7 @@ namespace Services.TimelineChart {
                 if (targetEl == _zoomInMenuItemEl || targetEl == _zoomOutMenuItemEl) {
                     return;
                 }
-                _contextMenuEl.style.display = "none";
+                _contextMenuEl.classList.add(CLS_CONTEXT_MENU_CLOSED);
             });
         }
 
@@ -1012,20 +1008,31 @@ namespace Services.TimelineChart {
             return [trucateStartTime, trucateEndTime];
         }
 
+        /** 컨트롤러를 초기화한다 */
+        function _resetController() {
+            // 클래스 초기화
+            _controllerLocationClassMap.forEach(cls => { _contextMenuEl.classList.remove(cls) });
+            _contextMenuEl.classList.remove(CLS_CONTEXT_MENU_CLOSED);
+            _contextMenuEl.classList.remove(CLS_CONTEXT_MENU_COLLAPSED);
+
+            if (_fixedController) {
+                // 고정 컨트롤러인 경우 컨텍스트 메뉴를 미니 상태로 설정.
+                _contextMenuEl.classList.add(CLS_CONTEXT_MENU_COLLAPSED);
+                // 컨트롤러 위치 적용
+                const locationClass = _controllerLocationClassMap.get(_controllerLocation);
+                _contextMenuEl.classList.add(locationClass);
+            }
+        }
+
         /**
          * 차트를 그린다.
          */
         function render() {
+            _resetController();
+
             _customizeElements({
                 rootElement: _rootElement
             });
-
-            // 렌더링 전 적용할 설정을 적용한다.
-            if (_fixedController) {
-                _contextMenuEl.classList.add(CLS_CONTEXT_MENU_FIXED);
-                const locationClass = _controllerLocationClassMap.get(_controllerLocation);
-                _contextMenuEl.classList.add(locationClass);
-            }
 
             _renderMainTitle();
             _renderTableColumn();
