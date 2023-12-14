@@ -136,8 +136,8 @@ namespace Services.TimelineChart {
         entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        mainTitleRender?: (containerEl: HTMLElement) => void;
-        columnTitleRender?: (containerEl: HTMLElement) => void;
+        mainTitleRender?: (containerEl: HTMLElement, title: string) => void;
+        columnTitleRender?: (containerEl: HTMLElement, title: string) => void;
         tableColumnRender?: (containerEl: HTMLElement) => void;
 
         customizeElements?: (elements: { rootElement: HTMLElement }) => void;
@@ -201,8 +201,8 @@ namespace Services.TimelineChart {
         vZoomEnabled: boolean;
         headerTimeFormat: (time: Date) => string;
         headerCellRender: (time: Date, containerElement: HTMLElement) => void;
-        mainTitleRender: (containerEl: HTMLElement) => void;
-        columnTitleRender: (containerEl: HTMLElement) => void;
+        mainTitleRender: (containerEl: HTMLElement, title: string) => void;
+        columnTitleRender: (containerEl: HTMLElement, title: string) => void;
         tableColumnRender: (containerEl: HTMLElement) => void;
         tableRowRender: (entity: Entity, containerEl: HTMLElement) => void;
         sidePointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
@@ -341,45 +341,45 @@ namespace Services.TimelineChart {
         * 타임라인차트 엘리먼트
         */
         const TC_ELEMENT_HTML = `
-                <div class="${CLS_ROOT}">
-                    <div class="${CLS_LEFT_PANEL}">
-                        <div class="${CLS_MAIN_TITLE}"></div>
-                        <div class="${CLS_TABLE_COLUMN_BOX}"></div>
-                        <div class="${CLS_ENTITY_TABLE_BOX}"></div>
-                    </div>
-                    <div class="${CLS_MAIN_PANEL}">
-                        <div class="${CLS_COLUMN_PANEL}">
-                            <div class="${CLS_COLUMN_TITLE}"></div>
-                            <div class="${CLS_COLUMN_HEADER_BOX}">
-                                <div class="${CLS_COLUMN_HEADER}"></div>
-                            </div>
-                            <div class="${CLS_SIDE_CANVAS_BOX}">
-                                <div class="${CLS_SIDE_CANVAS}"></div>
-                            </div>
-        
+                    <div class="${CLS_ROOT}">
+                        <div class="${CLS_LEFT_PANEL}">
+                            <div class="${CLS_MAIN_TITLE}"></div>
+                            <div class="${CLS_TABLE_COLUMN_BOX}"></div>
+                            <div class="${CLS_ENTITY_TABLE_BOX}"></div>
                         </div>
-                        <div class="${CLS_MAIN_BOX}">
-                            <div class="${CLS_MAIN_CANVAS_BOX}">
-                                <div class="${CLS_MAIN_CANVAS}">
+                        <div class="${CLS_MAIN_PANEL}">
+                            <div class="${CLS_COLUMN_PANEL}">
+                                <div class="${CLS_COLUMN_TITLE}"></div>
+                                <div class="${CLS_COLUMN_HEADER_BOX}">
+                                    <div class="${CLS_COLUMN_HEADER}"></div>
                                 </div>
+                                <div class="${CLS_SIDE_CANVAS_BOX}">
+                                    <div class="${CLS_SIDE_CANVAS}"></div>
+                                </div>
+            
                             </div>
-                            <div class="${CLS_CONTEXT_MENU}">
-                                <div class="${CLS_CONTEXT_MENU_GROUP1}">
-                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_UP}"></div>
-                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_DOWN}"></div>
-                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_LEFT}"></div>
-                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_RIGHT}"></div>
+                            <div class="${CLS_MAIN_BOX}">
+                                <div class="${CLS_MAIN_CANVAS_BOX}">
+                                    <div class="${CLS_MAIN_CANVAS}">
+                                    </div>
                                 </div>
-                                <div class="${CLS_CONTEXT_MENU_GROUP2}">
-                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_IN}"></div>
-                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_OUT}"></div>
-                                    <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_CLOSE}"></div>
+                                <div class="${CLS_CONTEXT_MENU}">
+                                    <div class="${CLS_CONTEXT_MENU_GROUP1}">
+                                        <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_UP}"></div>
+                                        <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_DOWN}"></div>
+                                        <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_LEFT}"></div>
+                                        <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_RIGHT}"></div>
+                                    </div>
+                                    <div class="${CLS_CONTEXT_MENU_GROUP2}">
+                                        <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_IN}"></div>
+                                        <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_ZOOM_OUT}"></div>
+                                        <div class="${CLS_CONTEXT_MENU_ITEM} ${CLS_CONTEXT_MENU_ITEM_CLOSE}"></div>
+                                    </div>
                                 </div>
-                            </div>
-                        <div>
+                            <div>
+                        </div>
                     </div>
-                </div>
-                `;
+                    `;
 
         let _data: ChartData;
 
@@ -1078,7 +1078,7 @@ namespace Services.TimelineChart {
         function _renderMainTitle() {
             _mainTitleElement.replaceChildren();
             if (_state.mainTitleRender != null) {
-                _state.mainTitleRender(_mainTitleElement);
+                _state.mainTitleRender(_mainTitleElement, _state.mainTitle);
             } else {
                 _mainTitleElement.innerText = _state.mainTitle;
             }
@@ -1093,7 +1093,7 @@ namespace Services.TimelineChart {
         function _renderColumnTitle() {
             _columnTitleElement.replaceChildren();
             if (_state.columnTitleRender != null) {
-                _state.columnTitleRender(_columnTitleElement);
+                _state.columnTitleRender(_columnTitleElement, _state.columnTitle);
             } else {
                 _columnTitleElement.innerText = _state.columnTitle;
             }
