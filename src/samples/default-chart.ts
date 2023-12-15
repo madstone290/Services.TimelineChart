@@ -49,6 +49,12 @@ namespace Services.TimelineChart.Samples.StyledSample {
         description?: string;
     }
 
+    enum SortDirection {
+        ASC = "asc",
+        DESC = "desc",
+        NONE = "none"
+    }
+
     const legendData = {
         leftItems: [
             { color: "#57247a", label: "Op 10" },
@@ -79,7 +85,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
     const entities: any[] = [
         {
             id: 1,
-            name: "H34A2900001",
+            name: "A34A2900001",
             barcodeNumber: "H34A2900001",
             productNumber: "00123H1",
             pointEvents: [
@@ -200,7 +206,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         },
         {
             id: 2,
-            name: "H34A2900002",
+            name: "B34A2900002",
             barcodeNumber: "H34A2900002",
             productNumber: "00123H2",
             rangeEvents: [
@@ -226,7 +232,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         },
         {
             id: 3,
-            name: "H34A2900003",
+            name: "C34A2900003",
             barcodeNumber: "H34A2900003",
             productNumber: "00123H3",
             rangeEvents: [
@@ -246,7 +252,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         },
         {
             id: 4,
-            name: "H34A2900004",
+            name: "D34A2900004",
             barcodeNumber: "H34A2900004",
             productNumber: "00123H4",
             rangeEvents: [
@@ -290,7 +296,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         },
         {
             id: 5,
-            name: "H34A2900005",
+            name: "P34A2900005",
             barcodeNumber: "H34A2900005",
             productNumber: "00123H5",
             rangeEvents: [
@@ -332,9 +338,9 @@ namespace Services.TimelineChart.Samples.StyledSample {
                 }
             ]
         },
-        { id: 6, name: "H34A2900006" },
-        { id: 7, name: "H34A2900007" },
-        { id: 8, name: "H34A2900008" },
+        { id: 6, name: "U34A2900006" },
+        { id: 7, name: "T34A2900007" },
+        { id: 8, name: "O34A2900008" },
         {
             id: 9,
             name: "H34A2900009",
@@ -374,12 +380,12 @@ namespace Services.TimelineChart.Samples.StyledSample {
                 },
             ]
         },
-        { id: 10, name: "H34A2900010" },
-        { id: 11, name: "H34A2900011" },
-        { id: 12, name: "H34A2900012" },
+        { id: 10, name: "Q34A2900010" },
+        { id: 11, name: "A34A2900011" },
+        { id: 12, name: "T34A2900012" },
         {
             id: 13,
-            name: "H34A2900013",
+            name: "X34A2900013",
             barcodeNumber: "H34A2900013",
             productNumber: "00123H13",
             rangeEvents: [
@@ -406,17 +412,51 @@ namespace Services.TimelineChart.Samples.StyledSample {
                 },
             ],
         },
-        { id: 16, name: "H34A2900016" },
-        { id: 17, name: "H34A2900017" },
-        { id: 18, name: "H34A2900018" },
-        { id: 19, name: "H34A2900019" },
-        { id: 20, name: "H34A2900020" },
+        { id: 316, name: "G34A2900016" },
+        { id: 17, name: "F34A2900017" },
+        { id: 218, name: "C34A2900018" },
+        { id: 519, name: "B34A2900019" },
+        { id: 120, name: "A34A2900020" },
+        {
+            id: 59,
+            name: "W34A2900009",
+            barcodeNumber: "H34A2900009",
+            productNumber: "00123H9",
+            rangeEvents: [
+                {
+                    type: "op10",
+                    start: new Date(Date.parse("2020-01-01T03:40:00")),
+                    end: new Date(Date.parse("2020-01-01T04:20:00")),
+                    entityId: 59,
+                },
+                {
+                    type: "op20",
+                    start: new Date(Date.parse("2020-01-01T03:20:00")),
+                    end: new Date(Date.parse("2020-01-01T07:00:00")),
+                    entityId: 59,
+                },
+                {
+                    type: "op30",
+                    start: new Date(Date.parse("2020-01-01T08:00:00")),
+                    end: new Date(Date.parse("2020-01-01T10:40:00")),
+                    entityId: 59,
+                },
+                {
+                    type: "op40",
+                    start: new Date(Date.parse("2020-01-01T14:40:00")),
+                    end: new Date(Date.parse("2020-01-01T16:20:00")),
+                    entityId: 59,
+                },
+            ],
+            pointEvents: [
+                {
+                    description: "불량품",
+                    time: new Date(Date.parse("2020-01-01T10:09:52")),
+                    entityId: 9,
+                },
+            ]
+        },
     ];
-
-    const entitiesX100: any[] = [];
-    for (let i = 0; i < 30; i++) {
-        entitiesX100.push(...entities.map(entity => entity));
-    }
 
     const sidePointEvents = [
         {
@@ -608,6 +648,9 @@ namespace Services.TimelineChart.Samples.StyledSample {
      * 고정된 툴팁 목록. key: 툴팁 컨테이너 엘리먼트, value: 툴팁 엘리먼트
      */
     const _fixedTooltipMap = new Map<HTMLElement, HTMLElement>();
+
+    let _sortDirection = SortDirection.NONE;
+    let _sortColumnIndex = 0;
 
     function getTimeDiff(start: Date, end: Date) {
         const totalMilliseconds = end.getTime() - start.getTime();
@@ -997,7 +1040,18 @@ namespace Services.TimelineChart.Samples.StyledSample {
         containerElement.innerHTML = title;
     }
 
-    function _createColumn(containerElement: HTMLElement, caption: string) {
+    function _updateSortStatus(columnEl: HTMLElement, sortDirection: SortDirection) {
+        const icon = columnEl.querySelector(".tr-table-column-icon");
+        if (sortDirection == SortDirection.ASC) {
+            icon.innerHTML = "&#9650;";
+        } else if (sortDirection == SortDirection.DESC) {
+            icon.innerHTML = "&#9660;";
+        } else {
+            icon.innerHTML = "";
+        }
+    }
+
+    function _createColumn(containerElement: HTMLElement, index: number, caption: string) {
         const columnEl = document.createElement("div");
         columnEl.classList.add("tr-table-column");
 
@@ -1010,33 +1064,48 @@ namespace Services.TimelineChart.Samples.StyledSample {
         icon.classList.add("tr-table-column-icon");
         columnEl.appendChild(icon);
 
-        let sorted = 0;
-        columnEl.addEventListener("click", (e) => {
-            sorted++;
-            if (sorted == 1) {
-                icon.innerHTML = "&#9660;";
-            } else if (sorted == 2) {
-                icon.innerHTML = "&#9650;";
-            }
-            else {
-                sorted = 0;
-                icon.innerText = "";
-            }
-        });
-
         containerElement.appendChild(columnEl);
         return columnEl;
     }
+    const _columnCollection: HTMLElement[] = [];
 
     const tableColumnRender = function (containerElement: HTMLElement) {
         const box = document.createElement("div");
         box.classList.add("tr-table-column-box");
         containerElement.appendChild(box);
 
-        const column1 = _createColumn(box, "Sequnce No.");
-        box.appendChild(column1);
-        const column2 = _createColumn(box, "Lot No.");
-        box.appendChild(column2);
+        const column1 = _createColumn(box, 0, "Sequnce No.");
+        _columnCollection.push(column1);
+
+        const column2 = _createColumn(box, 1, "Lot No.");
+        _columnCollection.push(column2);
+
+        _columnCollection.forEach((columnEl, index) => {
+            box.appendChild(columnEl);
+
+            columnEl.addEventListener("click", (e) => {
+                _sortColumnIndex = index;
+                if (_sortColumnIndex != index) {
+                    _sortDirection = SortDirection.ASC;
+                }
+                else {
+                    if (_sortDirection == SortDirection.ASC) {
+                        _sortDirection = SortDirection.DESC;
+                    } else if (_sortDirection == SortDirection.DESC) {
+                        _sortDirection = SortDirection.NONE;
+                    } else {
+                        _sortDirection = SortDirection.ASC;
+                    }
+                }
+                _columnCollection.forEach((columnEl, index) => {
+                    _updateSortStatus(columnEl, SortDirection.NONE);
+                });
+                _updateSortStatus(columnEl, _sortDirection);
+
+                const sortEvent = new CustomEvent("sort", { detail: { index: index, direction: _sortDirection } });
+                window.dispatchEvent(sortEvent);
+            });
+        });
     }
 
     const tableRowRender = function (entity: any, containerElement: HTMLElement) {
@@ -1081,7 +1150,7 @@ namespace Services.TimelineChart.Samples.StyledSample {
         const container = document.getElementById("tc-container");
         const data: Services.TimelineChart.ChartData =
         {
-            entities: entitiesX100.map(entity => {
+            entities: entities.map(entity => {
                 const shapedEntity: Entity = {
                     ...entity,
                     pointEvents: entity.pointEvents?.map((pointEvent: any): PointEvent => {
@@ -1155,6 +1224,42 @@ namespace Services.TimelineChart.Samples.StyledSample {
         chart.setData(data);
         chart.setOptions(options);
         chart.render();
+
+        const dataBackup = {
+            ...data,
+            entities: [...data.entities]
+        };
+
+        window.addEventListener("sort", (e) => {
+            const sortEvent = e as CustomEvent;
+            const sortInfo = sortEvent.detail;
+            const columnIndex = sortInfo.index;
+            const sortDirection = sortInfo.direction as SortDirection;
+            let sortedData = { ...dataBackup };
+
+            if (sortDirection == SortDirection.NONE) {
+                chart.setData(sortedData);
+                chart.renderCanvas();
+                return;
+            }
+
+            if (columnIndex == 0) {
+                const sign = sortDirection == SortDirection.ASC ? 1 : -1;
+                sortedData.entities = data.entities.sort((a, b) => {
+                    return sign * ((a as any).id - (b as any).id);
+                });
+            }
+            else if (columnIndex == 1) {
+                const sign = sortDirection == SortDirection.ASC ? 1 : -1;
+                sortedData.entities = data.entities.sort((a, b) => {
+                    return sign * (((a as any).name as string).localeCompare((b as any).name as string));
+                });
+            }
+            chart.setData(sortedData);
+            chart.renderCanvas();
+
+
+        });
     }
 }
 

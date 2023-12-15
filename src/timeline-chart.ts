@@ -1039,6 +1039,10 @@ namespace Services.TimelineChart {
             _renderColumnTitle();
             _renderColumnHeader();
 
+            renderCanvas();
+        }
+
+        function renderCanvas() {
             // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
             _updateElementSize();
             _renderSideCanvas();
@@ -1751,6 +1755,7 @@ namespace Services.TimelineChart {
         return {
             create,
             render,
+            renderCanvas,
             setOptions,
             setChartTimeRange,
             setData
