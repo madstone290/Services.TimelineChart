@@ -35,7 +35,7 @@
     border-color: #333c77;
     background-color: #19204d;
     color: white;
-    font-weight: 900;
+    font-weight: 700;
 }
 
 .tr-table-column-box {
@@ -62,10 +62,12 @@
     text-align: center;
     line-height: 100%;
     cursor: pointer;
-
     display: flex;
     justify-content: center;
     align-items: center;
+}
+.tr-table-column * {
+    user-select: none;
 }
 
 .tr-table-column:last-child {
