@@ -1068,7 +1068,6 @@ namespace Services.TimelineChart.Samples.StyledSample {
         return columnEl;
     }
     const _columnCollection: HTMLElement[] = [];
-
     const tableColumnRender = function (containerElement: HTMLElement) {
         const box = document.createElement("div");
         box.classList.add("tr-table-column-box");
@@ -1257,8 +1256,6 @@ namespace Services.TimelineChart.Samples.StyledSample {
             }
             chart.setData(sortedData);
             chart.renderCanvas();
-
-
         });
     }
 }

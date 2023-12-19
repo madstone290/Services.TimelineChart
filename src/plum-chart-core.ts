@@ -1,5 +1,5 @@
-const DEBUG = true;
-namespace Services.TimelineChart {
+namespace Services.PlumChart.Core {
+    const DEBUG = false;
     /**
      * 차트 이벤트.
      */

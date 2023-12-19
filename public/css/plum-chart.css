@@ -1,0 +1,347 @@
+/* 사용자 커스텀 시작 */
+.pl-op1 {
+    background-color: blanchedalmond;
+}
+
+.pl-op2 {
+    background-color: lightblue;
+}
+
+.pl-op3 {
+    background-color: lightgreen;
+}
+
+.pl-op4 {
+    background-color: lightpink;
+}
+
+.pl-downtime {
+    background-color: pink
+}
+
+.pl-network {
+    background-color: yellow;
+}
+
+/* 사용자 커스텀 종료 */
+
+/* tc 오버라이드 시작 */
+.tc-column-header-item {
+    border-color: #333c77;
+}
+
+/* timeline-chart.css 덮어쓰기 */
+.tc-entity-table-item {
+    border-color: white;
+    background-color: white;
+}
+
+.tc-entity-table-item:nth-child(odd) {
+    background-color: #e1edf8;
+}
+
+.tc-main-panel {
+    border-color: #1f2e5d;
+}
+
+.tc-column-header {
+    background-color: rgb(93, 99, 147);
+}
+
+.tc-side-canvas {
+    border-color: #333c77;
+    background-color: #8790b1;
+}
+
+.tc-main-canvas-box::-webkit-scrollbar-thumb {
+    background-color: #19204d;
+}
+
+.tc-main-canvas-box::-webkit-scrollbar-track {
+    background-color: #8790b1;
+}
+
+.tc-main-canvas-h-border {
+    border-color: #e1edf8;
+}
+
+.tc-main-canvas-v-border {
+    border-color: #c5d9eb;
+}
+
+.tc-side-canvas-v-border {
+    border-color: #333c77;
+}
+
+/* tc 오버라이드 종료 */
+
+
+
+
+/* 툴팁 시작 */
+.pl-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    color: #fff;
+    text-align: center;
+    border-radius: 3px;
+    z-index: 100;
+    padding: 15px;
+    background-color: #e9ebfd;
+    border: 1px white dotted;
+    color: #19204d;
+    text-align: left;
+    position: fixed;
+    overflow: auto;
+}
+
+.pl-tooltip.pl-tooltip-visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.pl-tooltip.pl-tooltip-invisible {
+    visibility: hidden;
+    opacity: 0;
+}
+
+.pl-tooltip::-webkit-scrollbar {
+    width: var(--tc-scroll-width);
+    height: var(--tc-scroll-height);
+}
+
+.pl-tooltip::-webkit-scrollbar-thumb {
+    background-color: #19204d;
+}
+
+.pl-tooltip::-webkit-scrollbar-track {
+    background-color: #8790b1;
+}
+
+.pl-tooltip * {
+    user-select: text;
+}
+
+/* 툴팁 종료 */
+
+
+/* 그리드 시작 */
+
+.pl-grid-title {
+    border-color: #333c77;
+    background-color: #19204d;
+    color: white;
+    padding-left: 8px;
+    font-weight: 700;
+}
+
+
+.pl-grid-columns {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    border-color: #333c77;
+    text-align: center;
+    background-color: #5d6393;
+    font-weight: 600;
+    color: white;
+}
+
+.pl-grid-column {
+    border-width: 0px 1px 0px 0px;
+    border-color: #333c77;
+    border-style: solid;
+    width: 100%;
+    height: 100%;
+    padding: 4px;
+    text-align: center;
+    line-height: 100%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.pl-grid-column * {
+    user-select: none;
+}
+
+.pl-grid-column-caption {
+    flex: 1;
+}
+
+.pl-grid-column-icon {
+    flex: 0;
+}
+
+.pl-grid-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    border-color: #333c77;
+    text-align: center;
+    font-weight: 600;
+}
+
+.pl-grid-cell {
+    border-width: 0px 0px 0px 0px;
+    border-color: #333c77;
+    border-style: solid;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    line-height: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 그리드 종료 */
+
+/* 캔버스 시작 */
+.pl-canvas-title {
+    border-color: #333c77;
+    background-color: #1f2e5d;
+    color: white;
+    font-weight: 700;
+}
+
+.pl-canvas-column-box {
+    border-color: #333c77;
+}
+
+.pl-canvas-column {
+    background-color: #5d6393;
+    color: white;
+    font-size: 14px;
+    text-align: center;
+}
+
+
+
+.pl-entity-point-event {
+    width: 100%;
+    height: 100%;
+}
+
+.pl-entity-point-event-title {
+    font-weight: bold;
+    text-align: center;
+    color: black;
+    background-color: white;
+    padding: 2px 0px 2px 0px;
+    margin: 0px 0px 10px 0px;
+    border-radius: 50px;
+}
+
+.pl-tooltip.pl-entity-point-event-tooltip {
+    border: 2px solid;
+}
+
+
+.pl-entity-range-event {
+    border-radius: 4px;
+    box-shadow: 4px 4px 10px #000000;
+    border: solid #000000 1px;
+    display: inline-block;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.pl-entity-range-event-title {
+    font-weight: bold;
+    text-align: center;
+    color: black;
+    background-color: white;
+    padding: 2px 0px 2px 0px;
+    margin: 0px 0px 10px 0px;
+    border-radius: 50px;
+}
+
+.pl-tooltip.pl-entity-range-event-tooltip {
+    border: 2px solid;
+}
+
+.pl-global-range-event {
+    border-radius: 1px;
+    width: 100%;
+    height: 100%;
+    opacity: 0.5;
+}
+
+.pl-global-range-event-title {
+    font-weight: bold;
+    text-align: center;
+    color: black;
+    padding: 2px 0px 2px 0px;
+    margin: 0px 0px 10px 0px;
+    border-radius: 50px;
+    background-color: white;
+}
+
+.pl-tooltip.pl-global-range-event-tooltip {
+    border: 2px double;
+}
+
+/* 캔버스 종료 */
+
+/* 레전드 시작 */
+.pl-legends {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: 600;
+    background-color: white;
+}
+
+.pl-legends-left {
+    display: flex;
+    flex-direction: row;
+    padding: 4px;
+    background-color: white;
+    flex-wrap: wrap;
+}
+
+.pl-legends-right {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 4px;
+    flex: 1;
+    flex-wrap: nowrap;
+}
+
+.pl-legend {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.pl-legend-label {
+    padding: 0px 2px;
+    margin-right: 10px;
+}
+
+.pl-legend-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.pl-legend-label {
+    padding: 0px 4px;
+}
+
+/* 레전드 종료 */
