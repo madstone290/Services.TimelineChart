@@ -12,23 +12,23 @@ namespace Services.PlumChart {
         /**
          * 범례 아이콘
          */
-        icon?: string,
+        icon?: string;
         /**
          * 범례 색상
          */
-        color?: string,
+        color?: string;
         /**
          * css 클래스명
          */
-        className?: string,
+        className?: string;
         /**
          * 범례 제목
          */
-        label: string,
+        label: string;
         /**
          * 범례 위치
          */
-        location?: "left" | "right",
+        location?: "left" | "right";
     }
 
     /**
@@ -38,28 +38,28 @@ namespace Services.PlumChart {
         /**
          * 이벤트 시간
          */
-        time: Date,
+        time: Date;
         /**
          * 이벤트 아이콘
          */
-        icon: string,
+        icon: string;
         /**
          * 이벤트 제목
          */
-        title: string,
+        title: string;
         /**
          * 이벤트 추가정보
          */
-        lines: string[],
+        lines: string[];
         /**
         * 이벤트 추가정보. 레이지 로딩 적용.
         * @returns 
         */
-        lazyLines?: () => Promise<string[]>,
+        lazyLines?: () => Promise<string[]>;
         /**
          * 툴팁 표시 여부
          */
-        showTooltip: boolean,
+        showTooltip: boolean
     }
 
     /**
@@ -69,36 +69,36 @@ namespace Services.PlumChart {
         /**
          * 이벤트 시작시간
          */
-        startTime: Date,
+        startTime: Date;
         /**
          * 이벤트 종료시간
          */
-        endTime: Date,
+        endTime: Date;
         /**
          * css 클래스명
          */
-        className?: string,
+        className?: string;
         /**
          * 이벤트 색상
          */
-        color?: string,
+        color?: string;
         /**
          * 이벤트 제목
          */
-        title: string,
+        title: string;
         /**
          * 이벤트 추가정보
          */
-        lines: string[],
+        lines: string[];
         /**
          * 이벤트 추가정보. 레이지 로딩 적용.
          * @returns 
          */
-        lazyLines?: () => Promise<string[]>,
+        lazyLines?: () => Promise<string[]>;
         /**
          * 툴팁 표시 여부
          */
-        showTooltip: boolean,
+        showTooltip: boolean;
     }
 
     export interface Entity {
@@ -120,8 +120,8 @@ namespace Services.PlumChart {
         formatTime?: (time: Date) => string;
         formatTimeRange?: (start: Date, end: Date) => string;
         renderCanvasColumn?: (time: Date, containerEl: HTMLElement) => HTMLElement;
-        useGridHoverColor?: boolean;
-        gridHoverColor?: string;
+        useEventHoverColor?: boolean;
+        eventHoverColor?: string;
         gridColumns: GridColumn[];
         gridTitle: string;
         canvasTitle: string;
@@ -275,8 +275,15 @@ namespace Services.PlumChart {
     let _sortDirection = SortDirection.NONE;
     let _sortColumnField = "";
 
-    let _useGridHoverColor = false;
-    let _gridHoverColor = "#333";
+    /**
+     * 캔버스 이벤트 호버시 배경색을 변경한다.
+     */
+    let _useEventHoverColor = false;
+
+    /**
+     * 캔버스 이벤트 호버시 배경색
+     */
+    let _eventHoverColor = "#333";
 
     let _formatTime: (time: Date) => string;
     /**
@@ -356,16 +363,16 @@ namespace Services.PlumChart {
 
     /**
      * 그리드 셀에 마우스 호버시 배경색을 변경한다.
-     * @param el 
+     * @param eventEl 
      * @returns 
      */
-    function _setGridHoverColor(el: HTMLElement) {
-        const originalColor = el.style.backgroundColor;
-        el.addEventListener("mouseenter", (e) => {
-            el.style.backgroundColor = _gridHoverColor;
+    function _setEventHoverColor(eventEl: HTMLElement) {
+        const originalColor = eventEl.style.backgroundColor;
+        eventEl.addEventListener("mouseenter", (e) => {
+            eventEl.style.backgroundColor = _eventHoverColor;
         });
-        el.addEventListener("mouseleave", (e) => {
-            el.style.backgroundColor = originalColor;
+        eventEl.addEventListener("mouseleave", (e) => {
+            eventEl.style.backgroundColor = originalColor;
         });
     }
 
@@ -457,7 +464,6 @@ namespace Services.PlumChart {
             if (_isTooltipFixed(containerEl))
                 return;
             _showTooltip(tooltipEl);
-            console.log(tooltipEl);
             _relocateTooltip(tooltipEl, e);
         });
         // 마우스 클릭/더블클릭시 툴팁을 고정한다.
@@ -528,14 +534,15 @@ namespace Services.PlumChart {
             for (const line of lazyLines) {
                 _renderLineElement(line, tooltipEl);
             }
+            _relocateTooltip(tooltipEl, e);
             lazyLoaded = true;
         });
 
         if (event.showTooltip) {
             _addTooltip(imgEl, tooltipEl);
         }
-        if (_useGridHoverColor) {
-            _setGridHoverColor(imgEl);
+        if (_useEventHoverColor) {
+            _setEventHoverColor(imgEl);
         }
     }
 
@@ -579,14 +586,15 @@ namespace Services.PlumChart {
             for (const line of lazyLines) {
                 _renderLineElement(line, tooltipEl);
             }
+            _relocateTooltip(tooltipEl, e);
             lazyLoaded = true;
         });
 
         if (event.showTooltip) {
             _addTooltip(boxEl, tooltipEl);
         }
-        if (_useGridHoverColor) {
-            _setGridHoverColor(boxEl);
+        if (_useEventHoverColor) {
+            _setEventHoverColor(boxEl);
         }
     }
 
@@ -866,8 +874,8 @@ namespace Services.PlumChart {
     }
 
     function setOptions(options: PlumChartOptions) {
-        _useGridHoverColor = options.useGridHoverColor ?? _useGridHoverColor;
-        _gridHoverColor = options.gridHoverColor ?? _gridHoverColor;
+        _useEventHoverColor = options.useEventHoverColor ?? _useEventHoverColor;
+        _eventHoverColor = options.eventHoverColor ?? _eventHoverColor;
         _formatTime = options.formatTime ?? _defaultFormatTime;
         _formatTimeRange = options.formatTimeRange ?? _defaultFormatTimeRange;
         options.gridColumns?.forEach((column) => {
