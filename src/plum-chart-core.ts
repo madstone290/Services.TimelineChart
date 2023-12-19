@@ -1142,7 +1142,8 @@ namespace Services.PlumChart.Core {
             while (cellIndex < headerCellCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
-                containerElement.style.left = `${(cellIndex * _cellWidth) + 1}px`;
+                const left = cellIndex == 0 ? 0 : (cellIndex * _cellWidth) + 1;
+                containerElement.style.left = `${left}px`;
                 containerElement.style.width = `${_cellWidth}px`;
                 _state.headerCellRender(currentTime, containerElement);
                 _columnHeaderElement.appendChild(containerElement);
@@ -1181,7 +1182,8 @@ namespace Services.PlumChart.Core {
 
         function _refreshColumnHeaders() {
             for (const [index, el] of _headerElements) {
-                el.style.left = `${(index * _cellWidth) + 1}px`;
+                const left = index == 0 ? 0 : (index * _cellWidth) + 1;
+                el.style.left = `${left}px`;
                 el.style.width = `${_cellWidth}px`;
             }
             _refreshCanvasHeaderVLines();
