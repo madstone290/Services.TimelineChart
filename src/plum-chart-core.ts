@@ -102,6 +102,8 @@ namespace Services.PlumChart.Core {
         mainTitle?: string;
         columnTitle?: string;
         leftPanelWidth?: number;
+        borderColor?: string;
+        canvasLineColor?: string;
         columnTitleHeight?: number;
         columnHeaderHeight?: number;
         sideCanvasHeight?: number;
@@ -334,6 +336,9 @@ namespace Services.PlumChart.Core {
         const VAR_SIDE_CANVAS_HEIGHT = "--tc-side-canvas-height";
         const VAR_SIDE_CANVAS_CONTENT_HEIGHT = "--tc-side-canvas-content-height";
 
+        const VAR_BORDER_COLOR = "--plc-border-color";
+        const VAR_CANVAS_LINE_COLOR = "--plc-canvas-line-color";
+
         // #endregion
         /**
         * 타임라인차트 엘리먼트
@@ -444,6 +449,7 @@ namespace Services.PlumChart.Core {
         let _zoomOutMenuItemEl: HTMLElement;
         let _closeMenuItemEl: HTMLElement;
 
+        let _canvasColumnVLines: HTMLElement[] = [];
         let _sideCanvasVLines: HTMLElement[] = [];
         let _sidePointEventItems = new Array<PointEventItem>();
 
@@ -557,6 +563,9 @@ namespace Services.PlumChart.Core {
          * 셀당 분(minute)
          */
         let _cellMinutes: number = 30;
+
+        let _rowHoverColor: string = "#eee";
+
         /**
          * 셀 너비(px)
          */
@@ -570,6 +579,9 @@ namespace Services.PlumChart.Core {
          */
         let _customizeElements: (elements: { rootElement: HTMLElement }) => void = (_) => { };
 
+        let _borderColor: string = "#ccc";
+
+        let _canvasLineColor: string = "red";
 
 
 
@@ -613,6 +625,10 @@ namespace Services.PlumChart.Core {
             return {
                 getVariable,
                 setVariable,
+
+                setBorderColor: (color: string) => { setVariable(VAR_BORDER_COLOR, color); },
+                setCanvasLineColor: (color: string) => { setVariable(VAR_CANVAS_LINE_COLOR, color); },
+
 
                 setLeftPanelWidth,
 
@@ -951,6 +967,9 @@ namespace Services.PlumChart.Core {
             _mainPointContentRatio = options.mainPointContentRatio ?? _mainPointContentRatio;
             _maxZoomScale = options.maxZoomScale ?? _maxZoomScale;
             _cellMinutes = options.cellMinutes ?? _cellMinutes;
+            _rowHoverColor = options.rowHoverColor ?? _rowHoverColor;
+            _canvasLineColor = options.canvasLineColor ?? _canvasLineColor;
+            _borderColor = options.borderColor ?? _borderColor;
             _customizeElements = options.customizeElements ?? _customizeElements;
 
             _setCellWidth(options.cellWidth ?? _cellWidth);
@@ -1026,6 +1045,9 @@ namespace Services.PlumChart.Core {
          * 차트를 그린다.
          */
         function render() {
+            css.setBorderColor(_borderColor);
+            css.setCanvasLineColor(_canvasLineColor);
+
             _resetController();
 
             _customizeElements({
@@ -1102,12 +1124,10 @@ namespace Services.PlumChart.Core {
         }
 
         let _headerElements = new Map<number, HTMLElement>();
-        let _headerRightBorderEl: HTMLElement;
 
         function _renderColumnHeader() {
             _columnHeaderElement.replaceChildren();
             _headerElements.clear();
-            _headerRightBorderEl = null;
 
             let startTime = _chartRenderStartTime;
             let endTime = _chartRenderEndTime;
@@ -1122,7 +1142,7 @@ namespace Services.PlumChart.Core {
             while (cellIndex < headerCellCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
-                containerElement.style.left = `${cellIndex * _cellWidth}px`;
+                containerElement.style.left = `${(cellIndex * _cellWidth) + 1}px`;
                 containerElement.style.width = `${_cellWidth}px`;
                 _state.headerCellRender(currentTime, containerElement);
                 _columnHeaderElement.appendChild(containerElement);
@@ -1131,22 +1151,40 @@ namespace Services.PlumChart.Core {
                 currentTime = new Date(currentTime.getTime() + toTime(_cellMinutes));
                 cellIndex++;
             }
-            // 마지막 셀의 오른쪽 테두리를 그린다.
-            const rightBorder = document.createElement("div");
-            rightBorder.classList.add(CLS_COLUMN_HEADER_ITEM);
-            rightBorder.style.width = `1px`;
-            rightBorder.style.height = `100%`;
-            rightBorder.style.left = `${cellIndex * _cellWidth}px`;
-            _headerRightBorderEl = rightBorder;
-            _columnHeaderElement.appendChild(rightBorder);
+            _renderCanvasHeaderVLines();
+        }
+
+        function _renderCanvasHeaderVLines() {
+            _canvasColumnVLines.length = 0;
+            const canvasWidth = _columnHeaderBoxElement.scrollWidth;
+            const vLineCount = Math.ceil(canvasWidth / _cellWidth);
+
+            let left = 0;
+            for (let i = 0; i < vLineCount; i++) {
+                left += _cellWidth;
+                const line = document.createElement("div") as HTMLElement;
+                line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
+                line.style.left = `${left}px`;
+                _columnHeaderElement.appendChild(line);
+                _canvasColumnVLines.push(line);
+            }
+        }
+
+        function _refreshCanvasHeaderVLines() {
+            let left = 0;
+            for (let i = 0; i < _canvasColumnVLines.length; i++) {
+                left += _cellWidth;
+                const line = _canvasColumnVLines[i];
+                line.style.left = `${left}px`;
+            }
         }
 
         function _refreshColumnHeaders() {
             for (const [index, el] of _headerElements) {
-                el.style.left = `${index * _cellWidth}px`;
+                el.style.left = `${(index * _cellWidth) + 1}px`;
                 el.style.width = `${_cellWidth}px`;
             }
-            _headerRightBorderEl.style.left = `${_state.headerCellCount * _cellWidth}px`;
+            _refreshCanvasHeaderVLines();
         }
 
         /**
@@ -1221,7 +1259,6 @@ namespace Services.PlumChart.Core {
                 left += _cellWidth;
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
-                line.style.height = `${_state.sideCanvasHeight}px`;
                 line.style.left = `${left}px`;
                 _sideCanvasElement.appendChild(line);
                 _sideCanvasVLines.push(line);
@@ -1416,7 +1453,7 @@ namespace Services.PlumChart.Core {
                 containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
                 containerEl.addEventListener("mouseenter", (e) => {
                     (containerEl as any).tag = containerEl.style.backgroundColor;
-                    containerEl.style.backgroundColor = _state.rowHoverColor;
+                    containerEl.style.backgroundColor = _rowHoverColor;
                 });
                 containerEl.addEventListener("mouseleave", (e) => {
                     containerEl.style.backgroundColor = (containerEl as any).tag;

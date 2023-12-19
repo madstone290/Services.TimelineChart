@@ -132,7 +132,7 @@ namespace Services.PlumChart {
         columnHeaderHeight?: number = 50;
         sideCanvasHeight?: number = 50;
         sideCanvasContentHeightRatio?: number = 0.8;
-        cellMinutes?: number = 30;
+        cellMinutes?: number = 20;
         cellWidth?: number = 100;
         cellHeight?: number = 50;
         mainRangeContentRatio?: number = 0.9;
@@ -148,7 +148,7 @@ namespace Services.PlumChart {
         /**
          * 테이블 행에 마우스를 올렸을 때 배경색
          */
-        rowHoverColor?: string = "#333";
+        rowHoverColor?: string = "#ddd";
 
         /**
          * 컨트롤러 고정 여부
@@ -192,6 +192,9 @@ namespace Services.PlumChart {
     const CLS_GRID_COLUMN = "pl-grid-column";
     const CLS_GRID_COLUMN_CAPTION = "pl-grid-column-caption";
     const CLS_GRID_COLUMN_ICON = "pl-grid-column-icon";
+
+    const CLS_GRID_ROW = "pl-grid-row";
+    const CLS_GRID_CELL = "pl-grid-cell";
 
     const CLS_TOOLTIP = "pl-tooltip";
     const CLS_TOOLTIP_VISIBLE = "pl-tooltip-visible";
@@ -644,8 +647,10 @@ namespace Services.PlumChart {
      * @param title 
      */
     function _defaultRenderGridTitle(containerEl: HTMLElement, title: string) {
-        containerEl.classList.add(CLS_GRID_TITLE);
-        containerEl.innerText = title;
+        const titleEl = document.createElement("div");
+        titleEl.classList.add(CLS_GRID_TITLE);
+        titleEl.innerText = title;
+        containerEl.appendChild(titleEl);
     }
 
     function _defaultRenderGridColumns(containerElement: HTMLElement) {
@@ -767,11 +772,11 @@ namespace Services.PlumChart {
      * @param containerEl 
      */
     function _defaultRenderGridRow(entity: Entity, containerEl: HTMLElement) {
-        containerEl.classList.add("pl-grid-row");
+        containerEl.classList.add(CLS_GRID_ROW);
 
         for (const column of _gridColumnMap.keys()) {
             const itemEl = document.createElement("div");
-            itemEl.classList.add("pl-grid-cell");
+            itemEl.classList.add(CLS_GRID_CELL);
             itemEl.innerText = ((entity as any)[column.field] as object).toString() ?? "";
             containerEl.appendChild(itemEl);
         }
@@ -779,12 +784,14 @@ namespace Services.PlumChart {
 
     /**
      * 캔버스 타이틀을 렌더링한다.
-     * @param containerElement
+     * @param containerEl
      * @param title 
      */
-    function _renderCanvasTitle(containerElement: HTMLElement, title: string) {
-        containerElement.classList.add(CLS_CANVAS_TITLE);
-        containerElement.innerText = title;
+    function _renderCanvasTitle(containerEl: HTMLElement, title: string) {
+        const titleEl = document.createElement("div");
+        titleEl.classList.add(CLS_CANVAS_TITLE);
+        titleEl.innerText = title;
+        containerEl.appendChild(titleEl);
     }
 
     let isMainCanvasCostomized = false;
@@ -913,6 +920,8 @@ namespace Services.PlumChart {
             tableColumnRender: _defaultRenderGridColumns,
             columnTitleRender: _renderCanvasTitle,
             customizeElements: _customizeElements,
+            canvasLineColor: "#ccc",
+            borderColor: "#ccc"
         };
         _coreChart.setOptions(coreOptions);
     }
