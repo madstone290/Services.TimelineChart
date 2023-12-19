@@ -920,8 +920,8 @@ namespace Services.PlumChart {
             tableColumnRender: _defaultRenderGridColumns,
             columnTitleRender: _renderCanvasTitle,
             customizeElements: _customizeElements,
-            canvasLineColor: "#ccc",
-            borderColor: "#ccc"
+            borderColor: "#333c77",
+            canvasLineColor: "#e1edf8",
         };
         _coreChart.setOptions(coreOptions);
     }
