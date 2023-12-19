@@ -59,7 +59,11 @@ namespace Services.PlumChart {
         /**
          * 툴팁 표시 여부
          */
-        showTooltip: boolean
+        showTooltip: boolean;
+        /**
+         * 툴팁에 시간 표시 여부
+         */
+        showTime: boolean;
     }
 
     /**
@@ -99,6 +103,10 @@ namespace Services.PlumChart {
          * 툴팁 표시 여부
          */
         showTooltip: boolean;
+        /**
+         * 툴팁에 시간 표시 여부
+         */
+        showTime: boolean;
     }
 
     export interface Entity {
@@ -516,9 +524,11 @@ namespace Services.PlumChart {
         titleEl.innerText = event.title;
         tooltipEl.appendChild(titleEl);
 
-        const timeEl = document.createElement("div");
-        timeEl.innerText = _formatTime(event.time);
-        tooltipEl.appendChild(timeEl);
+        if (event.showTime) {
+            const timeEl = document.createElement("div");
+            timeEl.innerText = _formatTime(event.time);
+            tooltipEl.appendChild(timeEl);
+        }
 
         for (const line of event.lines) {
             _renderLineElement(line, tooltipEl);
@@ -560,17 +570,20 @@ namespace Services.PlumChart {
         tooltipEl.classList.add(classNames.tooltip);
         canvasEl.appendChild(tooltipEl);
 
+
         const titleEl = document.createElement("div");
         titleEl.classList.add(classNames.title);
         titleEl.innerText = event.title;
         tooltipEl.appendChild(titleEl);
 
-        const startTime = _formatTime(event.startTime);
-        const endTime = _formatTime(event.endTime);
-        const timeRange = _formatTimeRange(event.startTime, event.endTime);
-        const timeEl = document.createElement("div");
-        timeEl.innerText = `${startTime} ~ ${endTime} (${timeRange})`;
-        tooltipEl.appendChild(timeEl);
+        if (event.showTime) {
+            const startTime = _formatTime(event.startTime);
+            const endTime = _formatTime(event.endTime);
+            const timeRange = _formatTimeRange(event.startTime, event.endTime);
+            const timeEl = document.createElement("div");
+            timeEl.innerText = `${startTime} ~ ${endTime} (${timeRange})`;
+            tooltipEl.appendChild(timeEl);
+        }
 
         for (const line of event.lines) {
             _renderLineElement(line, tooltipEl);

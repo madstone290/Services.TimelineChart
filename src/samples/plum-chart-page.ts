@@ -178,6 +178,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     title: error.type,
                     icon: error.type === "Quality" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
                     showTooltip: true,
+                    showTime: true,
                     lines: [
                         "Lot Number: " + lot.number,
                         "Product: " + lot.product,
@@ -201,6 +202,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     endTime: operation.endTime,
                     className: lotOperationClasses[operation.type],
                     showTooltip: true,
+                    showTime: true,
                     lines: [
                         "Lot Number: " + lot.number,
                         "Product: " + lot.product,
@@ -224,6 +226,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 title: error.type,
                 icon: error.type === "Man" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
                 showTooltip: true,
+                showTime: true,
                 lines: [
                     "Side Error",
                 ],
@@ -246,6 +249,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 endTime: error.endTime,
                 className: error.type === "Downtime" ? "pl-downtime" : "pl-network",
                 showTooltip: true,
+                showTime: true,
                 lines: [
                     "Global Error",
                 ],
