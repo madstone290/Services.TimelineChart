@@ -116,15 +116,49 @@ namespace Services.PlumChart {
         compareFn: (a: T, b: T) => number,
     }
 
-    export interface PlumChartOptions {
-        formatTime?: (time: Date) => string,
-        formatTimeRange?: (start: Date, end: Date) => string,
-        renderCanvasColumn?: (time: Date, containerEl: HTMLElement) => HTMLElement,
-        useGridHoverColor?: boolean,
-        gridHoverColor?: string,
-        gridColumns: GridColumn[],
-        gridTitle: string,
-        canvasTitle: string,
+    export class PlumChartOptions {
+        formatTime?: (time: Date) => string;
+        formatTimeRange?: (start: Date, end: Date) => string;
+        renderCanvasColumn?: (time: Date, containerEl: HTMLElement) => HTMLElement;
+        useGridHoverColor?: boolean;
+        gridHoverColor?: string;
+        gridColumns: GridColumn[];
+        gridTitle: string;
+        canvasTitle: string;
+        chartStartTime: Date;
+        chartEndTime: Date;
+        leftPanelWidth?: number = 300;
+        columnTitleHeight?: number = 50;
+        columnHeaderHeight?: number = 50;
+        sideCanvasHeight?: number = 50;
+        sideCanvasContentHeightRatio?: number = 0.8;
+        cellMinutes?: number = 30;
+        cellWidth?: number = 100;
+        cellHeight?: number = 50;
+        mainRangeContentRatio?: number = 0.9;
+        mainPointContentRatio?: number = 0.8
+        minZoomScale?: number = 1;
+        maxZoomScale?: number = 30
+        hasHorizontalLine?: boolean = true;
+        hasVerticalLine?: boolean = true;
+        /**
+         * 컬럼 너비를 자동으로 맞출지 여부. true인 경우 셀너비 옵션이 무시된다. 현재 차트 너비에 맞춰 셀너비를 조절한다.
+         */
+        columnAutoWidth?: boolean = true;
+        /**
+         * 테이블 행에 마우스를 올렸을 때 배경색
+         */
+        rowHoverColor?: string = "#333";
+
+        /**
+         * 컨트롤러 고정 여부
+         */
+        fixedController?: boolean = true;
+
+        /**
+         * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
+         */
+        controllerLocation?: Services.PlumChart.Core.ControllerLocation = "bottomRight";
     }
 
     export interface PlumChartData {
@@ -842,45 +876,43 @@ namespace Services.PlumChart {
             };
         }) ?? [];
 
-        const cellMinutes = 10;
-        const cellWidth = 30;
-        const cellHeight = 40;
         const coreOptions: Services.PlumChart.Core.ChartOptions = {
             mainTitle: options.gridTitle,
-            columnTitle: "Time Line",
-            chartStartTime: new Date(Date.parse("2024-01-01T06:00:00")),
-            chartEndTime: new Date(Date.parse("2024-01-01T24:00:00")),
-            columnTitleHeight: cellHeight,
-            columnHeaderHeight: cellHeight,
-            sideCanvasHeight: cellHeight,
-            sideCanvasContentHeightRatio: 0.5,
-            cellMinutes: cellMinutes,
-            cellWidth: cellWidth,
-            cellHeight: cellHeight,
+            columnTitle: options.canvasTitle,
+            chartStartTime: options.chartStartTime,
+            chartEndTime: options.chartEndTime,
+            columnTitleHeight: options.columnTitleHeight,
+            columnHeaderHeight: options.columnHeaderHeight,
+            sideCanvasHeight: options.sideCanvasHeight,
+            sideCanvasContentHeightRatio: options.sideCanvasContentHeightRatio,
+            cellMinutes: options.cellMinutes,
+            cellWidth: options.cellWidth,
+            cellHeight: options.cellHeight,
+            mainRangeContentRatio: options.mainRangeContentRatio,
+            mainPointContentRatio: options.mainPointContentRatio,
+            maxZoomScale: options.maxZoomScale,
+            hasHorizontalLine: options.hasHorizontalLine,
+            hasVerticalLine: options.hasVerticalLine,
+            columnAutoWidth: options.columnAutoWidth,
+            rowHoverColor: options.rowHoverColor,
+            fixedController: options.fixedController,
+            controllerLocation: options.controllerLocation,
+            hZoomEnabled: true,
+            vZoomEnabled: false,
             paddingCellCount: 1,
             leftPanelWidth: 300,
-            mainRangeContentRatio: 0.7,
-            mainPointContentRatio: 0.4,
-            maxZoomScale: 20,
-            hasHorizontalLine: true,
-            hasVerticalLine: true,
+            buttonScrollStepX: 400,
+            buttonScrollStepY: 400,
             sidePointEventRender: _defaultRenderSidePointEvent,
             tableRowRender: _defaultRenderGridRow,
             entityPointEventRender: _defaultRenderEntityPointEvent,
             entityRangeEventRender: _defaultRenderEntityRangeEvent,
             headerCellRender: _defaultRenderCanvasColumn,
             globalRangeEventRender: _defaultRenderGlobalRangeEvent,
-            columnAutoWidth: true,
-            vZoomEnabled: false,
             mainTitleRender: _defaultRenderGridTitle,
             tableColumnRender: _defaultRenderGridColumns,
             columnTitleRender: _renderCanvasTitle,
-            rowHoverColor: "#ccc",
-            buttonScrollStepX: 400,
-            buttonScrollStepY: 400,
-            fixedController: false,
-            controllerLocation: "topRight",
-            customizeElements: _customizeElements
+            customizeElements: _customizeElements,
         };
         _coreChart.setOptions(coreOptions);
     }

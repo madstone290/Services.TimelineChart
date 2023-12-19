@@ -148,7 +148,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }));
     const legends: Services.PlumChart.Legend[] = [...l1, ...l2, ...l3, ...l4];
 
-    plumChart.setOptions({
+    const options = new Services.PlumChart.PlumChartOptions();
+    const toptions = {
         useGridHoverColor: true,
         gridHoverColor: 'gray',
         gridColumns: [{
@@ -161,7 +162,11 @@ window.addEventListener("DOMContentLoaded", () => {
         }],
         gridTitle: 'Lot Information',
         canvasTitle: 'Lot Status',
-    });
+        chartStartTime: new Date(2024, 0, 1, 0, 0, 0, 0),
+        chartEndTime: new Date(2024, 0, 1, 24, 0, 0, 0),
+    }
+    Object.assign(options, toptions);
+    plumChart.setOptions(options);
     plumChart.setData({
         legends: legends,
         entities: lots.map(lot => ({

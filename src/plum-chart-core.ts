@@ -78,7 +78,7 @@ namespace Services.PlumChart.Core {
         rangeEventContainers: RangeEventItem[];
     }
 
-    type controllerLocation = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
+    export type ControllerLocation = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
 
     export interface ChartData {
 
@@ -128,19 +128,6 @@ namespace Services.PlumChart.Core {
         * 수직 줌 활성화 여부
         */
         vZoomEnabled?: boolean;
-        headerTimeFormat?: (time: Date) => string;
-        headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
-        tableRowRender?: (entity: Entity, containerEl: HTMLElement) => void;
-        sidePointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        mainTitleRender?: (containerEl: HTMLElement, title: string) => void;
-        columnTitleRender?: (containerEl: HTMLElement, title: string) => void;
-        tableColumnRender?: (containerEl: HTMLElement) => void;
-
-        customizeElements?: (elements: { rootElement: HTMLElement }) => void;
-
 
         /**
          * 테이블 행에 마우스를 올렸을 때 배경색
@@ -165,7 +152,19 @@ namespace Services.PlumChart.Core {
         /**
          * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
          */
-        controllerLocation?: controllerLocation;
+        controllerLocation?: ControllerLocation;
+
+        headerTimeFormat?: (time: Date) => string;
+        headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
+        tableRowRender?: (entity: Entity, containerEl: HTMLElement) => void;
+        sidePointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        mainTitleRender?: (containerEl: HTMLElement, title: string) => void;
+        columnTitleRender?: (containerEl: HTMLElement, title: string) => void;
+        tableColumnRender?: (containerEl: HTMLElement) => void;
+        customizeElements?: (elements: { rootElement: HTMLElement }) => void;
     }
 
     interface ChartState {
@@ -519,11 +518,11 @@ namespace Services.PlumChart.Core {
         /**
          * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
          */
-        let _controllerLocation: controllerLocation = "bottomRight";
+        let _controllerLocation: ControllerLocation = "bottomRight";
         /**
          * 컨트롤러 위치 클래스 맵
          */
-        let _controllerLocationClassMap = new Map<controllerLocation, string>([
+        let _controllerLocationClassMap = new Map<ControllerLocation, string>([
             ["topLeft", CLS_CONTEXT_MENU_TOP_LEFT],
             ["topRight", CLS_CONTEXT_MENU_TOP_RIGHT],
             ["bottomLeft", CLS_CONTEXT_MENU_BOTTOM_LEFT],
