@@ -3,6 +3,10 @@
     background-color: blanchedalmond;
 }
 
+.tc-side-canvas {
+    background-color: #8790b1;
+}
+
 .pl-op2 {
     background-color: lightblue;
 }
@@ -25,12 +29,30 @@
 
 /* 사용자 커스텀 종료 */
 
-/* Core 오버라이딩 시작 */
-.tc-side-canvas {
-    background-color: #8790b1;
+/* 컨테이너 시작 */
+.pl-root-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: white;
+    border: 1px solid #333c77;
+    border-radius: 4px;
+
 }
 
-/* Core 오버라이딩 종료 */
+.pl-legend-container {
+    flex: 0;
+}
+
+.pl-chart-container {
+    flex: 1;
+    height: 200px;
+}
+
+/* 컨테이너 종료 */
+
 
 /* 툴팁 시작 */
 .pl-tooltip {

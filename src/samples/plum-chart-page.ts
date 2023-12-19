@@ -125,7 +125,7 @@ const ERROR_IMG_SRC = "./asset/image/error.svg";
 const WARNING_IMG_SRC = "./asset/image/warning.svg";
 
 window.addEventListener("DOMContentLoaded", () => {
-    const plumChart = Services.PlumChart.create(document.getElementById('chart-container'));
+    const plumChart = Services.PlumChart.create(document.getElementById('root-container'));
 
 
     const l1 = lotOperationTypes.map(type => ({

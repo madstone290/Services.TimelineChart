@@ -179,6 +179,8 @@ namespace Services.PlumChart {
          */
         globalRangeEvents: RangeEvent[],
     }
+    const CLS_LEGEND_CONTAINER = "pl-legend-container";
+    const CLS_CHART_CONTAINER = "pl-chart-container";
 
     const CLS_LEGENDS = "pl-legends";
     const CLS_LEGENDS_LEFT = "pl-legends-left";
@@ -961,14 +963,18 @@ namespace Services.PlumChart {
     }
 
     export function create(containerEl: HTMLElement) {
+        const legendContainerEl = document.createElement("div");
+        legendContainerEl.classList.add(CLS_LEGEND_CONTAINER);
         _legendsEl = _createLegendEl();
-        _coreChartEl = document.createElement("div");
+        legendContainerEl.appendChild(_legendsEl);
 
         _coreChart = Services.PlumChart.Core.TimelineChart();
-        _coreChart.create(_coreChartEl);
+        const chartContainerEl = document.createElement("div");
+        chartContainerEl.classList.add(CLS_CHART_CONTAINER);
+        _coreChart.create(chartContainerEl);
 
-        containerEl.appendChild(_legendsEl);
-        containerEl.appendChild(_coreChartEl);
+        containerEl.appendChild(legendContainerEl);
+        containerEl.appendChild(chartContainerEl);
 
         return {
             setOptions,
