@@ -909,6 +909,7 @@ namespace Services.PlumChart {
         _eventHoverColor = options.eventHoverColor ?? _eventHoverColor;
         _formatTime = options.formatTime ?? _defaultFormatTime;
         _formatTimeRange = options.formatTimeRange ?? _defaultFormatTimeRange;
+        _gridColumnMap.clear();
         options.gridColumns?.forEach((column) => {
             _gridColumnMap.set(column, null);
         });
