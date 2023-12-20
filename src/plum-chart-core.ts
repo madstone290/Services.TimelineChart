@@ -1231,8 +1231,15 @@ namespace Services.PlumChart.Core {
              * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
              * entity list는 main canvas 수직스크롤과 동기화한다.
              */
-            const canvasWidth = _cellWidth * _state.headerCellCount;
-            const canvasHeight = _cellHeight * _data.entities.length;
+            let canvasWidth = _cellWidth * _state.headerCellCount;
+            let canvasHeight = _cellHeight * _data.entities.length;
+
+            if (canvasWidth == 0) {
+                canvasWidth = _mainCanvasBoxElement.clientWidth;
+            }
+            if (canvasHeight == 0) {
+                canvasHeight = _mainCanvasBoxElement.clientHeight
+            }
 
             _columnHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
             _sideCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
@@ -1440,10 +1447,7 @@ namespace Services.PlumChart.Core {
                 threshold: 0,
             };
             _intersecionObserver = new IntersectionObserver(callback, options);
-
-            const canvasHeight = _mainCanvasElement.scrollHeight;
-            const cellHeight = _cellHeight;
-            const containerCount = Math.floor(canvasHeight / cellHeight);
+            const containerCount = _data.entities.length;
             for (let i = 0; i < containerCount; i++) {
                 /*
 엔티티 컨테이너(로우) 생성
