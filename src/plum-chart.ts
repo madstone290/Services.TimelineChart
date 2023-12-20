@@ -43,6 +43,10 @@ namespace Services.PlumChart {
          * 이벤트 아이콘
          */
         icon: string;
+         /**
+         * css 클래스명
+         */
+        className?: string;
         /**
          * 이벤트 제목
          */
@@ -553,6 +557,10 @@ namespace Services.PlumChart {
         const imgEl = document.createElement("img");
         imgEl.classList.add(classNames.img);
         imgEl.src = event.icon;
+        if (event.className) {
+            imgEl.classList.add(event.className);
+        }
+
         containerEl.appendChild(imgEl);
 
         const tooltipEl = document.createElement("div");
@@ -614,6 +622,9 @@ namespace Services.PlumChart {
         boxEl.classList.add(event.className);
         if (event.color) {
             boxEl.style.backgroundColor = event.color;
+        }
+        if (event.className) {
+            boxEl.classList.add(event.className);
         }
         containerEl.appendChild(boxEl);
 
