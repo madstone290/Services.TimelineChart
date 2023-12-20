@@ -169,7 +169,7 @@ window.addEventListener("DOMContentLoaded", () => {
     plumChart.setOptions(options);
     plumChart.setData({
         legends: legends,
-        entities: lots.map(lot => ({
+        entities: lots.filter((value, idx) => idx < 100).map(lot => ({
             number: lot.number,
             product: lot.product,
             pointEvents: lot.errors.map(error => {

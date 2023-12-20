@@ -1231,15 +1231,8 @@ namespace Services.PlumChart.Core {
              * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
              * entity list는 main canvas 수직스크롤과 동기화한다.
              */
-            let canvasWidth = _cellWidth * _state.headerCellCount;
-            let canvasHeight = _cellHeight * _data.entities.length;
-
-            if (canvasWidth == 0) {
-                canvasWidth = _mainCanvasBoxElement.clientWidth;
-            }
-            if (canvasHeight == 0) {
-                canvasHeight = _mainCanvasBoxElement.clientHeight
-            }
+            let canvasWidth = Math.max(_cellWidth * _state.headerCellCount, _mainCanvasBoxElement.clientWidth);
+            let canvasHeight = Math.max(_cellHeight * _data.entities.length, _mainCanvasBoxElement.clientHeight);
 
             _columnHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
             _sideCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
