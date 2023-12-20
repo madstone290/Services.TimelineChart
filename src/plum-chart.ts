@@ -900,8 +900,10 @@ namespace Services.PlumChart {
 
             const icon = document.createElement("div");
             icon.classList.add(CLS_LEGEND_ICON);
-            if (item.icon)
+            if (item.icon){
                 icon.style.backgroundImage = `url(${item.icon})`;
+                icon.style.backgroundSize = "contain";
+            }
             if (item.color)
                 icon.style.backgroundColor = item.color;
             if (item.className)
