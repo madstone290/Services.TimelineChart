@@ -64,7 +64,7 @@
     z-index: 100;
     padding: 15px;
     background-color: #e9ebfd;
-    border: 1px white dotted;
+    border: 2px solid #19204d;
     color: #19204d;
     text-align: left;
     position: fixed;
@@ -97,6 +97,17 @@
 .pl-tooltip * {
     user-select: text;
 }
+
+.pl-tooltip-title {
+    font-weight: bold;
+    text-align: center;
+    color: black;
+    background-color: white;
+    padding: 2px 0px 2px 0px;
+    margin: 0px 0px 10px 0px;
+    border-radius: 50px;
+}
+
 
 /* 툴팁 종료 */
 
@@ -204,27 +215,10 @@
     width: 100%;
 }
 
-
-
 .pl-entity-point-event {
     width: 100%;
     height: 100%;
 }
-
-.pl-entity-point-event-title {
-    font-weight: bold;
-    text-align: center;
-    color: black;
-    background-color: white;
-    padding: 2px 0px 2px 0px;
-    margin: 0px 0px 10px 0px;
-    border-radius: 50px;
-}
-
-.pl-tooltip.pl-entity-point-event-tooltip {
-    border: 2px solid;
-}
-
 
 .pl-entity-range-event {
     border-radius: 4px;
@@ -236,39 +230,11 @@
     height: 100%;
 }
 
-.pl-entity-range-event-title {
-    font-weight: bold;
-    text-align: center;
-    color: black;
-    background-color: white;
-    padding: 2px 0px 2px 0px;
-    margin: 0px 0px 10px 0px;
-    border-radius: 50px;
-}
-
-.pl-tooltip.pl-entity-range-event-tooltip {
-    border: 2px solid;
-}
-
 .pl-global-range-event {
     border-radius: 1px;
     width: 100%;
     height: 100%;
     opacity: 0.5;
-}
-
-.pl-global-range-event-title {
-    font-weight: bold;
-    text-align: center;
-    color: black;
-    padding: 2px 0px 2px 0px;
-    margin: 0px 0px 10px 0px;
-    border-radius: 50px;
-    background-color: white;
-}
-
-.pl-tooltip.pl-global-range-event-tooltip {
-    border: 2px double;
 }
 
 /* 캔버스 종료 */

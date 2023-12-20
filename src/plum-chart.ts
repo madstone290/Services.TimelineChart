@@ -12,23 +12,23 @@ namespace Services.PlumChart {
         /**
          * 범례 아이콘
          */
-        icon?: string,
+        icon?: string;
         /**
          * 범례 색상
          */
-        color?: string,
+        color?: string;
         /**
          * css 클래스명
          */
-        className?: string,
+        className?: string;
         /**
          * 범례 제목
          */
-        label: string,
+        label: string;
         /**
          * 범례 위치
          */
-        location?: "left" | "right",
+        location?: "left" | "right";
     }
 
     /**
@@ -38,28 +38,32 @@ namespace Services.PlumChart {
         /**
          * 이벤트 시간
          */
-        time: Date,
+        time: Date;
         /**
          * 이벤트 아이콘
          */
-        icon: string,
+        icon: string;
         /**
          * 이벤트 제목
          */
-        title: string,
+        title: string;
         /**
          * 이벤트 추가정보
          */
-        lines: string[],
+        lines: string[];
         /**
         * 이벤트 추가정보. 레이지 로딩 적용.
         * @returns 
         */
-        lazyLines?: () => Promise<string[]>,
+        lazyLines?: () => Promise<string[]>;
         /**
          * 툴팁 표시 여부
          */
-        showTooltip: boolean,
+        showTooltip: boolean;
+        /**
+         * 툴팁에 시간 표시 여부
+         */
+        showTime: boolean;
     }
 
     /**
@@ -69,36 +73,40 @@ namespace Services.PlumChart {
         /**
          * 이벤트 시작시간
          */
-        startTime: Date,
+        startTime: Date;
         /**
          * 이벤트 종료시간
          */
-        endTime: Date,
+        endTime: Date;
         /**
          * css 클래스명
          */
-        className?: string,
+        className?: string;
         /**
          * 이벤트 색상
          */
-        color?: string,
+        color?: string;
         /**
          * 이벤트 제목
          */
-        title: string,
+        title: string;
         /**
          * 이벤트 추가정보
          */
-        lines: string[],
+        lines: string[];
         /**
          * 이벤트 추가정보. 레이지 로딩 적용.
          * @returns 
          */
-        lazyLines?: () => Promise<string[]>,
+        lazyLines?: () => Promise<string[]>;
         /**
          * 툴팁 표시 여부
          */
-        showTooltip: boolean,
+        showTooltip: boolean;
+        /**
+         * 툴팁에 시간 표시 여부
+         */
+        showTime: boolean;
     }
 
     export interface Entity {
@@ -120,8 +128,10 @@ namespace Services.PlumChart {
         formatTime?: (time: Date) => string;
         formatTimeRange?: (start: Date, end: Date) => string;
         renderCanvasColumn?: (time: Date, containerEl: HTMLElement) => HTMLElement;
-        useGridHoverColor?: boolean;
-        gridHoverColor?: string;
+        renderPointEventCustomTooltip?: (event: PointEvent, tooltipEl: HTMLElement) => void;
+        renderRangeEventCustomTooltip?: (event: RangeEvent, tooltipEl: HTMLElement) => void;
+        useEventHoverColor?: boolean;
+        eventHoverColor?: string;
         gridColumns: GridColumn[];
         gridTitle: string;
         canvasTitle: string;
@@ -200,25 +210,16 @@ namespace Services.PlumChart {
     const CLS_GRID_CELL = "pl-grid-cell";
 
     const CLS_TOOLTIP = "pl-tooltip";
+    const CLS_TOOLTIP_TITLE = "pl-tooltip-title";
     const CLS_TOOLTIP_VISIBLE = "pl-tooltip-visible";
     const CLS_TOOLTIP_INVISIBLE = "pl-tooltip-invisible";
 
     const CLS_CANVAS_TITLE = "pl-canvas-title";
     const CLS_CANVAS_COLUMN = "pl-canvas-column";
 
-
-
     const CLS_ENTITY_POINT_EVENT = "pl-entity-point-event";
-    const CLS_ENTITY_POINT_EVENT_TOOLTIP = "pl-entity-point-event-tooltip";
-    const CLS_ENTITY_POINT_EVENT_TITLE = "pl-entity-point-event-title";
-
     const CLS_ENTITY_RANGE_EVENT = "pl-entity-range-event";
-    const CLS_ENTITY_RANGE_EVENT_TOOLTIP = "pl-entity-range-event-tooltip";
-    const CLS_ENTITY_RANGE_EVENT_TITLE = "pl-entity-range-event-title";
-
     const CLS_GLOBAL_RANGE_EVENT = "pl-global-range-event";
-    const CLS_GLOBAL_RANGE_EVENT_TOOLTIP = "pl-global-range-event-tooltip";
-    const CLS_GLOBAL_RANGE_EVENT_TITLE = "pl-global-range-event-title";
 
 
 
@@ -228,10 +229,6 @@ namespace Services.PlumChart {
      */
     let _coreChart: ReturnType<typeof Services.PlumChart.Core.TimelineChart>;
 
-    /**
-     * 타임라인 차트 엘리먼트
-     */
-    let _coreChartEl: HTMLElement;
     /**
      * 범례 엘리먼트
      */
@@ -276,14 +273,29 @@ namespace Services.PlumChart {
     let _sortDirection = SortDirection.NONE;
     let _sortColumnField = "";
 
-    let _useGridHoverColor = false;
-    let _gridHoverColor = "#333";
+    /**
+     * 캔버스 이벤트 호버시 배경색을 변경한다.
+     */
+    let _useEventHoverColor = false;
+
+    /**
+     * 캔버스 이벤트 호버시 배경색
+     */
+    let _eventHoverColor = "#333";
 
     let _formatTime: (time: Date) => string;
     /**
      * 시간범위를 문자열로 변환한다.
      */
     let _formatTimeRange: (start: Date, end: Date) => string;
+    /**
+     * 점 이벤트 툴팁 커스텀 렌더링 함수
+     */
+    let _customPointEventTooltip: (event: PointEvent, eventEl: HTMLElement, tooltipEl: HTMLElement) => void = null;
+    /**
+     * 범위 이벤트 툴팁 커스텀 렌더링 함수
+     */
+    let _customRangeEventTooltip: (event: RangeEvent, eventEl: HTMLElement, tooltipEl: HTMLElement) => void = null;
 
     /**
      * 기본 시간범위 문자열 변환 함수
@@ -357,16 +369,16 @@ namespace Services.PlumChart {
 
     /**
      * 그리드 셀에 마우스 호버시 배경색을 변경한다.
-     * @param el 
+     * @param eventEl 
      * @returns 
      */
-    function _setGridHoverColor(el: HTMLElement) {
-        const originalColor = el.style.backgroundColor;
-        el.addEventListener("mouseenter", (e) => {
-            el.style.backgroundColor = _gridHoverColor;
+    function _setEventHoverColor(eventEl: HTMLElement) {
+        const originalColor = eventEl.style.backgroundColor;
+        eventEl.addEventListener("mouseenter", (e) => {
+            eventEl.style.backgroundColor = _eventHoverColor;
         });
-        el.addEventListener("mouseleave", (e) => {
-            el.style.backgroundColor = originalColor;
+        eventEl.addEventListener("mouseleave", (e) => {
+            eventEl.style.backgroundColor = originalColor;
         });
     }
 
@@ -385,23 +397,34 @@ namespace Services.PlumChart {
      * @param tooltipElement 
      * @param e 
      */
-    function _relocateTooltip(tooltipElement: HTMLElement, e: MouseEvent) {
+    function _relocateTooltip(tooltipElement: HTMLElement, e?: MouseEvent) {
         const tooltipOffset = 10;
-        let top = e.clientY + tooltipOffset;
-        let left = e.clientX + tooltipOffset;
-        if (window.innerWidth < e.clientX + tooltipElement.offsetWidth + tooltipOffset) {
+        let clientX = 0;
+        let clientY = 0;
+        const tooltipClientRect = tooltipElement.getBoundingClientRect();
+        if (e == null) {
+            clientY = tooltipClientRect.top - tooltipOffset;
+            clientX = tooltipClientRect.left - tooltipOffset;
+        }
+        else {
+            clientY = e.clientY;
+            clientX = e.clientX;
+        }
+        let left = clientX + tooltipOffset;
+        let top = clientY + tooltipOffset;
+
+        if (window.innerWidth < clientX + tooltipElement.offsetWidth + tooltipOffset) {
             left = window.innerWidth - tooltipElement.offsetWidth - tooltipOffset;
         }
-        if (window.innerHeight < e.clientY + tooltipElement.offsetHeight + tooltipOffset) {
+        if (window.innerHeight < clientY + tooltipElement.offsetHeight + tooltipOffset) {
             top = window.innerHeight - tooltipElement.offsetHeight - tooltipOffset;
         }
 
         tooltipElement.style.top = top + "px";
         tooltipElement.style.left = left + "px";
 
-        const boundingClientRect = tooltipElement.getBoundingClientRect();
         // detect if the tooltip height is longer than the window height
-        const tooltipHeight = boundingClientRect.height;
+        const tooltipHeight = tooltipClientRect.height;
         const windowInnerHeight = window.innerHeight - tooltipOffset * 2;
         if (tooltipHeight >= windowInnerHeight) {
             tooltipElement.style.maxHeight = windowInnerHeight + "px";
@@ -410,9 +433,9 @@ namespace Services.PlumChart {
         }
 
         // detect if the tooltip width is longer than the remaining width from the mouse position
-        const tooltipWidth = boundingClientRect.width;
+        const tooltipWidth = tooltipClientRect.width;
         const windowInnerWidth = window.innerWidth - tooltipOffset * 2;
-        const remainingWidth = windowInnerWidth - e.clientX;
+        const remainingWidth = windowInnerWidth - clientX;
         if (tooltipWidth >= remainingWidth) {
             tooltipElement.style.maxWidth = remainingWidth + "px";
         } else {
@@ -458,7 +481,6 @@ namespace Services.PlumChart {
             if (_isTooltipFixed(containerEl))
                 return;
             _showTooltip(tooltipEl);
-            console.log(tooltipEl);
             _relocateTooltip(tooltipEl, e);
         });
         // 마우스 클릭/더블클릭시 툴팁을 고정한다.
@@ -495,7 +517,43 @@ namespace Services.PlumChart {
         return lineEl;
     }
 
-    async function _renderPointEvent(event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement, classNames: { img: string, tooltip: string, title: string }) {
+    function _renderDefaultPointEventTooltip(event: PointEvent, eventEl: HTMLElement, tooltipEl: HTMLElement) {
+        const titleEl = document.createElement("div");
+        titleEl.classList.add(CLS_TOOLTIP_TITLE);
+        titleEl.innerText = event.title;
+        tooltipEl.appendChild(titleEl);
+
+        if (event.showTime) {
+            const timeEl = document.createElement("div");
+            timeEl.innerText = _formatTime(event.time);
+            tooltipEl.appendChild(timeEl);
+        }
+
+        for (const line of event.lines) {
+            _renderLineElement(line, tooltipEl);
+        }
+
+        let lazyLoaded = false;
+        let mouseEntered = false;
+        eventEl.addEventListener("mouseenter", async (e) => {
+            if (!event.lazyLines)
+                return;
+            if (mouseEntered)
+                return;
+            if (lazyLoaded)
+                return;
+            mouseEntered = true;
+            const lazyLines = await event.lazyLines();
+            for (const line of lazyLines) {
+                _renderLineElement(line, tooltipEl);
+            }
+            _relocateTooltip(tooltipEl);
+            lazyLoaded = true;
+            mouseEntered = false;
+        });
+    }
+
+    async function _renderPointEvent(event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement, classNames: { img: string }) {
         const imgEl = document.createElement("img");
         imgEl.classList.add(classNames.img);
         imgEl.src = event.icon;
@@ -503,44 +561,63 @@ namespace Services.PlumChart {
 
         const tooltipEl = document.createElement("div");
         tooltipEl.classList.add(CLS_TOOLTIP);
-        tooltipEl.classList.add(classNames.tooltip);
         canvasEl.appendChild(tooltipEl);
 
+        if (_customPointEventTooltip) {
+            _customPointEventTooltip(event, imgEl, tooltipEl);
+        } else {
+            _renderDefaultPointEventTooltip(event, imgEl, tooltipEl);
+        }
+
+        if (event.showTooltip) {
+            _addTooltip(imgEl, tooltipEl);
+        }
+        if (_useEventHoverColor) {
+            _setEventHoverColor(imgEl);
+        }
+    }
+
+    function _renderDefaultRangeEventTooltip(event: RangeEvent, eventEl: HTMLElement, tooltipEl: HTMLElement) {
         const titleEl = document.createElement("div");
-        titleEl.classList.add(classNames.title);
+        titleEl.classList.add(CLS_TOOLTIP_TITLE);
         titleEl.innerText = event.title;
         tooltipEl.appendChild(titleEl);
 
-        const timeEl = document.createElement("div");
-        timeEl.innerText = _formatTime(event.time);
-        tooltipEl.appendChild(timeEl);
+        if (event.showTime) {
+            const startTime = _formatTime(event.startTime);
+            const endTime = _formatTime(event.endTime);
+            const timeRange = _formatTimeRange(event.startTime, event.endTime);
+            const timeEl = document.createElement("div");
+            timeEl.innerText = `${startTime} ~ ${endTime} (${timeRange})`;
+            tooltipEl.appendChild(timeEl);
+        }
 
         for (const line of event.lines) {
             _renderLineElement(line, tooltipEl);
         }
 
         let lazyLoaded = false;
-        imgEl.addEventListener("mouseenter", async (e) => {
+        let mouseEntered = false;
+        eventEl.addEventListener("mouseenter", async (e) => {
             if (!event.lazyLines)
+                return;
+            if (mouseEntered)
                 return;
             if (lazyLoaded)
                 return;
+            mouseEntered = true;
             const lazyLines = await event.lazyLines();
             for (const line of lazyLines) {
                 _renderLineElement(line, tooltipEl);
             }
+            _relocateTooltip(tooltipEl);
             lazyLoaded = true;
+            mouseEntered = false;
         });
-
-        if (event.showTooltip) {
-            _addTooltip(imgEl, tooltipEl);
-        }
-        if (_useGridHoverColor) {
-            _setGridHoverColor(imgEl);
-        }
     }
 
-    async function _renderRangeEvent(event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement, classNames: { box: string, tooltip: string, title: string }) {
+
+    async function _renderRangeEvent(event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement, classNames: { box: string }) {
         const boxEl = document.createElement("div");
         boxEl.classList.add(classNames.box);
         boxEl.classList.add(event.className);
@@ -551,43 +628,19 @@ namespace Services.PlumChart {
 
         const tooltipEl = document.createElement("div");
         tooltipEl.classList.add(CLS_TOOLTIP);
-        tooltipEl.classList.add(classNames.tooltip);
         canvasEl.appendChild(tooltipEl);
 
-        const titleEl = document.createElement("div");
-        titleEl.classList.add(classNames.title);
-        titleEl.innerText = event.title;
-        tooltipEl.appendChild(titleEl);
-
-        const startTime = _formatTime(event.startTime);
-        const endTime = _formatTime(event.endTime);
-        const timeRange = _formatTimeRange(event.startTime, event.endTime);
-        const timeEl = document.createElement("div");
-        timeEl.innerText = `${startTime} ~ ${endTime} (${timeRange})`;
-        tooltipEl.appendChild(timeEl);
-
-        for (const line of event.lines) {
-            _renderLineElement(line, tooltipEl);
+        if (_customRangeEventTooltip) {
+            _customRangeEventTooltip(event, boxEl, tooltipEl);
+        } else {
+            _renderDefaultRangeEventTooltip(event, boxEl, tooltipEl);
         }
-
-        let lazyLoaded = false;
-        boxEl.addEventListener("mouseenter", async (e) => {
-            if (!event.lazyLines)
-                return;
-            if (lazyLoaded)
-                return;
-            const lazyLines = await event.lazyLines();
-            for (const line of lazyLines) {
-                _renderLineElement(line, tooltipEl);
-            }
-            lazyLoaded = true;
-        });
 
         if (event.showTooltip) {
             _addTooltip(boxEl, tooltipEl);
         }
-        if (_useGridHoverColor) {
-            _setGridHoverColor(boxEl);
+        if (_useEventHoverColor) {
+            _setEventHoverColor(boxEl);
         }
     }
 
@@ -600,8 +653,6 @@ namespace Services.PlumChart {
     async function _defaultRenderEntityPointEvent(event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
         _renderPointEvent(event, canvasEl, containerEl, {
             img: CLS_ENTITY_POINT_EVENT,
-            tooltip: CLS_ENTITY_POINT_EVENT_TOOLTIP,
-            title: CLS_ENTITY_POINT_EVENT_TITLE
         });
     };
 
@@ -614,8 +665,6 @@ namespace Services.PlumChart {
     async function _defaultRenderEntityRangeEvent(event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
         _renderRangeEvent(event, canvasEl, containerEl, {
             box: CLS_ENTITY_RANGE_EVENT,
-            tooltip: CLS_ENTITY_RANGE_EVENT_TOOLTIP,
-            title: CLS_ENTITY_RANGE_EVENT_TITLE
         });
     };
 
@@ -638,9 +687,7 @@ namespace Services.PlumChart {
      */
     async function _defaultRenderGlobalRangeEvent(event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
         _renderRangeEvent(event, canvasEl, containerEl, {
-            box: CLS_GLOBAL_RANGE_EVENT,
-            tooltip: CLS_GLOBAL_RANGE_EVENT_TOOLTIP,
-            title: CLS_GLOBAL_RANGE_EVENT_TITLE
+            box: CLS_GLOBAL_RANGE_EVENT
         });
     };
 
@@ -867,8 +914,8 @@ namespace Services.PlumChart {
     }
 
     function setOptions(options: PlumChartOptions) {
-        _useGridHoverColor = options.useGridHoverColor ?? _useGridHoverColor;
-        _gridHoverColor = options.gridHoverColor ?? _gridHoverColor;
+        _useEventHoverColor = options.useEventHoverColor ?? _useEventHoverColor;
+        _eventHoverColor = options.eventHoverColor ?? _eventHoverColor;
         _formatTime = options.formatTime ?? _defaultFormatTime;
         _formatTimeRange = options.formatTimeRange ?? _defaultFormatTimeRange;
         options.gridColumns?.forEach((column) => {
@@ -885,6 +932,9 @@ namespace Services.PlumChart {
                 }
             };
         }) ?? [];
+
+        _customPointEventTooltip = options.renderPointEventCustomTooltip ?? _customPointEventTooltip;
+        _customRangeEventTooltip = options.renderRangeEventCustomTooltip ?? _customRangeEventTooltip;
 
         const coreOptions: Services.PlumChart.Core.ChartOptions = {
             mainTitle: options.gridTitle,

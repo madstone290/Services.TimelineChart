@@ -149,9 +149,9 @@ window.addEventListener("DOMContentLoaded", () => {
     const legends: Services.PlumChart.Legend[] = [...l1, ...l2, ...l3, ...l4];
 
     const options = new Services.PlumChart.PlumChartOptions();
-    const myOptions = {
-        useGridHoverColor: false,
-        gridHoverColor: '#ccc',
+    const optionsSource: Services.PlumChart.PlumChartOptions = {
+        useEventHoverColor: true,
+        eventHoverColor: '#ccc',
         gridColumns: [{
             field: 'number',
             caption: 'Lot Number',
@@ -165,7 +165,7 @@ window.addEventListener("DOMContentLoaded", () => {
         chartStartTime: new Date(2024, 0, 1, 0, 0, 0, 0),
         chartEndTime: new Date(2024, 0, 1, 24, 0, 0, 0),
     }
-    Object.assign(options, myOptions);
+    Object.assign(options, optionsSource);
     plumChart.setOptions(options);
     plumChart.setData({
         legends: legends,
@@ -178,6 +178,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     title: error.type,
                     icon: error.type === "Quality" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
                     showTooltip: true,
+                    showTime: true,
                     lines: [
                         "Lot Number: " + lot.number,
                         "Product: " + lot.product,
@@ -201,6 +202,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     endTime: operation.endTime,
                     className: lotOperationClasses[operation.type],
                     showTooltip: true,
+                    showTime: true,
                     lines: [
                         "Lot Number: " + lot.number,
                         "Product: " + lot.product,
@@ -224,6 +226,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 title: error.type,
                 icon: error.type === "Man" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
                 showTooltip: true,
+                showTime: true,
                 lines: [
                     "Side Error",
                 ],
@@ -246,6 +249,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 endTime: error.endTime,
                 className: error.type === "Downtime" ? "pl-downtime" : "pl-network",
                 showTooltip: true,
+                showTime: true,
                 lines: [
                     "Global Error",
                 ],
