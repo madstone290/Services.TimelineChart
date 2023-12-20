@@ -751,6 +751,7 @@ namespace Services.PlumChart {
     function _createColumn(containerEl: HTMLElement, index: number, caption: string): HTMLElement {
         const columnEl = document.createElement("div");
         columnEl.classList.add(CLS_GRID_COLUMN);
+        columnEl.setAttribute("data-index", index.toString());
 
         const captionEl = document.createElement("div");
         captionEl.classList.add(CLS_GRID_COLUMN_CAPTION);
