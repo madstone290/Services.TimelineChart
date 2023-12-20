@@ -534,22 +534,18 @@ namespace Services.PlumChart {
         }
 
         let lazyLoaded = false;
-        let mouseEntered = false;
         eventEl.addEventListener("mouseenter", async (e) => {
             if (!event.lazyLines)
                 return;
-            if (mouseEntered)
-                return;
             if (lazyLoaded)
                 return;
-            mouseEntered = true;
+            lazyLoaded = true;
             const lazyLines = await event.lazyLines();
             for (const line of lazyLines) {
                 _renderLineElement(line, tooltipEl);
             }
             _relocateTooltip(tooltipEl);
-            lazyLoaded = true;
-            mouseEntered = false;
+
         });
     }
 
@@ -597,22 +593,17 @@ namespace Services.PlumChart {
         }
 
         let lazyLoaded = false;
-        let mouseEntered = false;
         eventEl.addEventListener("mouseenter", async (e) => {
             if (!event.lazyLines)
                 return;
-            if (mouseEntered)
-                return;
             if (lazyLoaded)
                 return;
-            mouseEntered = true;
+            lazyLoaded = true;
             const lazyLines = await event.lazyLines();
             for (const line of lazyLines) {
                 _renderLineElement(line, tooltipEl);
             }
             _relocateTooltip(tooltipEl);
-            lazyLoaded = true;
-            mouseEntered = false;
         });
     }
 
@@ -1030,7 +1021,7 @@ namespace Services.PlumChart {
         rootEl.appendChild(legendContainerEl);
         rootEl.appendChild(chartContainerEl);
         containerEl.appendChild(rootEl);
-        
+
         return {
             setOptions,
             setData,
