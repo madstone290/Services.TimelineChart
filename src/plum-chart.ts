@@ -179,6 +179,7 @@ namespace Services.PlumChart {
          */
         globalRangeEvents: RangeEvent[],
     }
+    const CLS_ROOT_CONTAINER = "pl-root-container";
     const CLS_LEGEND_CONTAINER = "pl-legend-container";
     const CLS_CHART_CONTAINER = "pl-chart-container";
 
@@ -963,6 +964,9 @@ namespace Services.PlumChart {
     }
 
     export function create(containerEl: HTMLElement) {
+        const rootEl = document.createElement("div");
+        rootEl.classList.add(CLS_ROOT_CONTAINER);
+
         const legendContainerEl = document.createElement("div");
         legendContainerEl.classList.add(CLS_LEGEND_CONTAINER);
         _legendsEl = _createLegendEl();
@@ -973,9 +977,10 @@ namespace Services.PlumChart {
         chartContainerEl.classList.add(CLS_CHART_CONTAINER);
         _coreChart.create(chartContainerEl);
 
-        containerEl.appendChild(legendContainerEl);
-        containerEl.appendChild(chartContainerEl);
-
+        rootEl.appendChild(legendContainerEl);
+        rootEl.appendChild(chartContainerEl);
+        containerEl.appendChild(rootEl);
+        
         return {
             setOptions,
             setData,
