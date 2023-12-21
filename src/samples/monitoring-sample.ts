@@ -921,7 +921,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
     export function renderChart() {
         startTime = new Date(startTime.getTime() + 1 * 60 * 1000);
         endTime = new Date(endTime.getTime() + 1 * 60 * 1000);
-        _chart.setChartTimeRange(startTime, endTime);
+        
 
         _data.entities = [
             {
@@ -946,7 +946,8 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             ..._data.entities
         ];
         _chart.setData(_data);
-        _chart.render();
+        _chart.updateChartTimeRange(startTime, endTime);
+        _chart.renderCanvas();
 
         entityNumber++;
 

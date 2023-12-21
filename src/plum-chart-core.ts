@@ -1000,6 +1000,17 @@ namespace Services.PlumChart.Core {
             _chartRenderEndTime = new Date(endTime.valueOf() + toTime(_cellMinutes * _state.paddingCellCount))
         }
 
+        /**
+         * 차트 시간 범위를 갱신한다. UI를 갱신한다.
+         * @param startTime 
+         * @param endTime 
+         */
+        function updateChartTimeRange(startTime: Date, endTime: Date) {
+            setChartTimeRange(startTime, endTime);
+            _renderColumnHeader();
+        }
+
+
         function setData(data: ChartData) {
             _data = data;
         }
@@ -1788,11 +1799,11 @@ namespace Services.PlumChart.Core {
 
         return {
             create,
+            setOptions,
+            setData,
             render,
             renderCanvas,
-            setOptions,
-            setChartTimeRange,
-            setData
+            updateChartTimeRange,
         }
     };
 }

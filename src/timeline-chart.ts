@@ -982,6 +982,11 @@ namespace Services.TimelineChart {
             _chartRenderEndTime = new Date(endTime.valueOf() + toTime(_cellMinutes * _state.paddingCellCount))
         }
 
+        function updateChartTimeRange(startTime: Date, endTime: Date) {
+            setChartTimeRange(startTime, endTime);
+            _renderColumnHeader();
+        }
+
         function setData(data: ChartData) {
             _data = data;
         }
@@ -1757,6 +1762,7 @@ namespace Services.TimelineChart {
             renderCanvas,
             setOptions,
             setChartTimeRange,
+            updateChartTimeRange,
             setData
         }
     };
