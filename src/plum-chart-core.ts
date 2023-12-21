@@ -1000,18 +1000,6 @@ namespace Services.PlumChart.Core {
             _chartRenderEndTime = new Date(endTime.valueOf() + toTime(_cellMinutes * _state.paddingCellCount))
         }
 
-        /**
-         * 차트 시간 범위를 갱신한다. UI를 갱신한다.
-         * @param startTime 
-         * @param endTime 
-         */
-        function updateChartTimeRange(startTime: Date, endTime: Date) {
-            setChartTimeRange(startTime, endTime);
-            _renderColumnHeader();
-            renderCanvas();
-        }
-
-
         function setData(data: ChartData) {
             _data = data;
         }
@@ -1068,15 +1056,16 @@ namespace Services.PlumChart.Core {
 
             _renderMainTitle();
             _renderTableColumn();
-            _renderColumnTitle();
-            _renderColumnHeader();
 
             renderCanvas();
         }
 
         function renderCanvas() {
-            // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
-            _updateElementSize();
+            // 캔버스 사이즈를 갱신한 후 갱신된 사이즈에 맞춰 렌더링을 실행한다.
+            _updateCanvasSize();
+
+            _renderColumnTitle();
+            _renderColumnHeader();
             _renderSideCanvas();
             _renderMainCanvas();
             _startRenderEntityRow();
@@ -1097,7 +1086,7 @@ namespace Services.PlumChart.Core {
                 _originalCellWidth = canvasWidth / _canvasColumnCount;
                 const cellWidth = _originalCellWidth * _currZoomScale;
                 _setCellWidth(cellWidth);
-                _refreshAll();
+                _refreshCanvas();
             }
         }
 
@@ -1126,6 +1115,31 @@ namespace Services.PlumChart.Core {
                 _state.tableColumnRender(_tableColumnBoxElement);
         }
 
+        function _updateCanvasSize() {
+            // 캔버스 컬럼 수를 계산한다. 
+            // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
+            _canvasColumnCount = Math.floor((_chartRenderEndTime.valueOf() - _chartRenderStartTime.valueOf()) / toTime(_cellMinutes));
+
+            if (_state.columnAutoWidth === true) {
+                _originalCellWidth = _mainCanvasBoxElement.clientWidth / _canvasColumnCount;
+                _cellWidth = _originalCellWidth * _currZoomScale;
+            }
+
+            /**
+            * main canvas에만 스크롤을 표시한다.
+            * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
+            * entity list는 main canvas 수직스크롤과 동기화한다.
+            */
+            let canvasWidth = Math.max(_cellWidth * _canvasColumnCount, _mainCanvasBoxElement.clientWidth);
+            let canvasHeight = Math.max(_cellHeight * _data.entities.length, _mainCanvasBoxElement.clientHeight);
+
+            _columnHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
+            _sideCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
+            _mainCanvasElement.style.width = `${canvasWidth}px`;
+            _mainCanvasElement.style.height = `${canvasHeight}px`;
+        }
+
+
         function _renderColumnTitle() {
             _columnTitleElement.replaceChildren();
             if (_state.columnTitleRender != null) {
@@ -1141,17 +1155,8 @@ namespace Services.PlumChart.Core {
             _columnHeaderElement.replaceChildren();
             _headerElements.clear();
 
-            let startTime = _chartRenderStartTime;
-            let endTime = _chartRenderEndTime;
-            _canvasColumnCount = (endTime.valueOf() - startTime.valueOf()) / toTime(_cellMinutes);
-
-            if (_state.columnAutoWidth === true) {
-                _originalCellWidth = _mainCanvasBoxElement.clientWidth / _canvasColumnCount;
-                _cellWidth = _originalCellWidth * _currZoomScale;
-            }
-
             let cellIndex = 0;
-            let currentTime = startTime;
+            let currentTime = _chartRenderStartTime;
             while (cellIndex < _canvasColumnCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
@@ -1231,23 +1236,6 @@ namespace Services.PlumChart.Core {
                     _zoomIn(pivotPoint.x, pivotPoint.y);
                 }
             }
-        }
-        /**
-         * UI 엘리먼트의 크기를 변경한다.
-         */
-        function _updateElementSize() {
-            /**
-             * main canvas에만 스크롤을 표시한다.
-             * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
-             * entity list는 main canvas 수직스크롤과 동기화한다.
-             */
-            let canvasWidth = Math.max(_cellWidth * _canvasColumnCount, _mainCanvasBoxElement.clientWidth);
-            let canvasHeight = Math.max(_cellHeight * _data.entities.length, _mainCanvasBoxElement.clientHeight);
-
-            _columnHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
-            _sideCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
-            _mainCanvasElement.style.width = `${canvasWidth}px`;
-            _mainCanvasElement.style.height = `${canvasHeight}px`;
         }
 
         /**
@@ -1777,7 +1765,7 @@ namespace Services.PlumChart.Core {
 
             // 일부 렌더링에는 마지막 줌 시간이 필요하므로 미리 저장해둔다.
             _state.lastZoomTime = new Date();
-            _refreshAll();
+            _refreshCanvas();
             // keep scroll position
             _mainCanvasBoxElement.scrollLeft = scrollLeft;
             _mainCanvasBoxElement.scrollTop = scrollTop;
@@ -1787,15 +1775,11 @@ namespace Services.PlumChart.Core {
         }
 
         /**
-         * 렌더링을 갱신한다.
+         * 캔버스 UI를 갱신한다.
          */
-        function _refreshAll() {
-            _updateElementSize();
+        function _refreshCanvas() {
+            _updateCanvasSize();
             _refreshColumnHeaders();
-            _refreshCanvas();
-        }
-
-        function _refreshCanvas(){
             _refreshSideCanvas();
             _refreshMainCanvas();
         }
@@ -1804,9 +1788,11 @@ namespace Services.PlumChart.Core {
             create,
             setOptions,
             setData,
+            setChartTimeRange,
             render,
             renderCanvas,
-            updateChartTimeRange,
+
         }
     };
 }
+
