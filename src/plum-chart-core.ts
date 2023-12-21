@@ -186,7 +186,6 @@ namespace Services.PlumChart.Core {
         chartWidth: number;
         cellContentHeightRatio: number;
         cellContentHeight: number;
-        headerCellCount: number;
         hasHorizontalLine: boolean;
         hasVerticalLine: boolean;
         columnAutoWidth: boolean;
@@ -411,7 +410,6 @@ namespace Services.PlumChart.Core {
             zoomVelocityX: 0,
             zoomVelocityY: 0,
             prevZoomDirection: null,
-            headerCellCount: 0,
             cellContentHeight: 0,
             sideCanvasContentHeight: 0,
             lastZoomTime: new Date(),
@@ -582,6 +580,8 @@ namespace Services.PlumChart.Core {
         let _borderColor: string = "#ccc";
 
         let _canvasLineColor: string = "red";
+
+        let _canvasColumnCount: number = 0;
 
 
 
@@ -1008,6 +1008,7 @@ namespace Services.PlumChart.Core {
         function updateChartTimeRange(startTime: Date, endTime: Date) {
             setChartTimeRange(startTime, endTime);
             _renderColumnHeader();
+            renderCanvas();
         }
 
 
@@ -1093,10 +1094,10 @@ namespace Services.PlumChart.Core {
             if (_state.columnAutoWidth) {
                 // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
                 const canvasWidth = _mainCanvasBoxElement.clientWidth;
-                _originalCellWidth = canvasWidth / _state.headerCellCount;
+                _originalCellWidth = canvasWidth / _canvasColumnCount;
                 const cellWidth = _originalCellWidth * _currZoomScale;
                 _setCellWidth(cellWidth);
-                _refresh();
+                _refreshAll();
             }
         }
 
@@ -1142,15 +1143,16 @@ namespace Services.PlumChart.Core {
 
             let startTime = _chartRenderStartTime;
             let endTime = _chartRenderEndTime;
-            let headerCellCount = (endTime.valueOf() - startTime.valueOf()) / toTime(_cellMinutes);
-            _state.headerCellCount = headerCellCount;
+            _canvasColumnCount = (endTime.valueOf() - startTime.valueOf()) / toTime(_cellMinutes);
+
             if (_state.columnAutoWidth === true) {
-                _originalCellWidth = _mainCanvasBoxElement.clientWidth / headerCellCount;
+                _originalCellWidth = _mainCanvasBoxElement.clientWidth / _canvasColumnCount;
+                _cellWidth = _originalCellWidth * _currZoomScale;
             }
 
             let cellIndex = 0;
             let currentTime = startTime;
-            while (cellIndex < headerCellCount) {
+            while (cellIndex < _canvasColumnCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
                 const left = cellIndex == 0 ? 0 : (cellIndex * _cellWidth) + 1;
@@ -1168,11 +1170,8 @@ namespace Services.PlumChart.Core {
 
         function _renderCanvasHeaderVLines() {
             _canvasColumnVLines.length = 0;
-            const canvasWidth = _columnHeaderBoxElement.scrollWidth;
-            const vLineCount = Math.ceil(canvasWidth / _cellWidth);
-
             let left = 0;
-            for (let i = 0; i < vLineCount; i++) {
+            for (let i = 0; i < _canvasColumnCount; i++) {
                 left += _cellWidth;
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
@@ -1242,7 +1241,7 @@ namespace Services.PlumChart.Core {
              * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
              * entity list는 main canvas 수직스크롤과 동기화한다.
              */
-            let canvasWidth = Math.max(_cellWidth * _state.headerCellCount, _mainCanvasBoxElement.clientWidth);
+            let canvasWidth = Math.max(_cellWidth * _canvasColumnCount, _mainCanvasBoxElement.clientWidth);
             let canvasHeight = Math.max(_cellHeight * _data.entities.length, _mainCanvasBoxElement.clientHeight);
 
             _columnHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
@@ -1778,7 +1777,7 @@ namespace Services.PlumChart.Core {
 
             // 일부 렌더링에는 마지막 줌 시간이 필요하므로 미리 저장해둔다.
             _state.lastZoomTime = new Date();
-            _refresh();
+            _refreshAll();
             // keep scroll position
             _mainCanvasBoxElement.scrollLeft = scrollLeft;
             _mainCanvasBoxElement.scrollTop = scrollTop;
@@ -1790,9 +1789,13 @@ namespace Services.PlumChart.Core {
         /**
          * 렌더링을 갱신한다.
          */
-        function _refresh() {
+        function _refreshAll() {
             _updateElementSize();
             _refreshColumnHeaders();
+            _refreshCanvas();
+        }
+
+        function _refreshCanvas(){
             _refreshSideCanvas();
             _refreshMainCanvas();
         }
