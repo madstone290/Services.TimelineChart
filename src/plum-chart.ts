@@ -425,52 +425,43 @@ namespace Services.PlumChart {
         /**
          * 마우스위치에 맞춰 툴팁 위치를 조정한다.
          * @param tooltipElement 
-         * @param e 
+         * @param evt 
          */
-        function _relocateTooltip(tooltipElement: HTMLElement, e?: MouseEvent) {
-            const tooltipOffset = 10;
-            let clientX = 0;
-            let clientY = 0;
+        function _relocateTooltip(tooltipElement: HTMLElement, evt?: MouseEvent) {
+            const mouseEvent: MouseEvent = evt ?? (tooltipElement as any).tag;
+            if (!mouseEvent)
+                return;
+            (tooltipElement as any).tag = evt;
+
+            const locationOffset = 10;
             const tooltipClientRect = tooltipElement.getBoundingClientRect();
-            if (e == null) {
-                clientY = tooltipClientRect.top - tooltipOffset;
-                clientX = tooltipClientRect.left - tooltipOffset;
-            }
-            else {
-                clientY = e.clientY;
-                clientX = e.clientX;
-            }
-            let left = clientX + tooltipOffset;
-            let top = clientY + tooltipOffset;
 
-            if (window.innerWidth < clientX + tooltipElement.offsetWidth + tooltipOffset) {
-                left = window.innerWidth - tooltipElement.offsetWidth - tooltipOffset;
-            }
-            if (window.innerHeight < clientY + tooltipElement.offsetHeight + tooltipOffset) {
-                top = window.innerHeight - tooltipElement.offsetHeight - tooltipOffset;
-            }
-
-            tooltipElement.style.top = top + "px";
-            tooltipElement.style.left = left + "px";
-
-            // detect if the tooltip height is longer than the window height
+            // 툴팁이 윈도우 높이보다 길면 최대 높이를 윈도우 높이로 설정한다.
             const tooltipHeight = tooltipClientRect.height;
-            const windowInnerHeight = window.innerHeight - tooltipOffset * 2;
+            const windowInnerHeight = window.innerHeight - locationOffset * 2;
             if (tooltipHeight >= windowInnerHeight) {
                 tooltipElement.style.maxHeight = windowInnerHeight + "px";
             } else {
                 tooltipElement.style.maxHeight = "";
             }
 
-            // detect if the tooltip width is longer than the remaining width from the mouse position
-            const tooltipWidth = tooltipClientRect.width;
-            const windowInnerWidth = window.innerWidth - tooltipOffset * 2;
-            const remainingWidth = windowInnerWidth - clientX;
-            if (tooltipWidth >= remainingWidth) {
-                tooltipElement.style.maxWidth = remainingWidth + "px";
-            } else {
-                tooltipElement.style.maxWidth = "";
+            let clientX = mouseEvent.clientX;
+            let clientY = mouseEvent.clientY;
+            let left = clientX + locationOffset;
+            let top = clientY + locationOffset;
+
+            // 마우스 x좌표 + 툴팁너비 + offset  이 윈도우 너비보다 크면 좌측방향으로 툴팁을 위치한다.
+            if (clientX + locationOffset + tooltipElement.offsetWidth > window.innerWidth) {
+                left = Math.max(locationOffset, clientX - tooltipElement.offsetWidth - locationOffset);
             }
+            // 윈도우 높이보다 툴팁이 길면 툽팁 y좌표를 조정한다.
+            if (window.innerHeight < clientY + tooltipElement.offsetHeight + locationOffset) {
+                top = Math.max(locationOffset, window.innerHeight - tooltipElement.offsetHeight - locationOffset);
+            }
+            tooltipElement.style.top = top + "px";
+            tooltipElement.style.left = left + "px";
+
+
         };
 
         /**
@@ -575,7 +566,6 @@ namespace Services.PlumChart {
                     _renderLineElement(line, tooltipEl);
                 }
                 _relocateTooltip(tooltipEl);
-
             });
         }
 

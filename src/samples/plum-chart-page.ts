@@ -188,9 +188,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     lazyLines: () => {
                         return new Promise((resolve, reject) => {
                             setTimeout(() => {
-                                resolve([
-                                    "Lazy: " + new Date(),
-                                ]);
+                                const lines = Array.from({ length: 3 }).map(() => "Lazy: " + new Date());
+                                resolve(lines);
                             }, 500);
                         });
                     }
@@ -212,9 +211,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     lazyLines: () => {
                         return new Promise((resolve, reject) => {
                             setTimeout(() => {
-                                resolve([
-                                    "Lazy: " + new Date(),
-                                ]);
+                                const lines = Array.from({ length: 50 }).map(() => "Lazy: " + new Date());
+                                resolve(lines);
                             }, 500);
                         });
                     },
@@ -235,9 +233,8 @@ window.addEventListener("DOMContentLoaded", () => {
                 lazyLines: () => {
                     return new Promise((resolve, reject) => {
                         setTimeout(() => {
-                            resolve([
-                                "Lazy: " + new Date(),
-                            ]);
+                            const lines = Array.from({ length: 5 }).map(() => "Lazy: " + new Date());
+                            resolve(lines);
                         }, 500);
                     });
                 }

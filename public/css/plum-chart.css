@@ -69,6 +69,8 @@
     text-align: left;
     position: fixed;
     overflow: auto;
+    min-width: 200px;
+    white-space: nowrap;
 }
 
 .pl-tooltip.pl-tooltip-visible {
