@@ -915,6 +915,8 @@ namespace Services.PlumChart {
                 return;
             const leftBox = _legendsEl.getElementsByClassName(CLS_LEGENDS_LEFT)[0];
             const rightBox = _legendsEl.getElementsByClassName(CLS_LEGENDS_RIGHT)[0];
+            leftBox.replaceChildren();
+            rightBox.replaceChildren();
             for (const item of _legends) {
                 const box = document.createElement("div");
                 box.classList.add(CLS_LEGEND);
