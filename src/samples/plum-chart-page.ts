@@ -165,6 +165,7 @@ window.addEventListener("DOMContentLoaded", () => {
         canvasTitle: 'Lot Status',
         chartStartTime: new Date(2024, 0, 1, 0, 0, 0, 0),
         chartEndTime: new Date(2024, 0, 1, 24, 0, 0, 0),
+        columnAutoWidth: true
     }
     Object.assign(options, optionsSource);
     plumChart.setOptions(options);
@@ -268,6 +269,7 @@ window.addEventListener("DOMContentLoaded", () => {
         })
     });
     plumChart.render();
+
 });
 
 

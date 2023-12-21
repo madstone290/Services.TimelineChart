@@ -1120,11 +1120,6 @@ namespace Services.PlumChart.Core {
             // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
             _canvasColumnCount = Math.floor((_chartRenderEndTime.valueOf() - _chartRenderStartTime.valueOf()) / toTime(_cellMinutes));
 
-            if (_state.columnAutoWidth === true) {
-                _originalCellWidth = _mainCanvasBoxElement.clientWidth / _canvasColumnCount;
-                _cellWidth = _originalCellWidth * _currZoomScale;
-            }
-
             /**
             * main canvas에만 스크롤을 표시한다.
             * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
