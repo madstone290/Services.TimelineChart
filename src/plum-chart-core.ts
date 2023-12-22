@@ -1,5 +1,5 @@
 namespace Services.PlumChart.Core {
-    const DEBUG = false;
+    export let DEBUG = false;
     /**
      * 차트 이벤트.
      */
@@ -1402,7 +1402,6 @@ namespace Services.PlumChart.Core {
             changedEntries.forEach((entry: IntersectionObserverEntry, i: number) => {
                 const containerEl = entry.target as HTMLElement;
                 const entityRow = _entityRows.get(containerEl);
-
                 if (entry.isIntersecting) {
                     if (entityRow.lastRenderTime == null) {
                         // 최초 렌더링
@@ -1414,7 +1413,12 @@ namespace Services.PlumChart.Core {
                     _intersectingEntityRows.set(entityRow.index, entityRow);
                 }
                 else {
-                    _intersectingEntityRows.delete(entityRow.index);
+                    // 스크롤에 의해 엔티티가 영역을 벗어나는 경우에만 교차엔티티 리스트에서 제거한다.
+                    // 루트 요소의 가시성 변경(display:none)에 의한 경우에는 교차엔티티 리스트에서 제거하지 않는다.
+                    const rootElDisplayNone = entry.rootBounds.width == 0 && entry.rootBounds.height == 0;
+                    if (!rootElDisplayNone) {
+                        _intersectingEntityRows.delete(entityRow.index);
+                    }
                 }
             });
         }
