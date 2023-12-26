@@ -17,6 +17,7 @@ namespace Pages.Monitoring {
         op2: "pl-op2",
         op3: "pl-op3",
         op4: "pl-op4",
+        op5: "pl-op5",
     }
 
     interface Lot {
@@ -47,36 +48,50 @@ namespace Pages.Monitoring {
         type: GlobalErrorType;
     }
 
-    const getRandomHour = () => Math.floor(Math.random() * 24);
-    const getRandomMinute = () => Math.floor(Math.random() * 60);
-
-    const lots: Lot[] = [];
-    for (let i = 0; i < 100; i++) {
-        const lot: Lot = {
-            number: `20240101000${i}`,
-            product: `P12${i % 10}`,
-            errors: [
-                {
-                    time: new Date(2024, 0, 1, getRandomHour(), getRandomMinute(), 0, 0),
-                    type: lotErrorTypes[Math.floor(Math.random() * lotErrorTypes.length) % lotErrorTypes.length] as any
-                },
-                {
-                    time: new Date(2024, 0, 1, getRandomHour(), getRandomMinute(), 0, 0),
-                    type: lotErrorTypes[Math.floor(Math.random() * lotErrorTypes.length) % lotErrorTypes.length] as any
-                },
-            ],
-            operations: Array.from({ length: 5 }).map(() => {
-                const hour = getRandomHour();
-                const minute = getRandomMinute();
-                return {
-                    startTime: new Date(2024, 0, 1, hour, minute, 0, 0),
-                    endTime: new Date(2024, 0, 1, hour + 1, minute, 0, 0),
-                    type: lotOperationTypes[Math.floor(Math.random() * lotOperationTypes.length) % lotOperationTypes.length] as any
-                }
-            })
-        }
-        lots.push(lot);
+    interface ChartState {
+        index: number;
+        startTime: Date;
+        endTime: Date;
+        lots: Lot[];
     }
+
+    const getRandom = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1) + min);
+    const getRandomLots = (count: number, startTime: number) => {
+        const lots: Lot[] = [];
+        let time = startTime;
+        for (let i = 0; i < count; i++) {
+            let operationTime = time;
+            let errorTime = time;
+            console.log("time", time);
+            const lot: Lot = {
+                number: `20240101000${i}`,
+                product: `P12${i % 10}`,
+                operations: Array.from({ length: 5 }).map((value, idx) => {
+                    const startTime = operationTime;
+                    const endTime = getRandom(operationTime + 1, operationTime + 2);
+                    const gap = getRandom(0, 1);
+                    operationTime = endTime + gap;
+                    return {
+                        startTime: new Date(2024, 0, 1, Math.floor(startTime / 60), startTime % 60, 0, 0),
+                        endTime: new Date(2024, 0, 1, Math.floor(endTime / 60), endTime % 60, 0, 0),
+                        type: lotOperationTypes[Math.floor(Math.random() * lotOperationTypes.length) % lotOperationTypes.length] as any
+                    }
+                }),
+                errors: Array.from({ length: 3 }).map((value, idx) => {
+                    errorTime = getRandom(errorTime, errorTime + 10);
+                    return {
+                        time: new Date(2024, 0, 1, Math.floor(time / 60), errorTime % 60, 0, 0),
+                        type: lotErrorTypes[Math.floor(Math.random() * lotErrorTypes.length) % lotErrorTypes.length] as any
+                    }
+                }),
+            }
+            lots.push(lot);
+            time = operationTime + 5;
+        }
+        lots.sort((a, b) => b.operations[0].startTime.getTime() - a.operations[0].startTime.getTime());
+        return lots;
+    };
+
     const sideErrors: SideError[] = [
         {
             time: new Date(2024, 0, 1, 6, 10, 0, 0),
@@ -133,6 +148,8 @@ namespace Pages.Monitoring {
         chartIdx: number;
         tabIdx: number;
     }
+
+    const chartStateList: ChartState[] = [];
 
     window.addEventListener("DOMContentLoaded", () => {
         const workCenters = [
@@ -208,25 +225,91 @@ namespace Pages.Monitoring {
         tabs.toggle("tab-0");
 
         function startTimer(tabIndex: number) {
-            console.log("start timer at " + tabIndex);
             const workCenterIdxMin = tabIndex * 4;
             const workCenterIdxMax = workCenterIdxMin + 4;
-            console.log("workCenterIdxMin: " + workCenterIdxMin);
-            console.log("workCenterIdxMax: " + workCenterIdxMax);
             for (let workCenterIdx = workCenterIdxMin; workCenterIdx < workCenterIdxMax; workCenterIdx++) {
                 if (workCenters.length <= workCenterIdx)
                     break;
 
                 const chart = workCenterCharts.find(x => x.chartIdx == workCenterIdx).chart;
+                let tick = 0;
                 // chart.renderCanvas();
                 setTimeout(() => {
                     chart.renderCanvas();
                     console.log("render chart at " + workCenterIdx);
+                }, 500);
+                timers[workCenterIdx] = setInterval(() => {
+                    const chartState = chartStateList[workCenterIdx];
+                    tick++;
+                    if (30 < tick) {
+                        tick = 0;
+                        const lots = chartState.lots;
+                        const newLot = getRandomLots(1, chartState.startTime.getTime() / 1000 * 60)[0];
+                        chartState.lots = [newLot, ...lots];
+                    }
+
+                    const chartStartTime = chartState.startTime;
+                    chartStartTime.setMinutes(chartStartTime.getMinutes() + 1);
+                    const chartEndTime = chartState.endTime;
+                    chartEndTime.setMinutes(chartEndTime.getMinutes() + 1);
+
+                    chartState.startTime = chartStartTime;
+                    chartState.endTime = chartEndTime;
+
+                    const data = chart.getCoreChart().getData();
+
+                    data.entities = chartState.lots.map(lot => ({
+                        number: lot.number,
+                        product: lot.product,
+                        pointEvents: lot.errors.map(error => {
+                            const pointEvent: Services.PlumChart.PointEvent = {
+                                time: error.time,
+                                title: error.type,
+                                icon: error.type === "Quality" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
+                                showTooltip: true,
+                                showTime: true,
+                                lines: [
+                                    "Lot Number: " + lot.number,
+                                    "Product: " + lot.product,
+                                ],
+                                lazyLines: () => {
+                                    return new Promise((resolve, reject) => {
+                                        setTimeout(() => {
+                                            const lines = Array.from({ length: 3 }).map(() => "Lazy: " + new Date());
+                                            resolve(lines);
+                                        }, 500);
+                                    });
+                                }
+                            }
+                            return pointEvent;
+                        }),
+                        rangeEvents: lot.operations.map(operation => {
+                            const rangeEvent: Services.PlumChart.RangeEvent = {
+                                title: operation.type,
+                                startTime: operation.startTime,
+                                endTime: operation.endTime,
+                                className: lotOperationClasses[operation.type],
+                                showTooltip: true,
+                                showTime: true,
+                                lines: [
+                                    "Lot Number: " + lot.number,
+                                    "Product: " + lot.product,
+                                ],
+                                lazyLines: () => {
+                                    return new Promise((resolve, reject) => {
+                                        setTimeout(() => {
+                                            const lines = Array.from({ length: 50 }).map(() => "Lazy: " + new Date());
+                                            resolve(lines);
+                                        }, 500);
+                                    });
+                                },
+                            }
+                            return rangeEvent;
+                        })
+                    }));
+                    chart.getCoreChart().setChartTimeRange(chartStartTime, chartEndTime);
+                    chart.renderCanvas();
                 }, 1000);
-                // timers[workCenterIdx] = setInterval(() => {
-                //     chart.renderCanvas();
-                //     console.log("render chart at " + workCenterIdx);
-                // }, 5000);
             }
         }
 
@@ -286,11 +369,18 @@ namespace Pages.Monitoring {
                 chartEndTime: new Date(2024, 0, 1, 8, 0, 0, 0),
                 columnAutoWidth: true
             }
+            chartStateList.push({
+                index: index,
+                startTime: optionsSource.chartStartTime,
+                endTime: optionsSource.chartEndTime,
+                lots: getRandomLots(20, 6 * 60),
+            });
+
             Object.assign(options, optionsSource);
             plumChart.setOptions(options);
             plumChart.setData({
                 legends: legends,
-                entities: lots.filter((value, idx) => idx < 100).map(lot => ({
+                entities: chartStateList[index].lots.map(lot => ({
                     number: lot.number,
                     product: lot.product,
                     pointEvents: lot.errors.map(error => {

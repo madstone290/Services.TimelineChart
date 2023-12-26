@@ -1004,6 +1004,10 @@ namespace Services.PlumChart.Core {
             _data = data;
         }
 
+        function getData() {
+            return _data;
+        }
+
         function isTimeInRange(startTime: Date, endTime?: Date): boolean {
             if (endTime == null) {
                 return _chartRenderStartTime <= startTime && startTime <= _chartRenderEndTime;
@@ -1787,6 +1791,7 @@ namespace Services.PlumChart.Core {
             create,
             setOptions,
             setData,
+            getData,
             setChartTimeRange,
             render,
             renderCanvas,
