@@ -18,24 +18,28 @@
 }
 
 /* 사용자 커스텀 시작 */
-.pl-op1 {
-    background-color: blanchedalmond;
-}
-
 .tc-side-canvas {
     background-color: #8790b1;
 }
 
+.pl-op1 {
+    background-color: 57247a;
+}
+
 .pl-op2 {
-    background-color: lightblue;
+    background-color: f1a83a;
 }
 
 .pl-op3 {
-    background-color: lightgreen;
+    background-color: 77bc57;
 }
 
 .pl-op4 {
-    background-color: lightpink;
+    background-color: ff8fd3;
+}
+
+.pl-op5 {
+    background-color: 2500c7;
 }
 
 .pl-downtime {
