@@ -1,6 +1,6 @@
 declare var dayjs: any;
 
-namespace Services.TimelineChart.Samples.MonitoringSample {
+namespace Services.PlumChart.MonitoringSample {
     interface MesEntity {
         id?: any;
         name?: string;
@@ -854,8 +854,8 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
     }
 
     let _chart: any;
-    let _options: Services.TimelineChart.ChartOptions;
-    let _data: Services.TimelineChart.ChartData;
+    let _options: Services.PlumChart.Core.ChartOptions;
+    let _data: Services.PlumChart.Core.ChartData;
     let _legend: any;
     export function load() {
         _legend = ChartLegend();
@@ -905,7 +905,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             rowHoverColor: "#ccc",
         };
 
-        _chart = Services.TimelineChart.TimelineChart();
+        _chart = Services.PlumChart.Core.TimelineChart();
         _chart.create(container);
         _chart.setOptions(_options);
         _chart.setData(_data);
@@ -946,7 +946,7 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
             ..._data.entities
         ];
         _chart.setData(_data);
-        _chart.updateChartTimeRange(startTime, endTime);
+        _chart.setChartTimeRange(startTime, endTime);
         _chart.renderCanvas();
 
         entityNumber++;
@@ -979,13 +979,13 @@ namespace Services.TimelineChart.Samples.MonitoringSample {
 }
 
 window.addEventListener("load", () => {
-    Services.TimelineChart.Samples.MonitoringSample.load();
+    Services.PlumChart.MonitoringSample.load();
 
     let controlling = false;
     const refresh = function () {
         if (controlling)
             return;
-        Services.TimelineChart.Samples.MonitoringSample.renderChart();
+        Services.PlumChart.MonitoringSample.renderChart();
     };
 
     let intervalId = 0;

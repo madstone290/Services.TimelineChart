@@ -1,3 +1,22 @@
+/* 컬러 참조 */
+.colrs____{
+    background-color: #57247a;
+    background-color: #f1a83a;
+    background-color: #77bc57;
+    background-color: #ff8fd3;
+    background-color: #d7bdff;
+    background-color: #2500c7;
+    background-color: #445735;
+    background-color: #296080;
+    background-color: #ff7526;
+    background-color: #5391ff;
+    background-color: #ff4199;
+    background-color: #8d3f59;
+    background-color: #94deeb;
+    background-color: #8866d3;
+    background-color: #bb9f7b;
+}
+
 /* 사용자 커스텀 시작 */
 .pl-op1 {
     background-color: blanchedalmond;
@@ -178,6 +197,9 @@
     flex-direction: row;
     text-align: center;
     font-weight: 600;
+}
+.pl-grid-row:nth-child(odd) {
+    background-color: #e1edf8;
 }
 
 .pl-grid-cell {
