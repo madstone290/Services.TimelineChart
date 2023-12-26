@@ -174,6 +174,8 @@ namespace Pages.Monitoring {
                 const workCenterDiv = document.createElement("div");
                 workCenterDiv.classList.add("work-center");
                 workCenterDiv.classList.add("work-center-" + i);
+                workCenterDiv.onmouseenter = () => { workCenterDiv.style.zIndex = "100"; };
+                workCenterDiv.onmouseleave = () => { workCenterDiv.style.zIndex = "0"; };
                 tabContent.appendChild(workCenterDiv);
 
 
