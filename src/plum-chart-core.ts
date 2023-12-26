@@ -17,6 +17,23 @@ namespace Services.PlumChart.Core {
         rangeEvents: RangeEvent[];
     }
 
+    enum CanvasRenderMode {
+        /**
+         * IntersectionObserver를 사용하여 행을 레이지 렌더링한다.
+         */
+        Intersection,
+
+        /**
+         * 스크롤 이벤트를 이용하여 행을 레이지 렌더링한다.
+         */
+        Scroll,
+
+        /**
+         * 행을 즉시 렌더링한다.
+         */
+        Eager
+    }
+
     interface PointEventItem {
         /**
          * 이벤트 시간
@@ -96,6 +113,7 @@ namespace Services.PlumChart.Core {
     }
 
     export interface ChartOptions {
+        renderMode?: CanvasRenderMode;
         chartStartTime: Date;
         chartEndTime: Date;
         paddingCellCount?: number;
@@ -466,7 +484,7 @@ namespace Services.PlumChart.Core {
         /**
          * 엔티티 컨테이너 목록. 엔티티 렌더링에 사용한다.
          */
-        let _entityRows = new Map<HTMLElement, EntityRow>();
+        let _activeEntityRows = new Map<HTMLElement, EntityRow>();
         /**
          * 메인캔버스 수직 경계선 엘리먼트 목록
          */
@@ -584,6 +602,7 @@ namespace Services.PlumChart.Core {
         let _canvasColumnCount: number = 0;
 
 
+        let _renderMode: CanvasRenderMode = CanvasRenderMode.Scroll;
 
 
         const css = function () {
@@ -1061,10 +1080,22 @@ namespace Services.PlumChart.Core {
             _renderMainTitle();
             _renderTableColumn();
 
+            // 캔버스 컬럼 수를 계산한다. 
+            // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
+            _canvasColumnCount = Math.floor((_chartRenderEndTime.valueOf() - _chartRenderStartTime.valueOf()) / toTime(_cellMinutes));
+
+            // 캔버스 컬럼 수에 따라 캔버스 너비를 계산한다.
+            if (_state.columnAutoWidth) {
+                _originalCellWidth = _mainCanvasBoxElement.clientWidth / _canvasColumnCount;
+                const cellWidth = _originalCellWidth * _currZoomScale;
+                _setCellWidth(cellWidth);
+            }
+
             renderCanvas();
         }
 
         function renderCanvas() {
+            _startResizeObserver();
             // 캔버스 사이즈를 갱신한 후 갱신된 사이즈에 맞춰 렌더링을 실행한다.
             _updateCanvasSize();
 
@@ -1072,9 +1103,13 @@ namespace Services.PlumChart.Core {
             _renderColumnHeader();
             _renderSideCanvas();
             _renderMainCanvas();
-            _startRenderEntityRow();
-
-            _startResizeObserver();
+            if (_renderMode == CanvasRenderMode.Intersection) {
+                _startRenderEntityRow();
+            } else if (_renderMode == CanvasRenderMode.Scroll) {
+                _startRenderEntityRowsWithScroll();
+            } else {
+                _renderEntityRowsImediately();
+            }
 
             // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
             _mainCanvasBoxElement.scrollTo(_mainCanvasBoxElement.scrollLeft, _mainCanvasBoxElement.scrollTop - 1);
@@ -1120,10 +1155,6 @@ namespace Services.PlumChart.Core {
         }
 
         function _updateCanvasSize() {
-            // 캔버스 컬럼 수를 계산한다. 
-            // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
-            _canvasColumnCount = Math.floor((_chartRenderEndTime.valueOf() - _chartRenderStartTime.valueOf()) / toTime(_cellMinutes));
-
             /**
             * main canvas에만 스크롤을 표시한다.
             * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
@@ -1340,6 +1371,11 @@ namespace Services.PlumChart.Core {
             _refreshMainCanvasVLines();
             _refreshGlobalRangeEvents();
             _refreshIntersectingEntitiList();
+
+            for (const [_, entityRow] of _activeEntityRows.entries()) {
+                _refreshEntityRow(entityRow);
+            }
+
         }
 
         function _refreshIntersectingEntitiList() {
@@ -1405,7 +1441,7 @@ namespace Services.PlumChart.Core {
         const callback: IntersectionObserverCallback = (changedEntries: IntersectionObserverEntry[]) => {
             changedEntries.forEach((entry: IntersectionObserverEntry, i: number) => {
                 const containerEl = entry.target as HTMLElement;
-                const entityRow = _entityRows.get(containerEl);
+                const entityRow = _activeEntityRows.get(containerEl);
                 if (entry.isIntersecting) {
                     if (entityRow.lastRenderTime == null) {
                         // 최초 렌더링
@@ -1459,7 +1495,7 @@ namespace Services.PlumChart.Core {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
                 });
                 containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _entityRows.get(containerEl);
+                    const entityContainer = _activeEntityRows.get(containerEl);
                     const entity = entityContainer.entity;
                     const evtStartTime = _getFirstVisibleEventTime(entity);
 
@@ -1472,7 +1508,7 @@ namespace Services.PlumChart.Core {
                 });
                 _entityTableBoxElement.appendChild(containerEl);
 
-                _entityRows.set(containerEl, {
+                _activeEntityRows.set(containerEl, {
                     index: i,
                     containerEl: containerEl,
                     entity: _data.entities[i],
@@ -1482,6 +1518,116 @@ namespace Services.PlumChart.Core {
                     rangeEventContainers: [],
                 });
                 _intersecionObserver.observe(containerEl);
+            }
+        }
+
+        function _startRenderEntityRowsWithScroll() {
+            _entityTableBoxElement.replaceChildren();
+            // add container elements
+            // lazy rendering using scroll event
+
+            const containerCount = _data.entities.length;
+            for (let i = 0; i < containerCount; i++) {
+                const containerEl = document.createElement("div");
+                containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
+                containerEl.addEventListener("mouseenter", (e) => {
+                    (containerEl as any).tag = containerEl.style.backgroundColor;
+                    containerEl.style.backgroundColor = _rowHoverColor;
+                });
+                containerEl.addEventListener("mouseleave", (e) => {
+                    containerEl.style.backgroundColor = (containerEl as any).tag;
+                });
+                containerEl.addEventListener("click", (e) => {
+                    const entityContainer = _activeEntityRows.get(containerEl);
+                    const entity = entityContainer.entity;
+                    const evtStartTime = _getFirstVisibleEventTime(entity);
+
+                    if (evtStartTime != null) {
+                        const [renderStartTime] = trucateTimeRange(evtStartTime);
+                        const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
+                        const left = time * _cellWidth / _cellMinutes;
+                        _mainCanvasBoxElement.scrollLeft = left + _state.entityEventSearchScrollOffset;
+                    }
+                });
+                _entityTableBoxElement.appendChild(containerEl);
+
+                _activeEntityRows.set(containerEl, {
+                    index: i,
+                    containerEl: containerEl,
+                    entity: _data.entities[i],
+                    lastRenderTime: null,
+                    hLine: null,
+                    pointEventContainers: [],
+                    rangeEventContainers: [],
+                });
+
+
+                const scrollTop = _mainCanvasBoxElement.scrollTop;
+                const scrollHeight = _mainCanvasBoxElement.scrollHeight;
+                const clientHeight = _mainCanvasBoxElement.clientHeight;
+                const scrollBottom = scrollTop + clientHeight;
+                const containerTop = i * _cellHeight;
+                const containerBottom = containerTop + _cellHeight;
+                if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
+                    _renderEntityRow(_activeEntityRows.get(containerEl));
+                }
+            }
+            _mainCanvasBoxElement.addEventListener("scroll", (e) => {
+                const scrollTop = _mainCanvasBoxElement.scrollTop;
+                const scrollHeight = _mainCanvasBoxElement.scrollHeight;
+                const clientHeight = _mainCanvasBoxElement.clientHeight;
+                const scrollBottom = scrollTop + clientHeight;
+                for (const [_, entityRow] of _activeEntityRows.entries()) {
+                    const containerTop = entityRow.index * _cellHeight;
+                    const containerBottom = containerTop + _cellHeight;
+                    if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
+                        if (entityRow.lastRenderTime == null) {
+                            _renderEntityRow(entityRow);
+                        } else if (entityRow.lastRenderTime <= _state.lastZoomTime) {
+                            _refreshEntityRow(entityRow);
+                        }
+                    }
+                }
+            });
+        }
+
+        function _renderEntityRowsImediately() {
+            _entityTableBoxElement.replaceChildren();
+            const containerCount = _data.entities.length;
+            for (let i = 0; i < containerCount; i++) {
+                const containerEl = document.createElement("div");
+                containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
+                containerEl.addEventListener("mouseenter", (e) => {
+                    (containerEl as any).tag = containerEl.style.backgroundColor;
+                    containerEl.style.backgroundColor = _rowHoverColor;
+                });
+                containerEl.addEventListener("mouseleave", (e) => {
+                    containerEl.style.backgroundColor = (containerEl as any).tag;
+                });
+                containerEl.addEventListener("click", (e) => {
+                    const entityContainer = _activeEntityRows.get(containerEl);
+                    const entity = entityContainer.entity;
+                    const evtStartTime = _getFirstVisibleEventTime(entity);
+
+                    if (evtStartTime != null) {
+                        const [renderStartTime] = trucateTimeRange(evtStartTime);
+                        const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
+                        const left = time * _cellWidth / _cellMinutes;
+                        _mainCanvasBoxElement.scrollLeft = left + _state.entityEventSearchScrollOffset;
+                    }
+                });
+                _entityTableBoxElement.appendChild(containerEl);
+
+                _activeEntityRows.set(containerEl, {
+                    index: i,
+                    containerEl: containerEl,
+                    entity: _data.entities[i],
+                    lastRenderTime: null,
+                    hLine: null,
+                    pointEventContainers: [],
+                    rangeEventContainers: [],
+                });
+                _renderEntityRow(_activeEntityRows.get(containerEl));
             }
         }
 
@@ -1653,7 +1799,6 @@ namespace Services.PlumChart.Core {
             containerElement.style.top = `${top}px`;
             containerElement.style.width = `${width}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT);
-
             if (_state.entityRangeEventRender != null)
                 _state.entityRangeEventRender(event, _mainCanvasElement, containerElement);
 

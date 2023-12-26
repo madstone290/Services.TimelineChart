@@ -54,7 +54,6 @@ namespace Services.PlumChart.DefaultPage {
     for (let i = 0; i < 100; i++) {
         let operationTime = time;
         let errorTime = time;
-        console.log("time", time);
         const lot: Lot = {
             number: `20240101000${i}`,
             product: `P12${i % 10}`,
