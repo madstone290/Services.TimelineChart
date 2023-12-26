@@ -221,10 +221,10 @@ namespace Pages.Monitoring {
                     chart.renderCanvas();
                     console.log("render chart at " + workCenterIdx);
                 }, 1000);
-                timers[workCenterIdx] = setInterval(() => {
-                    chart.renderCanvas();
-                    console.log("render chart at " + workCenterIdx);
-                }, 5000);
+                // timers[workCenterIdx] = setInterval(() => {
+                //     chart.renderCanvas();
+                //     console.log("render chart at " + workCenterIdx);
+                // }, 5000);
             }
         }
 

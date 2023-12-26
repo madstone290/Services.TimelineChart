@@ -228,7 +228,6 @@ img {
     background-color: #ffffff;
     border: 1px solid #999999;
     border-radius: 4px;
-    z-index: 100;
     display: none;
     flex-direction: row;
 }
