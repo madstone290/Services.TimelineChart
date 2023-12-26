@@ -62,7 +62,6 @@ namespace Pages.Monitoring {
         for (let i = 0; i < count; i++) {
             let operationTime = time;
             let errorTime = time;
-            console.log("time", time);
             const lot: Lot = {
                 number: `20240101000${i}`,
                 product: `P12${i % 10}`,
@@ -149,7 +148,122 @@ namespace Pages.Monitoring {
         tabIdx: number;
     }
 
+
+    const lotListArray: Lot[][] = [];
     const chartStateList: ChartState[] = [];
+
+    function getLotList(index: number, startTime: Date, endTime: Date) {
+
+        return lotListArray[index].filter(lot => {
+            const eventExist = lot.operations.some(operation => {
+                return operation.startTime.getTime() < endTime.getTime() &&
+                    operation.endTime.getTime() > startTime.getTime();
+            });
+            return eventExist;
+        });
+    }
+
+    function lotErrorToPointEvent(lot: Lot, error: LotError) {
+        const pointEvent: Services.PlumChart.PointEvent = {
+            time: error.time,
+            title: error.type,
+            icon: error.type === "Quality" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
+            showTooltip: true,
+            showTime: true,
+            lines: [
+                "Lot Number: " + lot.number,
+                "Product: " + lot.product,
+            ],
+            lazyLines: () => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const lines = Array.from({ length: 3 }).map(() => "Lazy: " + new Date());
+                        resolve(lines);
+                    }, 500);
+                });
+            }
+        }
+        return pointEvent;
+    }
+
+    function lotOperationToRangeEvent(lot: Lot, operation: LotOperation) {
+        const rangeEvent: Services.PlumChart.RangeEvent = {
+            title: operation.type,
+            startTime: operation.startTime,
+            endTime: operation.endTime,
+            className: lotOperationClasses[operation.type],
+            showTooltip: true,
+            showTime: true,
+            lines: [
+                "Lot Number: " + lot.number,
+                "Product: " + lot.product,
+            ],
+            lazyLines: () => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const lines = Array.from({ length: 50 }).map(() => "Lazy: " + new Date());
+                        resolve(lines);
+                    }, 500);
+                });
+            },
+        }
+        return rangeEvent;
+    }
+
+    function sideErrorToPointEvent(error: SideError) {
+        const pointEvent: Services.PlumChart.PointEvent = {
+            time: error.time,
+            title: error.type,
+            icon: error.type === "Man" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
+            showTooltip: true,
+            showTime: true,
+            lines: [
+                "Side Error",
+            ],
+            lazyLines: () => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const lines = Array.from({ length: 5 }).map(() => "Lazy: " + new Date());
+                        resolve(lines);
+                    }, 500);
+                });
+            }
+        }
+        return pointEvent;
+    }
+
+    function globalErrorToRangeEvent(error: GlobalError) {
+        const rangeEvent: Services.PlumChart.RangeEvent = {
+            title: error.type,
+            startTime: error.startTime,
+            endTime: error.endTime,
+            className: error.type === "Downtime" ? "pl-downtime" : "pl-network",
+            showTooltip: true,
+            showTime: true,
+            lines: [
+                "Global Error",
+            ],
+            lazyLines: () => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        resolve([
+                            "Lazy: " + new Date(),
+                        ]);
+                    }, 500);
+                });
+            },
+        }
+        return rangeEvent;
+    }
+
+    function lotToEntity(lot: Lot) {
+        return {
+            number: lot.number,
+            product: lot.product,
+            pointEvents: lot.errors.map(error => lotErrorToPointEvent(lot, error)),
+            rangeEvents: lot.operations.map(operation => lotOperationToRangeEvent(lot, operation)),
+        }
+    }
 
     window.addEventListener("DOMContentLoaded", () => {
         const workCenters = [
@@ -188,6 +302,8 @@ namespace Pages.Monitoring {
                 if (workCenterIdx >= workCenters.length) {
                     break;
                 }
+                lotListArray.push(getRandomLots(100, 0));
+
                 const workCenterDiv = document.createElement("div");
                 workCenterDiv.classList.add("work-center");
                 workCenterDiv.classList.add("work-center-" + i);
@@ -208,22 +324,6 @@ namespace Pages.Monitoring {
             }
         }
 
-        var tabs = new Tabby('.tabby');
-        document.addEventListener('tabby', function (event: CustomEvent) {
-            const previousContent = event.detail.previousContent;
-            const content = event.detail.content;
-
-            if (previousContent != null) {
-                const prevTabIndex = workCenterCharts.find(x => x.contentEl == previousContent).tabIdx;
-                stopTimer(prevTabIndex);
-            }
-
-            const tabIndex = workCenterCharts.find(x => x.contentEl == content).tabIdx;
-            startTimer(tabIndex);
-        }, false);
-
-        tabs.toggle("tab-0");
-
         function startTimer(tabIndex: number) {
             const workCenterIdxMin = tabIndex * 4;
             const workCenterIdxMax = workCenterIdxMin + 4;
@@ -231,22 +331,17 @@ namespace Pages.Monitoring {
                 if (workCenters.length <= workCenterIdx)
                     break;
 
-                const chart = workCenterCharts.find(x => x.chartIdx == workCenterIdx).chart;
+                const plumChart = workCenterCharts.find(x => x.chartIdx == workCenterIdx).chart;
                 let tick = 0;
                 // chart.renderCanvas();
                 setTimeout(() => {
-                    chart.renderCanvas();
+                    plumChart.renderCanvas();
                     console.log("render chart at " + workCenterIdx);
                 }, 500);
+
                 timers[workCenterIdx] = setInterval(() => {
+                    console.log("timer tick at " + workCenterIdx);
                     const chartState = chartStateList[workCenterIdx];
-                    tick++;
-                    if (30 < tick) {
-                        tick = 0;
-                        const lots = chartState.lots;
-                        const newLot = getRandomLots(1, chartState.startTime.getTime() / 1000 * 60)[0];
-                        chartState.lots = [newLot, ...lots];
-                    }
 
                     const chartStartTime = chartState.startTime;
                     chartStartTime.setMinutes(chartStartTime.getMinutes() + 1);
@@ -256,59 +351,12 @@ namespace Pages.Monitoring {
                     chartState.startTime = chartStartTime;
                     chartState.endTime = chartEndTime;
 
-                    const data = chart.getCoreChart().getData();
+                    console.log("timer tick at " + workCenterIdx, chartStartTime, chartEndTime);
 
-                    data.entities = chartState.lots.map(lot => ({
-                        number: lot.number,
-                        product: lot.product,
-                        pointEvents: lot.errors.map(error => {
-                            const pointEvent: Services.PlumChart.PointEvent = {
-                                time: error.time,
-                                title: error.type,
-                                icon: error.type === "Quality" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
-                                showTooltip: true,
-                                showTime: true,
-                                lines: [
-                                    "Lot Number: " + lot.number,
-                                    "Product: " + lot.product,
-                                ],
-                                lazyLines: () => {
-                                    return new Promise((resolve, reject) => {
-                                        setTimeout(() => {
-                                            const lines = Array.from({ length: 3 }).map(() => "Lazy: " + new Date());
-                                            resolve(lines);
-                                        }, 500);
-                                    });
-                                }
-                            }
-                            return pointEvent;
-                        }),
-                        rangeEvents: lot.operations.map(operation => {
-                            const rangeEvent: Services.PlumChart.RangeEvent = {
-                                title: operation.type,
-                                startTime: operation.startTime,
-                                endTime: operation.endTime,
-                                className: lotOperationClasses[operation.type],
-                                showTooltip: true,
-                                showTime: true,
-                                lines: [
-                                    "Lot Number: " + lot.number,
-                                    "Product: " + lot.product,
-                                ],
-                                lazyLines: () => {
-                                    return new Promise((resolve, reject) => {
-                                        setTimeout(() => {
-                                            const lines = Array.from({ length: 50 }).map(() => "Lazy: " + new Date());
-                                            resolve(lines);
-                                        }, 500);
-                                    });
-                                },
-                            }
-                            return rangeEvent;
-                        })
-                    }));
-                    chart.getCoreChart().setChartTimeRange(chartStartTime, chartEndTime);
-                    chart.renderCanvas();
+                    plumChart.setEntities(getLotList(workCenterIdx, chartStartTime, chartEndTime).map(lot => lotToEntity(lot)));
+                    plumChart.getCoreChart().setChartTimeRange(chartStartTime, chartEndTime);
+                    plumChart.renderCanvas();
+
                 }, 1000);
             }
         }
@@ -369,120 +417,39 @@ namespace Pages.Monitoring {
                 chartEndTime: new Date(2024, 0, 1, 8, 0, 0, 0),
                 columnAutoWidth: true
             }
+
             chartStateList.push({
                 index: index,
                 startTime: optionsSource.chartStartTime,
                 endTime: optionsSource.chartEndTime,
-                lots: getRandomLots(20, 6 * 60),
+                lots: getLotList(index, optionsSource.chartStartTime, optionsSource.chartEndTime),
             });
 
             Object.assign(options, optionsSource);
             plumChart.setOptions(options);
-            plumChart.setData({
-                legends: legends,
-                entities: chartStateList[index].lots.map(lot => ({
-                    number: lot.number,
-                    product: lot.product,
-                    pointEvents: lot.errors.map(error => {
-                        const pointEvent: Services.PlumChart.PointEvent = {
-                            time: error.time,
-                            title: error.type,
-                            icon: error.type === "Quality" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
-                            showTooltip: true,
-                            showTime: true,
-                            lines: [
-                                "Lot Number: " + lot.number,
-                                "Product: " + lot.product,
-                            ],
-                            lazyLines: () => {
-                                return new Promise((resolve, reject) => {
-                                    setTimeout(() => {
-                                        const lines = Array.from({ length: 3 }).map(() => "Lazy: " + new Date());
-                                        resolve(lines);
-                                    }, 500);
-                                });
-                            }
-                        }
-                        return pointEvent;
-                    }),
-                    rangeEvents: lot.operations.map(operation => {
-                        const rangeEvent: Services.PlumChart.RangeEvent = {
-                            title: operation.type,
-                            startTime: operation.startTime,
-                            endTime: operation.endTime,
-                            className: lotOperationClasses[operation.type],
-                            showTooltip: true,
-                            showTime: true,
-                            lines: [
-                                "Lot Number: " + lot.number,
-                                "Product: " + lot.product,
-                            ],
-                            lazyLines: () => {
-                                return new Promise((resolve, reject) => {
-                                    setTimeout(() => {
-                                        const lines = Array.from({ length: 50 }).map(() => "Lazy: " + new Date());
-                                        resolve(lines);
-                                    }, 500);
-                                });
-                            },
-                        }
-                        return rangeEvent;
-                    })
-                })),
-                sidePointEvents: sideErrors.map(error => {
-                    const pointEvent: Services.PlumChart.PointEvent = {
-                        time: error.time,
-                        title: error.type,
-                        icon: error.type === "Man" ? ERROR_IMG_SRC : WARNING_IMG_SRC,
-                        showTooltip: true,
-                        showTime: true,
-                        lines: [
-                            "Side Error",
-                        ],
-                        lazyLines: () => {
-                            return new Promise((resolve, reject) => {
-                                setTimeout(() => {
-                                    const lines = Array.from({ length: 5 }).map(() => "Lazy: " + new Date());
-                                    resolve(lines);
-                                }, 500);
-                            });
-                        }
-                    }
-                    return pointEvent;
-                }),
-                globalRangeEvents: globalErrors.map(error => {
-                    const rangeEvent: Services.PlumChart.RangeEvent = {
-                        title: error.type,
-                        startTime: error.startTime,
-                        endTime: error.endTime,
-                        className: error.type === "Downtime" ? "pl-downtime" : "pl-network",
-                        showTooltip: true,
-                        showTime: true,
-                        lines: [
-                            "Global Error",
-                        ],
-                        lazyLines: () => {
-                            return new Promise((resolve, reject) => {
-                                setTimeout(() => {
-                                    resolve([
-                                        "Lazy: " + new Date(),
-                                    ]);
-                                }, 500);
-                            });
-                        },
-                    }
-                    return rangeEvent;
-                })
-            });
+            plumChart.setLegends(legends);
+            plumChart.setEntities(chartStateList[index].lots.map(lot => lotToEntity(lot)));
+            plumChart.setSidePointEvents(sideErrors.map(error => sideErrorToPointEvent(error)));
+            plumChart.setGlobalRangeEvents(globalErrors.map(error => globalErrorToRangeEvent(error)));
+
             plumChart.render();
         }
 
 
+        var tabs = new Tabby('.tabby');
+        document.addEventListener('tabby', function (event: CustomEvent) {
+            const previousContent = event.detail.previousContent;
+            const content = event.detail.content;
 
+            if (previousContent != null) {
+                const prevTabIndex = workCenterCharts.find(x => x.contentEl == previousContent).tabIdx;
+                stopTimer(prevTabIndex);
+            }
+
+            const tabIndex = workCenterCharts.find(x => x.contentEl == content).tabIdx;
+            startTimer(tabIndex);
+        }, false);
+
+        tabs.toggle("tab-0");
     });
-
-
-
 }
-
-

@@ -1025,6 +1025,36 @@ namespace Services.PlumChart {
             });
         }
 
+        function setLegends(legends: Legend[]) {
+            _legends = legends;
+        }
+
+        function setEntities(entities: Entity[]) {
+            _entities = entities;
+            _coreChart.setData({
+                entities: _entities,
+                sidePointEvents: _sidePointEvents,
+                globalRangeEvents: _globalRangeEvents
+            });
+        }
+        function setSidePointEvents(sidePointEvents: PointEvent[]) {
+            _sidePointEvents = sidePointEvents;
+            _coreChart.setData({
+                entities: _entities,
+                sidePointEvents: _sidePointEvents,
+                globalRangeEvents: _globalRangeEvents
+            });
+        }
+        function setGlobalRangeEvents(globalRangeEvents: RangeEvent[]) {
+            _globalRangeEvents = globalRangeEvents;
+            _coreChart.setData({
+                entities: _entities,
+                sidePointEvents: _sidePointEvents,
+                globalRangeEvents: _globalRangeEvents
+            });
+        }
+
+
         function render() {
             isMainCanvasCostomized = false;
             _renderLegends();
@@ -1043,6 +1073,11 @@ namespace Services.PlumChart {
             create,
             setOptions,
             setData,
+            setLegends,
+            setEntities,
+            setSidePointEvents,
+            setGlobalRangeEvents,
+
             render,
             renderCanvas,
             getCoreChart
