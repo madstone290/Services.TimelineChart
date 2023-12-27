@@ -474,17 +474,17 @@ namespace Services.PlumChart.Core {
          */
         let _intersecionObserver: IntersectionObserver;
         /**
-         * 현재 리스트에 보여지는 엔티티의 인덱스
-         */
-        let _intersectingEntityRows = new Map<number, EntityRow>();
-        /**
          * 메인캔버스 사이즈 변경 관찰자. fab버튼 및 컬럼헤더 크기 조정에 사용한다.
          */
         let _mainCanvasBoxResizeObserver: ResizeObserver;
         /**
-         * 엔티티 컨테이너 목록. 엔티티 렌더링에 사용한다.
+         * 엔티티 컨테이너 목록. key: 컨테이너 엘리먼트, value: 엔티티 행
          */
-        let _activeEntityRows = new Map<HTMLElement, EntityRow>();
+        let _entityContainerRows = new Map<HTMLElement, EntityRow>();
+        /**
+         * 엔티티 컨테이너 목록. key: 컨테이너 엘리먼트, value: 엔티티 행
+         */
+        let _activeEntityRows = new Map<number, EntityRow>();
         /**
          * 메인캔버스 수직 경계선 엘리먼트 목록
          */
@@ -1092,10 +1092,12 @@ namespace Services.PlumChart.Core {
             }
 
             renderCanvas();
+
+            _startResizeObserver();
         }
 
         function renderCanvas() {
-            _startResizeObserver();
+
             // 캔버스 사이즈를 갱신한 후 갱신된 사이즈에 맞춰 렌더링을 실행한다.
             _updateCanvasSize();
 
@@ -1103,13 +1105,7 @@ namespace Services.PlumChart.Core {
             _renderColumnHeader();
             _renderSideCanvas();
             _renderMainCanvas();
-            if (_renderMode == CanvasRenderMode.Intersection) {
-                _startRenderEntityRow();
-            } else if (_renderMode == CanvasRenderMode.Scroll) {
-                _startRenderEntityRowsWithScroll();
-            } else {
-                _renderEntityRowsImediately();
-            }
+            _renderEntities();
 
             // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
             _mainCanvasBoxElement.scrollTo(_mainCanvasBoxElement.scrollLeft, _mainCanvasBoxElement.scrollTop - 1);
@@ -1370,16 +1366,11 @@ namespace Services.PlumChart.Core {
         function _refreshMainCanvas() {
             _refreshMainCanvasVLines();
             _refreshGlobalRangeEvents();
-            _refreshIntersectingEntitiList();
-
-            for (const [_, entityRow] of _activeEntityRows.entries()) {
-                _refreshEntityRow(entityRow);
-            }
-
         }
 
-        function _refreshIntersectingEntitiList() {
-            for (const [_, entityRow] of _intersectingEntityRows.entries()) {
+        function _refreshActiveEntitiList() {
+            for (const [_, entityRow] of _activeEntityRows.entries()) {
+                console.log("_refreshActiveEntitiList", entityRow);
                 _refreshEntityRow(entityRow);
             }
         }
@@ -1408,6 +1399,18 @@ namespace Services.PlumChart.Core {
             for (let i = 0; i < _mainCanvasVLines.length; i++) {
                 const line = _mainCanvasVLines[i];
                 line.style.left = `${(i + 1) * _cellWidth}px`;
+            }
+        }
+
+        function _renderEntities() {
+            _entityContainerRows.clear();
+            _activeEntityRows.clear();
+            if (_renderMode == CanvasRenderMode.Intersection) {
+                _startRenderEntityRow();
+            } else if (_renderMode == CanvasRenderMode.Scroll) {
+                _startRenderEntityRowsWithScroll();
+            } else {
+                _renderEntityRowsImediately();
             }
         }
 
@@ -1440,8 +1443,10 @@ namespace Services.PlumChart.Core {
 
         const callback: IntersectionObserverCallback = (changedEntries: IntersectionObserverEntry[]) => {
             changedEntries.forEach((entry: IntersectionObserverEntry, i: number) => {
+                console.log(entry, (entry.target as any).tag);
+
                 const containerEl = entry.target as HTMLElement;
-                const entityRow = _activeEntityRows.get(containerEl);
+                const entityRow = _entityContainerRows.get(containerEl);
                 if (entry.isIntersecting) {
                     if (entityRow.lastRenderTime == null) {
                         // 최초 렌더링
@@ -1450,14 +1455,14 @@ namespace Services.PlumChart.Core {
                         // 리페인트
                         _refreshEntityRow(entityRow);
                     }
-                    _intersectingEntityRows.set(entityRow.index, entityRow);
+                    _activeEntityRows.set(entityRow.index, entityRow);
                 }
                 else {
                     // 스크롤에 의해 엔티티가 영역을 벗어나는 경우에만 교차엔티티 리스트에서 제거한다.
                     // 루트 요소의 가시성 변경(display:none)에 의한 경우에는 교차엔티티 리스트에서 제거하지 않는다.
                     const rootElDisplayNone = entry.rootBounds.width == 0 && entry.rootBounds.height == 0;
                     if (!rootElDisplayNone) {
-                        _intersectingEntityRows.delete(entityRow.index);
+                        _activeEntityRows.delete(entityRow.index);
                     }
                 }
             });
@@ -1470,7 +1475,6 @@ namespace Services.PlumChart.Core {
         function _startRenderEntityRow() {
             _entityTableBoxElement.replaceChildren();
             _intersecionObserver?.disconnect();
-            _intersectingEntityRows.clear();
 
             const options: IntersectionObserverInit = {
                 root: _entityTableBoxElement,
@@ -1495,7 +1499,7 @@ namespace Services.PlumChart.Core {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
                 });
                 containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _activeEntityRows.get(containerEl);
+                    const entityContainer = _entityContainerRows.get(containerEl);
                     const entity = entityContainer.entity;
                     const evtStartTime = _getFirstVisibleEventTime(entity);
 
@@ -1507,8 +1511,8 @@ namespace Services.PlumChart.Core {
                     }
                 });
                 _entityTableBoxElement.appendChild(containerEl);
-
-                _activeEntityRows.set(containerEl, {
+                (containerEl as any).tag = i;
+                _entityContainerRows.set(containerEl, {
                     index: i,
                     containerEl: containerEl,
                     entity: _data.entities[i],
@@ -1521,6 +1525,7 @@ namespace Services.PlumChart.Core {
             }
         }
 
+        let _scrollDetectorActive = false;
         function _startRenderEntityRowsWithScroll() {
             _entityTableBoxElement.replaceChildren();
             // add container elements
@@ -1538,7 +1543,7 @@ namespace Services.PlumChart.Core {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
                 });
                 containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _activeEntityRows.get(containerEl);
+                    const entityContainer = _entityContainerRows.get(containerEl);
                     const entity = entityContainer.entity;
                     const evtStartTime = _getFirstVisibleEventTime(entity);
 
@@ -1551,7 +1556,7 @@ namespace Services.PlumChart.Core {
                 });
                 _entityTableBoxElement.appendChild(containerEl);
 
-                _activeEntityRows.set(containerEl, {
+                _entityContainerRows.set(containerEl, {
                     index: i,
                     containerEl: containerEl,
                     entity: _data.entities[i],
@@ -1569,26 +1574,43 @@ namespace Services.PlumChart.Core {
                 const containerTop = i * _cellHeight;
                 const containerBottom = containerTop + _cellHeight;
                 if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
-                    _renderEntityRow(_activeEntityRows.get(containerEl));
+                    _renderEntityRow(_entityContainerRows.get(containerEl));
+                    _activeEntityRows.set(i, _entityContainerRows.get(containerEl));
+                    console.log("render start", i, _entityContainerRows.get(containerEl).lastRenderTime);
                 }
             }
-            _mainCanvasBoxElement.addEventListener("scroll", (e) => {
-                const scrollTop = _mainCanvasBoxElement.scrollTop;
-                const scrollHeight = _mainCanvasBoxElement.scrollHeight;
-                const clientHeight = _mainCanvasBoxElement.clientHeight;
-                const scrollBottom = scrollTop + clientHeight;
-                for (const [_, entityRow] of _activeEntityRows.entries()) {
-                    const containerTop = entityRow.index * _cellHeight;
-                    const containerBottom = containerTop + _cellHeight;
-                    if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
-                        if (entityRow.lastRenderTime == null) {
-                            _renderEntityRow(entityRow);
-                        } else if (entityRow.lastRenderTime <= _state.lastZoomTime) {
-                            _refreshEntityRow(entityRow);
+
+            if (!_scrollDetectorActive) {
+                console.log("scroll detector start");
+                _mainCanvasBoxElement.addEventListener("scroll", (e) => {
+                    console.log("scroll event");
+                    const scrollTop = _mainCanvasBoxElement.scrollTop;
+                    const scrollHeight = _mainCanvasBoxElement.scrollHeight;
+                    const clientHeight = _mainCanvasBoxElement.clientHeight;
+                    const scrollBottom = scrollTop + clientHeight;
+                    for (const [_, entityRow] of _entityContainerRows.entries()) {
+                        const containerTop = entityRow.index * _cellHeight;
+                        const containerBottom = containerTop + _cellHeight;
+                        if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
+                            _activeEntityRows.set(entityRow.index, entityRow);
+                            if (entityRow.lastRenderTime == null) {
+                                console.log("render start", entityRow.index, entityRow.lastRenderTime);
+                                _renderEntityRow(entityRow);
+                                console.log("render end", entityRow.index, entityRow.lastRenderTime);
+                            } else if (entityRow.lastRenderTime < _state.lastZoomTime) {
+                                console.log("_refreshEntityRow", entityRow.index);
+                                _refreshEntityRow(entityRow);
+                            }
+                        } else {
+                            _activeEntityRows.delete(entityRow.index);
                         }
                     }
-                }
-            });
+                });
+
+                _scrollDetectorActive = true;
+            }
+
+
         }
 
         function _renderEntityRowsImediately() {
@@ -1605,7 +1627,7 @@ namespace Services.PlumChart.Core {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
                 });
                 containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _activeEntityRows.get(containerEl);
+                    const entityContainer = _entityContainerRows.get(containerEl);
                     const entity = entityContainer.entity;
                     const evtStartTime = _getFirstVisibleEventTime(entity);
 
@@ -1618,7 +1640,7 @@ namespace Services.PlumChart.Core {
                 });
                 _entityTableBoxElement.appendChild(containerEl);
 
-                _activeEntityRows.set(containerEl, {
+                _entityContainerRows.set(containerEl, {
                     index: i,
                     containerEl: containerEl,
                     entity: _data.entities[i],
@@ -1627,7 +1649,8 @@ namespace Services.PlumChart.Core {
                     pointEventContainers: [],
                     rangeEventContainers: [],
                 });
-                _renderEntityRow(_activeEntityRows.get(containerEl));
+                _renderEntityRow(_entityContainerRows.get(containerEl));
+                _activeEntityRows.set(i, _entityContainerRows.get(containerEl));
             }
         }
 
@@ -1876,6 +1899,7 @@ namespace Services.PlumChart.Core {
         }
 
         function _zoom(scale: number, pivotPointX?: number, pivotPointY?: number) {
+            console.log(`zoom: ${scale} x: ${pivotPointX} y: ${pivotPointY}`);
             if (scale <= _minZoomScale)
                 scale = _minZoomScale;
             if (_maxZoomScale <= scale)
@@ -1914,6 +1938,7 @@ namespace Services.PlumChart.Core {
             // 일부 렌더링에는 마지막 줌 시간이 필요하므로 미리 저장해둔다.
             _state.lastZoomTime = new Date();
             _refreshCanvas();
+
             // keep scroll position
             _mainCanvasBoxElement.scrollLeft = scrollLeft;
             _mainCanvasBoxElement.scrollTop = scrollTop;
@@ -1930,6 +1955,7 @@ namespace Services.PlumChart.Core {
             _refreshColumnHeaders();
             _refreshSideCanvas();
             _refreshMainCanvas();
+            _refreshActiveEntitiList();
         }
 
         return {

@@ -340,7 +340,6 @@ namespace Pages.Monitoring {
                 }, 500);
 
                 timers[workCenterIdx] = setInterval(() => {
-                    console.log("timer tick at " + workCenterIdx);
                     const chartState = chartStateList[workCenterIdx];
 
                     const chartStartTime = chartState.startTime;
@@ -351,13 +350,11 @@ namespace Pages.Monitoring {
                     chartState.startTime = chartStartTime;
                     chartState.endTime = chartEndTime;
 
-                    console.log("timer tick at " + workCenterIdx, chartStartTime, chartEndTime);
-
                     plumChart.setEntities(getLotList(workCenterIdx, chartStartTime, chartEndTime).map(lot => lotToEntity(lot)));
                     plumChart.getCoreChart().setChartTimeRange(chartStartTime, chartEndTime);
                     plumChart.renderCanvas();
 
-                }, 1000);
+                },1000);
             }
         }
 
