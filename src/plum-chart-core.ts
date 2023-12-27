@@ -19,14 +19,14 @@ namespace Services.PlumChart.Core {
 
     enum CanvasRenderMode {
         /**
+        * 스크롤 이벤트를 이용하여 행을 레이지 렌더링한다.
+        */
+        Scroll,
+
+        /**
          * IntersectionObserver를 사용하여 행을 레이지 렌더링한다.
          */
         Intersection,
-
-        /**
-         * 스크롤 이벤트를 이용하여 행을 레이지 렌더링한다.
-         */
-        Scroll,
 
         /**
          * 행을 즉시 렌더링한다.
@@ -215,7 +215,96 @@ namespace Services.PlumChart.Core {
         lastZoomTime: Date;
     }
 
-    export const TimelineChart = function () {
+    interface ChartElements {
+        root: HTMLElement;
+        mainTitle: HTMLElement;
+        tableColumnBox: HTMLElement;
+        columnTitle: HTMLElement;
+        entityTableBox: HTMLElement;
+        columnHeaderBox: HTMLElement;
+        columnHeader: HTMLElement;
+        sideCanvasBox: HTMLElement;
+        sideCanvas: HTMLElement;
+        mainCanvasBox: HTMLElement;
+        mainCanvas: HTMLElement;
+        contextMenu: HTMLElement;
+        upMenuItem: HTMLElement;
+        downMenuItem: HTMLElement;
+        leftMenuItem: HTMLElement;
+        rightMenuItem: HTMLElement;
+        zoomInMenuItem: HTMLElement;
+        zoomOutMenuItem: HTMLElement;
+        closeMenuItem: HTMLElement;
+        canvasColumnVLines: HTMLElement[];
+        sideCanvasVLines: HTMLElement[];
+    }
+
+    // #region Constants
+    const CLS_ROOT = "tc-root";
+    const CLS_COLUMN_TITLE = "tc-column-title";
+    const CLS_COLUMN_HEADER_BOX = "tc-column-header-box";
+    const CLS_COLUMN_HEADER = "tc-column-header";
+    const CLS_SIDE_CANVAS_BOX = "tc-side-canvas-box";
+    const CLS_SIDE_CANVAS = "tc-side-canvas";
+    const CLS_COLUMN_HEADER_ITEM = "tc-column-header-item";
+    const CLS_COLUMN_PANEL = "tc-column-panel";
+    const CLS_LEFT_PANEL = "tc-left-panel";
+    const CLS_MAIN_PANEL = "tc-main-panel";
+    const CLS_MAIN_TITLE = "tc-maintitle";
+    const CLS_TABLE_COLUMN_BOX = "tc-table-column-box";
+    const CLS_ENTITY_TABLE_BOX = "tc-entity-table-box";
+    const CLS_ENTITY_TABLE_ITEM = "tc-entity-table-item";
+
+    const CLS_MAIN_BOX = "tc-main-box";
+    const CLS_MAIN_CANVAS_BOX = "tc-main-canvas-box";
+    const CLS_MAIN_CANVAS = "tc-main-canvas";
+
+    const CLS_SIDE_CANVASE_V_BORDER = "tc-side-canvas-v-border";
+    const CLS_SIDE_CANVAS_POINT_EVENT = "tc-side-canvas-point-event";
+
+    const CLS_MAIN_CANVAS_H_BORDER = "tc-main-canvas-h-border";
+    const CLS_MAIN_CANVAS_V_BORDER = "tc-main-canvas-v-border";
+    const CLS_MAIN_CANVAS_ENTITY_POINT_EVENT = "tc-main-canvas-entity-point-event";
+    const CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT = "tc-main-canvas-entity-range-event";
+    const CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT = "tc-main-canvas-global-range-event";
+
+    const CLS_CONTEXT_MENU = "tc-context-menu";
+    const CLS_CONTEXT_MENU_FIXED = "tc-context-menu-fixed";
+    const CLS_CONTEXT_MENU_TOP_LEFT = "tc-context-menu-top-left"
+    const CLS_CONTEXT_MENU_TOP_RIGHT = "tc-context-menu-top-right"
+    const CLS_CONTEXT_MENU_BOTTOM_LEFT = "tc-context-menu-bottom-left";
+    const CLS_CONTEXT_MENU_BOTTOM_RIGHT = "tc-context-menu-bottom-right";
+    const CLS_CONTEXT_MENU_CLOSED = "tc-context-menu-closed";
+    const CLS_CONTEXT_MENU_COLLAPSED = "tc-context-menu-collapsed";
+    const CLS_CONTEXT_MENU_GROUP1 = "tc-context-menu-group1";
+    const CLS_CONTEXT_MENU_GROUP2 = "tc-context-menu-group2";
+    const CLS_CONTEXT_MENU_ITEM = "tc-context-menu-item";
+    const CLS_CONTEXT_MENU_ITEM_UP = "tc-context-menu-item-up";
+    const CLS_CONTEXT_MENU_ITEM_DOWN = "tc-context-menu-item-down";
+    const CLS_CONTEXT_MENU_ITEM_LEFT = "tc-context-menu-item-left";
+    const CLS_CONTEXT_MENU_ITEM_RIGHT = "tc-context-menu-item-right";
+    const CLS_CONTEXT_MENU_ITEM_ZOOM_IN = "tc-context-menu-item-zoom-in";
+    const CLS_CONTEXT_MENU_ITEM_ZOOM_OUT = "tc-context-menu-item-zoom-out";
+    const CLS_CONTEXT_MENU_ITEM_CLOSE = "tc-context-menu-item-close";
+
+    const VAR_CELL_HEIGHT = "--tc-cell-height";
+    const VAR_MAIN_POINT_CONTENT_HEIGHT = "--tc-main-point-content-height";
+    const VAR_MAIN_RANGE_CONTENT_HEIGHT = "--tc-main-range-content-height";
+    const VAR_SCROLL_WIDTH = "--tc-scroll-width";
+
+    const VAR_CHART_HEIGHT = "--tc-height";
+    const VAR_CHART_WIDTH = "--tc-width";
+    const VAR_LEFT_PANEL_WIDTH = "--tc-list-width";
+    const VAR_COLUMN_TITLE_HEIGHT = "--tc-column-title-height";
+    const VAR_COLUMN_HEADER_HEIGHT = "--tc-column-header-height";
+    const VAR_SIDE_CANVAS_HEIGHT = "--tc-side-canvas-height";
+    const VAR_SIDE_CANVAS_CONTENT_HEIGHT = "--tc-side-canvas-content-height";
+
+    const VAR_BORDER_COLOR = "--plc-border-color";
+    const VAR_CANVAS_LINE_COLOR = "--plc-canvas-line-color";
+    // #endregion
+
+    export const CoreChart = function () {
 
         /* Layout
         |---------------|-------------------|
@@ -230,71 +319,7 @@ namespace Services.PlumChart.Core {
         |               |                   |
         |---------------|-------------------|
         */
-        // #region Constants
-        const CLS_ROOT = "tc-root";
-        const CLS_COLUMN_TITLE = "tc-column-title";
-        const CLS_COLUMN_HEADER_BOX = "tc-column-header-box";
-        const CLS_COLUMN_HEADER = "tc-column-header";
-        const CLS_SIDE_CANVAS_BOX = "tc-side-canvas-box";
-        const CLS_SIDE_CANVAS = "tc-side-canvas";
-        const CLS_COLUMN_HEADER_ITEM = "tc-column-header-item";
-        const CLS_COLUMN_PANEL = "tc-column-panel";
-        const CLS_LEFT_PANEL = "tc-left-panel";
-        const CLS_MAIN_PANEL = "tc-main-panel";
-        const CLS_MAIN_TITLE = "tc-maintitle";
-        const CLS_TABLE_COLUMN_BOX = "tc-table-column-box";
-        const CLS_ENTITY_TABLE_BOX = "tc-entity-table-box";
-        const CLS_ENTITY_TABLE_ITEM = "tc-entity-table-item";
 
-        const CLS_MAIN_BOX = "tc-main-box";
-        const CLS_MAIN_CANVAS_BOX = "tc-main-canvas-box";
-        const CLS_MAIN_CANVAS = "tc-main-canvas";
-
-        const CLS_SIDE_CANVASE_V_BORDER = "tc-side-canvas-v-border";
-        const CLS_SIDE_CANVAS_POINT_EVENT = "tc-side-canvas-point-event";
-
-        const CLS_MAIN_CANVAS_H_BORDER = "tc-main-canvas-h-border";
-        const CLS_MAIN_CANVAS_V_BORDER = "tc-main-canvas-v-border";
-        const CLS_MAIN_CANVAS_ENTITY_POINT_EVENT = "tc-main-canvas-entity-point-event";
-        const CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT = "tc-main-canvas-entity-range-event";
-        const CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT = "tc-main-canvas-global-range-event";
-
-        const CLS_CONTEXT_MENU = "tc-context-menu";
-        const CLS_CONTEXT_MENU_FIXED = "tc-context-menu-fixed";
-        const CLS_CONTEXT_MENU_TOP_LEFT = "tc-context-menu-top-left"
-        const CLS_CONTEXT_MENU_TOP_RIGHT = "tc-context-menu-top-right"
-        const CLS_CONTEXT_MENU_BOTTOM_LEFT = "tc-context-menu-bottom-left";
-        const CLS_CONTEXT_MENU_BOTTOM_RIGHT = "tc-context-menu-bottom-right";
-        const CLS_CONTEXT_MENU_CLOSED = "tc-context-menu-closed";
-        const CLS_CONTEXT_MENU_COLLAPSED = "tc-context-menu-collapsed";
-        const CLS_CONTEXT_MENU_GROUP1 = "tc-context-menu-group1";
-        const CLS_CONTEXT_MENU_GROUP2 = "tc-context-menu-group2";
-        const CLS_CONTEXT_MENU_ITEM = "tc-context-menu-item";
-        const CLS_CONTEXT_MENU_ITEM_UP = "tc-context-menu-item-up";
-        const CLS_CONTEXT_MENU_ITEM_DOWN = "tc-context-menu-item-down";
-        const CLS_CONTEXT_MENU_ITEM_LEFT = "tc-context-menu-item-left";
-        const CLS_CONTEXT_MENU_ITEM_RIGHT = "tc-context-menu-item-right";
-        const CLS_CONTEXT_MENU_ITEM_ZOOM_IN = "tc-context-menu-item-zoom-in";
-        const CLS_CONTEXT_MENU_ITEM_ZOOM_OUT = "tc-context-menu-item-zoom-out";
-        const CLS_CONTEXT_MENU_ITEM_CLOSE = "tc-context-menu-item-close";
-
-        const VAR_CELL_HEIGHT = "--tc-cell-height";
-        const VAR_MAIN_POINT_CONTENT_HEIGHT = "--tc-main-point-content-height";
-        const VAR_MAIN_RANGE_CONTENT_HEIGHT = "--tc-main-range-content-height";
-        const VAR_SCROLL_WIDTH = "--tc-scroll-width";
-
-        const VAR_CHART_HEIGHT = "--tc-height";
-        const VAR_CHART_WIDTH = "--tc-width";
-        const VAR_LEFT_PANEL_WIDTH = "--tc-list-width";
-        const VAR_COLUMN_TITLE_HEIGHT = "--tc-column-title-height";
-        const VAR_COLUMN_HEADER_HEIGHT = "--tc-column-header-height";
-        const VAR_SIDE_CANVAS_HEIGHT = "--tc-side-canvas-height";
-        const VAR_SIDE_CANVAS_CONTENT_HEIGHT = "--tc-side-canvas-content-height";
-
-        const VAR_BORDER_COLOR = "--plc-border-color";
-        const VAR_CANVAS_LINE_COLOR = "--plc-canvas-line-color";
-
-        // #endregion
         /**
         * 타임라인차트 엘리먼트
         */
@@ -339,10 +364,13 @@ namespace Services.PlumChart.Core {
                     </div>
                     `;
 
-        const SCROLL_WIDTH = 15;
+        const _data: ChartData = {
+            entities: [],
+            sidePointEvents: [],
+            globalRangeEvents: []
+        };
 
-        let _data: ChartData;
-        let _options: ChartOptions = {
+        const _options: ChartOptions = {
             chartStartTime: new Date(),
             chartEndTime: new Date(new Date().getDate() + 1),
             controllerLocation: "bottomRight",
@@ -375,7 +403,7 @@ namespace Services.PlumChart.Core {
             hasVerticalLine: true,
             columnAutoWidth: true,
             entityEventSearchScrollOffset: -100,
-
+            renderMode: CanvasRenderMode.Scroll,
 
 
             headerTimeFormat: (time: Date) => { return time.toLocaleString(); },
@@ -387,7 +415,7 @@ namespace Services.PlumChart.Core {
             },
         }
 
-        let _state: ChartState = {
+        const _state: ChartState = {
             chartHeight: 0,
             chartWidth: 0,
             currentZoomScale: 1,
@@ -398,29 +426,30 @@ namespace Services.PlumChart.Core {
             accelResetTimeout: 300,
         }
 
-        /* Html Elements */
-        let _rootElement: HTMLElement;
-        let _mainTitleElement: HTMLElement;
-        let _tableColumnBoxElement: HTMLElement;
-        let _columnTitleElement: HTMLElement;
-        let _entityTableBoxElement: HTMLElement;
-        let _columnHeaderBoxElement: HTMLElement;
-        let _columnHeaderElement: HTMLElement;
-        let _sideCanvasBoxElement: HTMLElement;
-        let _sideCanvasElement: HTMLElement;
-        let _mainCanvasBoxElement: HTMLElement;
-        let _mainCanvasElement: HTMLElement;
-        let _contextMenuEl: HTMLElement;
-        let _upMenuItemEl: HTMLElement;
-        let _downMenuItemEl: HTMLElement;
-        let _leftMenuItemEl: HTMLElement;
-        let _rightMenuItemEl: HTMLElement;
-        let _zoomInMenuItemEl: HTMLElement;
-        let _zoomOutMenuItemEl: HTMLElement;
-        let _closeMenuItemEl: HTMLElement;
+        const _elements: ChartElements = {
+            root: null,
+            mainTitle: null,
+            tableColumnBox: null,
+            columnTitle: null,
+            entityTableBox: null,
+            columnHeaderBox: null,
+            columnHeader: null,
+            sideCanvasBox: null,
+            sideCanvas: null,
+            mainCanvasBox: null,
+            mainCanvas: null,
+            contextMenu: null,
+            upMenuItem: null,
+            downMenuItem: null,
+            leftMenuItem: null,
+            rightMenuItem: null,
+            zoomInMenuItem: null,
+            zoomOutMenuItem: null,
+            closeMenuItem: null,
+            canvasColumnVLines: [],
+            sideCanvasVLines: [],
+        };
 
-        let _canvasColumnVLines: HTMLElement[] = [];
-        let _sideCanvasVLines: HTMLElement[] = [];
         let _sidePointEventItems = new Array<PointEventItem>();
 
         /**
@@ -460,10 +489,7 @@ namespace Services.PlumChart.Core {
          * 현재 Y축 줌값.
          */
         let _currZoomScale = 1;
-        /**
-         * 이전 X축 줌값.
-         */
-        let _prevZoomScale = 1;
+
         /**
          * 기본 줌 스텝.
          */
@@ -473,14 +499,6 @@ namespace Services.PlumChart.Core {
          */
         let _zoomVelocity = 0;
 
-        /**
-         * 버튼 클릭시 작동할 가로스크롤 길이
-         */
-        let _buttonScrollStepX: number = 400;
-        /**
-         * 버튼 클릭시 작동할 세로스크롤 길이
-         */
-        let _buttonScrollStepY: number = 200;
         /**
          * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
          */
@@ -523,15 +541,12 @@ namespace Services.PlumChart.Core {
         let _canvasColumnCount: number = 0;
 
 
-        let _renderMode: CanvasRenderMode = CanvasRenderMode.Scroll;
-
-
         const css = function () {
             function getVariable(name: string) {
-                return getComputedStyle(_rootElement).getPropertyValue(name);
+                return getComputedStyle(_elements.root).getPropertyValue(name);
             }
             function setVariable(name: string, value: string) {
-                _rootElement.style.setProperty(name, value);
+                _elements.root.style.setProperty(name, value);
             }
             function setChartWidth(width: number) {
                 setVariable(VAR_CHART_WIDTH, `${width}px`);
@@ -604,26 +619,26 @@ namespace Services.PlumChart.Core {
             const element = doc.body.firstChild;
             container.appendChild(element);
 
-            _rootElement = container.getElementsByClassName(CLS_ROOT)[0] as HTMLElement;
-            _mainTitleElement = container.getElementsByClassName(CLS_MAIN_TITLE)[0] as HTMLElement;
-            _tableColumnBoxElement = container.getElementsByClassName(CLS_TABLE_COLUMN_BOX)[0] as HTMLElement;
-            _columnTitleElement = container.getElementsByClassName(CLS_COLUMN_TITLE)[0] as HTMLElement;
-            _entityTableBoxElement = container.getElementsByClassName(CLS_ENTITY_TABLE_BOX)[0] as HTMLElement;
-            _columnHeaderBoxElement = container.getElementsByClassName(CLS_COLUMN_HEADER_BOX)[0] as HTMLElement;
-            _columnHeaderElement = container.getElementsByClassName(CLS_COLUMN_HEADER)[0] as HTMLElement;
-            _sideCanvasBoxElement = container.getElementsByClassName(CLS_SIDE_CANVAS_BOX)[0] as HTMLElement;
-            _sideCanvasElement = container.getElementsByClassName(CLS_SIDE_CANVAS)[0] as HTMLElement;
-            _mainCanvasBoxElement = container.getElementsByClassName(CLS_MAIN_CANVAS_BOX)[0] as HTMLElement;
-            _mainCanvasElement = container.getElementsByClassName(CLS_MAIN_CANVAS)[0] as HTMLElement;
+            _elements.root = container.getElementsByClassName(CLS_ROOT)[0] as HTMLElement;
+            _elements.mainTitle = container.getElementsByClassName(CLS_MAIN_TITLE)[0] as HTMLElement;
+            _elements.tableColumnBox = container.getElementsByClassName(CLS_TABLE_COLUMN_BOX)[0] as HTMLElement;
+            _elements.columnTitle = container.getElementsByClassName(CLS_COLUMN_TITLE)[0] as HTMLElement;
+            _elements.entityTableBox = container.getElementsByClassName(CLS_ENTITY_TABLE_BOX)[0] as HTMLElement;
+            _elements.columnHeaderBox = container.getElementsByClassName(CLS_COLUMN_HEADER_BOX)[0] as HTMLElement;
+            _elements.columnHeader = container.getElementsByClassName(CLS_COLUMN_HEADER)[0] as HTMLElement;
+            _elements.sideCanvasBox = container.getElementsByClassName(CLS_SIDE_CANVAS_BOX)[0] as HTMLElement;
+            _elements.sideCanvas = container.getElementsByClassName(CLS_SIDE_CANVAS)[0] as HTMLElement;
+            _elements.mainCanvasBox = container.getElementsByClassName(CLS_MAIN_CANVAS_BOX)[0] as HTMLElement;
+            _elements.mainCanvas = container.getElementsByClassName(CLS_MAIN_CANVAS)[0] as HTMLElement;
 
-            _contextMenuEl = container.getElementsByClassName(CLS_CONTEXT_MENU)[0] as HTMLElement;
-            _upMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_UP)[0] as HTMLElement;
-            _downMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_DOWN)[0] as HTMLElement;
-            _leftMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_LEFT)[0] as HTMLElement;
-            _rightMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_RIGHT)[0] as HTMLElement;
-            _zoomInMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_IN)[0] as HTMLElement;
-            _zoomOutMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)[0] as HTMLElement;
-            _closeMenuItemEl = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_CLOSE)[0] as HTMLElement;
+            _elements.contextMenu = container.getElementsByClassName(CLS_CONTEXT_MENU)[0] as HTMLElement;
+            _elements.upMenuItem = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_UP)[0] as HTMLElement;
+            _elements.downMenuItem = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_DOWN)[0] as HTMLElement;
+            _elements.leftMenuItem = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_LEFT)[0] as HTMLElement;
+            _elements.rightMenuItem = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_RIGHT)[0] as HTMLElement;
+            _elements.zoomInMenuItem = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_IN)[0] as HTMLElement;
+            _elements.zoomOutMenuItem = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_ZOOM_OUT)[0] as HTMLElement;
+            _elements.closeMenuItem = container.getElementsByClassName(CLS_CONTEXT_MENU_ITEM_CLOSE)[0] as HTMLElement;
 
             _initCanvasBasicEventListeners();
             _initContextMenuElements();
@@ -675,15 +690,15 @@ namespace Services.PlumChart.Core {
         }
 
         function _getPositionInMainCanvas(clientX: number, clientY: number) {
-            return _getPositionInContainer(clientX, clientY, _mainCanvasElement);
+            return _getPositionInContainer(clientX, clientY, _elements.mainCanvas);
         }
 
         function _getPositionInMainCanvasBox(clientX: number, clientY: number) {
-            return _getPositionInContainer(clientX, clientY, _mainCanvasBoxElement);
+            return _getPositionInContainer(clientX, clientY, _elements.mainCanvasBox);
         }
 
         function _getClientCenterPositionInMainCanvasBox() {
-            const rect = _mainCanvasBoxElement.getBoundingClientRect();
+            const rect = _elements.mainCanvasBox.getBoundingClientRect();
             const clientX = rect.left + rect.width / 2;
             const clientY = rect.top + rect.height / 2;
             return { clientX, clientY };
@@ -700,36 +715,36 @@ namespace Services.PlumChart.Core {
          * 캔버스 기본 이벤트 리스너를 추가한다.(스크롤, 마우스드래그, 마우스휠)
          */
         function _initCanvasBasicEventListeners() {
-            _mainCanvasBoxElement.addEventListener("scroll", (e) => {
+            _elements.mainCanvasBox.addEventListener("scroll", (e) => {
                 // 가로스크롤 동기화
-                _columnHeaderBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
-                _sideCanvasBoxElement.scrollLeft = _mainCanvasBoxElement.scrollLeft;
+                _elements.columnHeaderBox.scrollLeft = _elements.mainCanvasBox.scrollLeft;
+                _elements.sideCanvasBox.scrollLeft = _elements.mainCanvasBox.scrollLeft;
                 // 세로스크롤 동기화
-                _entityTableBoxElement.scrollTop = _mainCanvasBoxElement.scrollTop;
+                _elements.entityTableBox.scrollTop = _elements.mainCanvasBox.scrollTop;
             });
-            _entityTableBoxElement.addEventListener("wheel", (e) => {
+            _elements.entityTableBox.addEventListener("wheel", (e) => {
                 // 세로스크롤 동기화
-                _mainCanvasBoxElement.scrollTop += e.deltaY;
+                _elements.mainCanvasBox.scrollTop += e.deltaY;
             });
-            _mainCanvasElement.addEventListener("mousemove", (e) => {
+            _elements.mainCanvas.addEventListener("mousemove", (e) => {
                 if (e.buttons === 1) {
-                    _mainCanvasBoxElement.scrollLeft -= e.movementX;
-                    _mainCanvasBoxElement.scrollTop -= e.movementY;
+                    _elements.mainCanvasBox.scrollLeft -= e.movementX;
+                    _elements.mainCanvasBox.scrollTop -= e.movementY;
                 }
             });
-            _mainCanvasElement.addEventListener("mousedown", (e) => {
+            _elements.mainCanvas.addEventListener("mousedown", (e) => {
                 document.body.style.cursor = "pointer";
             });
-            _mainCanvasElement.addEventListener("mouseup", (e) => {
+            _elements.mainCanvas.addEventListener("mouseup", (e) => {
                 document.body.style.cursor = "default";
             });
 
-            _mainCanvasElement.addEventListener("wheel", (e) => {
-                zoomCanvasWhenWheel(_mainCanvasElement, e);
+            _elements.mainCanvas.addEventListener("wheel", (e) => {
+                zoomCanvasWhenWheel(_elements.mainCanvas, e);
             });
 
-            _sideCanvasElement.addEventListener("wheel", (e) => {
-                zoomCanvasWhenWheel(_sideCanvasElement, e);
+            _elements.sideCanvas.addEventListener("wheel", (e) => {
+                zoomCanvasWhenWheel(_elements.sideCanvas, e);
             });
 
             // prevent default zoom
@@ -766,15 +781,15 @@ namespace Services.PlumChart.Core {
 
             const addDirectionDownHandler = (btn: HTMLElement, shortX: () => number, longX: () => number, shortY: () => number, longY: () => number) => {
                 btn.addEventListener("mousedown", function (e) {
-                    _mainCanvasBoxElement.scrollTo({
-                        top: _mainCanvasBoxElement.scrollTop + shortY(),
-                        left: _mainCanvasBoxElement.scrollLeft + shortX(),
+                    _elements.mainCanvasBox.scrollTo({
+                        top: _elements.mainCanvasBox.scrollTop + shortY(),
+                        left: _elements.mainCanvasBox.scrollLeft + shortX(),
                         behavior: "smooth"
                     });
                     fabTimeoutId = setTimeout(() => {
                         fabIntervalId = setInterval(() => {
-                            _mainCanvasBoxElement.scrollTop += longY();
-                            _mainCanvasBoxElement.scrollLeft += longX();
+                            _elements.mainCanvasBox.scrollTop += longY();
+                            _elements.mainCanvasBox.scrollLeft += longX();
                         }, fabIntervalTimeout);
                     }, fabTimeoutTimeout);
                 });
@@ -788,12 +803,12 @@ namespace Services.PlumChart.Core {
                 });
             }
 
-            addDirectionDownHandler(_upMenuItemEl, () => 0, () => 0, () => -shortStepY(), () => -longStepY());
-            addDirectionDownHandler(_downMenuItemEl, () => 0, () => 0, () => shortStepY(), () => longStepY());
-            addDirectionDownHandler(_leftMenuItemEl, () => -shortStepX(), () => -longStepX(), () => 0, () => 0);
-            addDirectionDownHandler(_rightMenuItemEl, () => shortStepX(), () => longStepX(), () => 0, () => 0);
+            addDirectionDownHandler(_elements.upMenuItem, () => 0, () => 0, () => -shortStepY(), () => -longStepY());
+            addDirectionDownHandler(_elements.downMenuItem, () => 0, () => 0, () => shortStepY(), () => longStepY());
+            addDirectionDownHandler(_elements.leftMenuItem, () => -shortStepX(), () => -longStepX(), () => 0, () => 0);
+            addDirectionDownHandler(_elements.rightMenuItem, () => shortStepX(), () => longStepX(), () => 0, () => 0);
 
-            _zoomInMenuItemEl.addEventListener("click", (e) => {
+            _elements.zoomInMenuItem.addEventListener("click", (e) => {
                 if (_options.fixedController) {
                     const { clientX, clientY } = _getClientCenterPositionInMainCanvasBox();
                     const { x, y } = _getPositionInMainCanvas(clientX, clientY);
@@ -803,7 +818,7 @@ namespace Services.PlumChart.Core {
                     _zoomIn(x, y);
                 }
             });
-            _zoomOutMenuItemEl.addEventListener("click", (e) => {
+            _elements.zoomOutMenuItem.addEventListener("click", (e) => {
                 if (_options.fixedController) {
                     const { clientX, clientY } = _getClientCenterPositionInMainCanvasBox();
                     const { x, y } = _getPositionInMainCanvas(clientX, clientY);
@@ -813,11 +828,11 @@ namespace Services.PlumChart.Core {
                     _zoomOut(x, y);
                 }
             });
-            _closeMenuItemEl.addEventListener("click", (e) => {
+            _elements.closeMenuItem.addEventListener("click", (e) => {
                 if (_options.fixedController) {
-                    _contextMenuEl.classList.toggle(CLS_CONTEXT_MENU_COLLAPSED);
+                    _elements.contextMenu.classList.toggle(CLS_CONTEXT_MENU_COLLAPSED);
                 } else {
-                    _contextMenuEl.classList.toggle(CLS_CONTEXT_MENU_CLOSED);
+                    _elements.contextMenu.classList.toggle(CLS_CONTEXT_MENU_CLOSED);
                 }
             });
 
@@ -825,38 +840,38 @@ namespace Services.PlumChart.Core {
             // 모바일 기기에서 contextmenu 이벤트가 정상적으로 발생하는 지 확인 필요. 
             // 발생하지 않는 경우 touchstart 이벤트를 사용해야 한다.
             // 고정 컨트롤러가 아닌 경우에만 컨텍스트 메뉴 팝업 적용.
-            _mainCanvasElement.addEventListener("contextmenu", (e) => {
+            _elements.mainCanvas.addEventListener("contextmenu", (e) => {
                 if (!DEBUG) {
                     e.preventDefault();
                 }
                 if (_options.fixedController)
                     return;
                 const { x, y } = _getPositionInMainCanvasBox(e.clientX, e.clientY);
-                _contextMenuEl.style.left = `${x}px`;
-                _contextMenuEl.style.top = `${y}px`;
-                _contextMenuEl.classList.remove(CLS_CONTEXT_MENU_CLOSED);
+                _elements.contextMenu.style.left = `${x}px`;
+                _elements.contextMenu.style.top = `${y}px`;
+                _elements.contextMenu.classList.remove(CLS_CONTEXT_MENU_CLOSED);
             });
 
             let touchTimer: number;
             let longTouchDuration = 300;
-            _mainCanvasElement.addEventListener("touchstart", (e) => {
+            _elements.mainCanvas.addEventListener("touchstart", (e) => {
                 touchTimer = setTimeout(() => {
                     console.log("long touch", e);
                 }, longTouchDuration);
             });
-            _mainCanvasElement.addEventListener("touchend", (e) => {
+            _elements.mainCanvas.addEventListener("touchend", (e) => {
                 if (touchTimer)
                     clearTimeout(touchTimer);
             });
 
-            _mainCanvasElement.addEventListener("click", (e) => {
+            _elements.mainCanvas.addEventListener("click", (e) => {
                 if (_options.fixedController)
                     return;
                 const targetEl = e.target as HTMLElement;
-                if (targetEl == _zoomInMenuItemEl || targetEl == _zoomOutMenuItemEl) {
+                if (targetEl == _elements.zoomInMenuItem || targetEl == _elements.zoomOutMenuItem) {
                     return;
                 }
-                _contextMenuEl.classList.add(CLS_CONTEXT_MENU_CLOSED);
+                _elements.contextMenu.classList.add(CLS_CONTEXT_MENU_CLOSED);
             });
         }
 
@@ -876,7 +891,7 @@ namespace Services.PlumChart.Core {
         }
 
         function setData(data: ChartData) {
-            _data = data;
+            Object.assign(_data, data);
         }
 
         function getData() {
@@ -907,16 +922,16 @@ namespace Services.PlumChart.Core {
         /** 컨트롤러를 초기화한다 */
         function _resetController() {
             // 클래스 초기화
-            _controllerLocationClassMap.forEach(cls => { _contextMenuEl.classList.remove(cls) });
-            _contextMenuEl.classList.remove(CLS_CONTEXT_MENU_CLOSED);
-            _contextMenuEl.classList.remove(CLS_CONTEXT_MENU_COLLAPSED);
+            _controllerLocationClassMap.forEach(cls => { _elements.contextMenu.classList.remove(cls) });
+            _elements.contextMenu.classList.remove(CLS_CONTEXT_MENU_CLOSED);
+            _elements.contextMenu.classList.remove(CLS_CONTEXT_MENU_COLLAPSED);
 
             if (_options.fixedController) {
                 // 고정 컨트롤러인 경우 컨텍스트 메뉴를 미니 상태로 설정.
-                _contextMenuEl.classList.add(CLS_CONTEXT_MENU_COLLAPSED);
+                _elements.contextMenu.classList.add(CLS_CONTEXT_MENU_COLLAPSED);
                 // 컨트롤러 위치 적용
                 const locationClass = _controllerLocationClassMap.get(_controllerLocation);
-                _contextMenuEl.classList.add(locationClass);
+                _elements.contextMenu.classList.add(locationClass);
             }
         }
 
@@ -942,7 +957,7 @@ namespace Services.PlumChart.Core {
             _applyCssOptions();
             _resetController();
 
-            _options.customizeElements({ rootElement: _rootElement });
+            _options.customizeElements({ rootElement: _elements.root });
 
             _renderMainTitle();
             _renderTableColumn();
@@ -953,7 +968,7 @@ namespace Services.PlumChart.Core {
 
             // 캔버스 컬럼 수에 따라 캔버스 너비를 계산한다.
             if (_options.columnAutoWidth) {
-                _originalCellWidth = _mainCanvasBoxElement.clientWidth / _canvasColumnCount;
+                _originalCellWidth = _elements.mainCanvasBox.clientWidth / _canvasColumnCount;
                 const cellWidth = _originalCellWidth * _currZoomScale;
                 _setCellWidth(cellWidth);
             }
@@ -976,7 +991,7 @@ namespace Services.PlumChart.Core {
 
 
             // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
-            _mainCanvasBoxElement.scrollTo(_mainCanvasBoxElement.scrollLeft, _mainCanvasBoxElement.scrollTop - 1);
+            _elements.mainCanvasBox.scrollTo(_elements.mainCanvasBox.scrollLeft, _elements.mainCanvasBox.scrollTop - 1);
         }
 
         /**
@@ -985,7 +1000,7 @@ namespace Services.PlumChart.Core {
         function _mainCanvasBoxResizeCallback() {
             if (_options.columnAutoWidth) {
                 // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
-                const canvasWidth = _mainCanvasBoxElement.clientWidth;
+                const canvasWidth = _elements.mainCanvasBox.clientWidth;
                 _originalCellWidth = canvasWidth / _canvasColumnCount;
                 const cellWidth = _originalCellWidth * _currZoomScale;
                 _setCellWidth(cellWidth);
@@ -999,23 +1014,23 @@ namespace Services.PlumChart.Core {
         function _startResizeObserver() {
             _mainCanvasBoxResizeObserver?.disconnect();
             _mainCanvasBoxResizeObserver = new ResizeObserver(_mainCanvasBoxResizeCallback);
-            _mainCanvasBoxResizeObserver.observe(_mainCanvasBoxElement);
+            _mainCanvasBoxResizeObserver.observe(_elements.mainCanvasBox);
 
         }
 
         function _renderMainTitle() {
-            _mainTitleElement.replaceChildren();
+            _elements.mainTitle.replaceChildren();
             if (_options.mainTitleRender != null) {
-                _options.mainTitleRender(_mainTitleElement, _options.mainTitle);
+                _options.mainTitleRender(_elements.mainTitle, _options.mainTitle);
             } else {
-                _mainTitleElement.innerText = _options.mainTitle;
+                _elements.mainTitle.innerText = _options.mainTitle;
             }
         }
 
         function _renderTableColumn() {
-            _tableColumnBoxElement.replaceChildren();
+            _elements.tableColumnBox.replaceChildren();
             if (_options.tableColumnRender != null)
-                _options.tableColumnRender(_tableColumnBoxElement);
+                _options.tableColumnRender(_elements.tableColumnBox);
         }
 
         function _updateCanvasSize() {
@@ -1024,29 +1039,29 @@ namespace Services.PlumChart.Core {
             * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
             * entity list는 main canvas 수직스크롤과 동기화한다.
             */
-            let canvasWidth = Math.max(_cellWidth * _canvasColumnCount, _mainCanvasBoxElement.clientWidth);
-            let canvasHeight = Math.max(_cellHeight * _data.entities.length, _mainCanvasBoxElement.clientHeight);
+            let canvasWidth = Math.max(_cellWidth * _canvasColumnCount, _elements.mainCanvasBox.clientWidth);
+            let canvasHeight = Math.max(_cellHeight * _data.entities.length, _elements.mainCanvasBox.clientHeight);
 
-            _columnHeaderElement.style.width = `${canvasWidth + _options.scrollWidth}px`;
-            _sideCanvasElement.style.width = `${canvasWidth + _options.scrollWidth}px`;
-            _mainCanvasElement.style.width = `${canvasWidth}px`;
-            _mainCanvasElement.style.height = `${canvasHeight}px`;
+            _elements.columnHeader.style.width = `${canvasWidth + _options.scrollWidth}px`;
+            _elements.sideCanvas.style.width = `${canvasWidth + _options.scrollWidth}px`;
+            _elements.mainCanvas.style.width = `${canvasWidth}px`;
+            _elements.mainCanvas.style.height = `${canvasHeight}px`;
         }
 
 
         function _renderColumnTitle() {
-            _columnTitleElement.replaceChildren();
+            _elements.columnTitle.replaceChildren();
             if (_options.columnTitleRender != null) {
-                _options.columnTitleRender(_columnTitleElement, _options.columnTitle);
+                _options.columnTitleRender(_elements.columnTitle, _options.columnTitle);
             } else {
-                _columnTitleElement.innerText = _options.columnTitle;
+                _elements.columnTitle.innerText = _options.columnTitle;
             }
         }
 
         let _headerElements = new Map<number, HTMLElement>();
 
         function _renderColumnHeader() {
-            _columnHeaderElement.replaceChildren();
+            _elements.columnHeader.replaceChildren();
             _headerElements.clear();
 
             let cellIndex = 0;
@@ -1058,7 +1073,7 @@ namespace Services.PlumChart.Core {
                 containerElement.style.left = `${left}px`;
                 containerElement.style.width = `${_cellWidth}px`;
                 _options.headerCellRender(currentTime, containerElement);
-                _columnHeaderElement.appendChild(containerElement);
+                _elements.columnHeader.appendChild(containerElement);
                 _headerElements.set(cellIndex, containerElement);
 
                 currentTime = new Date(currentTime.getTime() + toTime(_options.cellMinutes));
@@ -1068,23 +1083,23 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderCanvasHeaderVLines() {
-            _canvasColumnVLines.length = 0;
+            _elements.canvasColumnVLines.length = 0;
             let left = 0;
             for (let i = 0; i < _canvasColumnCount; i++) {
                 left += _cellWidth;
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
                 line.style.left = `${left}px`;
-                _columnHeaderElement.appendChild(line);
-                _canvasColumnVLines.push(line);
+                _elements.columnHeader.appendChild(line);
+                _elements.canvasColumnVLines.push(line);
             }
         }
 
         function _refreshCanvasHeaderVLines() {
             let left = 0;
-            for (let i = 0; i < _canvasColumnVLines.length; i++) {
+            for (let i = 0; i < _elements.canvasColumnVLines.length; i++) {
                 left += _cellWidth;
-                const line = _canvasColumnVLines[i];
+                const line = _elements.canvasColumnVLines[i];
                 line.style.left = `${left}px`;
             }
         }
@@ -1136,7 +1151,7 @@ namespace Services.PlumChart.Core {
          * 보조 캔버스를 그린다.
          */
         function _renderSideCanvas() {
-            _sideCanvasElement.replaceChildren();
+            _elements.sideCanvas.replaceChildren();
             if (_options.hasVerticalLine)
                 _renderSideCanvasVerticalLine();
 
@@ -1144,8 +1159,8 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderSideCanvasVerticalLine() {
-            _sideCanvasVLines.length = 0;
-            const canvasWidth = _sideCanvasElement.scrollWidth;
+            _elements.sideCanvasVLines.length = 0;
+            const canvasWidth = _elements.sideCanvas.scrollWidth;
             const vLineCount = Math.ceil(canvasWidth / _cellWidth);
 
             let left = 0;
@@ -1154,8 +1169,8 @@ namespace Services.PlumChart.Core {
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
                 line.style.left = `${left}px`;
-                _sideCanvasElement.appendChild(line);
-                _sideCanvasVLines.push(line);
+                _elements.sideCanvas.appendChild(line);
+                _elements.sideCanvasVLines.push(line);
             }
         }
 
@@ -1166,9 +1181,9 @@ namespace Services.PlumChart.Core {
 
         function _refreshSideCanvasVerticalLine() {
             let left = 0;
-            for (let i = 0; i < _sideCanvasVLines.length; i++) {
+            for (let i = 0; i < _elements.sideCanvasVLines.length; i++) {
                 left += _cellWidth;
-                const line = _sideCanvasVLines[i];
+                const line = _elements.sideCanvasVLines[i];
                 line.style.left = `${left}px`;
             }
         }
@@ -1193,8 +1208,8 @@ namespace Services.PlumChart.Core {
             containerElement.classList.add(CLS_SIDE_CANVAS_POINT_EVENT);
 
             if (_options.sidePointEventRender != null)
-                _options.sidePointEventRender(event, _sideCanvasElement, containerElement);
-            _sideCanvasElement.appendChild(containerElement);
+                _options.sidePointEventRender(event, _elements.sideCanvas, containerElement);
+            _elements.sideCanvas.appendChild(containerElement);
             _sidePointEventItems.push({
                 time: eventTime,
                 containerEl: containerElement
@@ -1226,7 +1241,7 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderMainCanvas() {
-            _mainCanvasElement.replaceChildren();
+            _elements.mainCanvas.replaceChildren();
             if (_options.hasVerticalLine)
                 _renderMainCanvasVLine();
             _renderGlobalRangeEvents();
@@ -1246,9 +1261,9 @@ namespace Services.PlumChart.Core {
 
         function _renderMainCanvasVLine() {
             _mainCanvasVLines.length = 0;
-            const canvasWidth = _mainCanvasElement.scrollWidth;
+            const canvasWidth = _elements.mainCanvas.scrollWidth;
             const lineGap = _cellWidth;
-            const lineHeight = _mainCanvasElement.scrollHeight;
+            const lineHeight = _elements.mainCanvas.scrollHeight;
             const vLineCount = Math.ceil(canvasWidth / lineGap);
 
             let left = 0;
@@ -1259,7 +1274,7 @@ namespace Services.PlumChart.Core {
                 line.style.left = `${left}px`;
                 line.style.height = `${lineHeight}px`;
 
-                _mainCanvasElement.appendChild(line);
+                _elements.mainCanvas.appendChild(line);
                 _mainCanvasVLines.push(line);
             }
         }
@@ -1274,9 +1289,9 @@ namespace Services.PlumChart.Core {
         function _renderEntities() {
             _entityContainerRows.clear();
             _activeEntityRows.clear();
-            if (_renderMode == CanvasRenderMode.Intersection) {
+            if (_options.renderMode == CanvasRenderMode.Intersection) {
                 _startRenderEntityRow();
-            } else if (_renderMode == CanvasRenderMode.Scroll) {
+            } else if (_options.renderMode == CanvasRenderMode.Scroll) {
                 _startRenderEntityRowsWithScroll();
             } else {
                 _renderEntityRowsImediately();
@@ -1292,7 +1307,7 @@ namespace Services.PlumChart.Core {
                 const mainCanvasHLine = document.createElement("div");
                 mainCanvasHLine.classList.add(CLS_MAIN_CANVAS_H_BORDER);
                 mainCanvasHLine.style.top = `${_cellHeight * (index)}px`;
-                _mainCanvasElement.appendChild(mainCanvasHLine);
+                _elements.mainCanvas.appendChild(mainCanvasHLine);
                 entityRow.hLine = mainCanvasHLine;
             }
             entityRow.lastRenderTime = new Date();
@@ -1342,11 +1357,11 @@ namespace Services.PlumChart.Core {
          * 실제 엔티티는 보여지는 영역에 따라 동적으로 그려진다.
          */
         function _startRenderEntityRow() {
-            _entityTableBoxElement.replaceChildren();
+            _elements.entityTableBox.replaceChildren();
             _intersecionObserver?.disconnect();
 
             const options: IntersectionObserverInit = {
-                root: _entityTableBoxElement,
+                root: _elements.entityTableBox,
                 threshold: 0,
             };
             _intersecionObserver = new IntersectionObserver(callback, options);
@@ -1376,10 +1391,10 @@ namespace Services.PlumChart.Core {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
                         const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
                         const left = time * _cellWidth / _options.cellMinutes;
-                        _mainCanvasBoxElement.scrollLeft = left + _options.entityEventSearchScrollOffset;
+                        _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
-                _entityTableBoxElement.appendChild(containerEl);
+                _elements.entityTableBox.appendChild(containerEl);
                 (containerEl as any).tag = i;
                 _entityContainerRows.set(containerEl, {
                     index: i,
@@ -1396,7 +1411,7 @@ namespace Services.PlumChart.Core {
 
         let _scrollDetectorActive = false;
         function _startRenderEntityRowsWithScroll() {
-            _entityTableBoxElement.replaceChildren();
+            _elements.entityTableBox.replaceChildren();
             // add container elements
             // lazy rendering using scroll event
 
@@ -1420,10 +1435,10 @@ namespace Services.PlumChart.Core {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
                         const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
                         const left = time * _cellWidth / _options.cellMinutes;
-                        _mainCanvasBoxElement.scrollLeft = left + _options.entityEventSearchScrollOffset;
+                        _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
-                _entityTableBoxElement.appendChild(containerEl);
+                _elements.entityTableBox.appendChild(containerEl);
 
                 _entityContainerRows.set(containerEl, {
                     index: i,
@@ -1436,9 +1451,9 @@ namespace Services.PlumChart.Core {
                 });
 
 
-                const scrollTop = _mainCanvasBoxElement.scrollTop;
-                const scrollHeight = _mainCanvasBoxElement.scrollHeight;
-                const clientHeight = _mainCanvasBoxElement.clientHeight;
+                const scrollTop = _elements.mainCanvasBox.scrollTop;
+                const scrollHeight = _elements.mainCanvasBox.scrollHeight;
+                const clientHeight = _elements.mainCanvasBox.clientHeight;
                 const scrollBottom = scrollTop + clientHeight;
                 const containerTop = i * _cellHeight;
                 const containerBottom = containerTop + _cellHeight;
@@ -1451,11 +1466,11 @@ namespace Services.PlumChart.Core {
 
             if (!_scrollDetectorActive) {
                 console.log("scroll detector start");
-                _mainCanvasBoxElement.addEventListener("scroll", (e) => {
+                _elements.mainCanvasBox.addEventListener("scroll", (e) => {
                     console.log("scroll event");
-                    const scrollTop = _mainCanvasBoxElement.scrollTop;
-                    const scrollHeight = _mainCanvasBoxElement.scrollHeight;
-                    const clientHeight = _mainCanvasBoxElement.clientHeight;
+                    const scrollTop = _elements.mainCanvasBox.scrollTop;
+                    const scrollHeight = _elements.mainCanvasBox.scrollHeight;
+                    const clientHeight = _elements.mainCanvasBox.clientHeight;
                     const scrollBottom = scrollTop + clientHeight;
                     for (const [_, entityRow] of _entityContainerRows.entries()) {
                         const containerTop = entityRow.index * _cellHeight;
@@ -1483,7 +1498,7 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderEntityRowsImediately() {
-            _entityTableBoxElement.replaceChildren();
+            _elements.entityTableBox.replaceChildren();
             const containerCount = _data.entities.length;
             for (let i = 0; i < containerCount; i++) {
                 const containerEl = document.createElement("div");
@@ -1504,10 +1519,10 @@ namespace Services.PlumChart.Core {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
                         const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
                         const left = time * _cellWidth / _options.cellMinutes;
-                        _mainCanvasBoxElement.scrollLeft = left + _options.entityEventSearchScrollOffset;
+                        _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
-                _entityTableBoxElement.appendChild(containerEl);
+                _elements.entityTableBox.appendChild(containerEl);
 
                 _entityContainerRows.set(containerEl, {
                     index: i,
@@ -1627,9 +1642,9 @@ namespace Services.PlumChart.Core {
             containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_POINT_EVENT);
 
             if (_options.entityPointEventRender != null)
-                _options.entityPointEventRender(event, _mainCanvasElement, containerElement);
+                _options.entityPointEventRender(event, _elements.mainCanvas, containerElement);
 
-            _mainCanvasElement.appendChild(containerElement);
+            _elements.mainCanvas.appendChild(containerElement);
             entityRow.pointEventContainers.push({
                 time: eventTime,
                 containerEl: containerElement
@@ -1692,9 +1707,9 @@ namespace Services.PlumChart.Core {
             containerElement.style.width = `${width}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT);
             if (_options.entityRangeEventRender != null)
-                _options.entityRangeEventRender(event, _mainCanvasElement, containerElement);
+                _options.entityRangeEventRender(event, _elements.mainCanvas, containerElement);
 
-            _mainCanvasElement.appendChild(containerElement);
+            _elements.mainCanvas.appendChild(containerElement);
             entityRow.rangeEventContainers.push({
                 startTime: startTime,
                 endTime: endTime,
@@ -1733,9 +1748,9 @@ namespace Services.PlumChart.Core {
             containerElement.classList.add(CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT);
 
             if (_options.globalRangeEventRender != null)
-                _options.globalRangeEventRender(event, _mainCanvasElement, containerElement);
+                _options.globalRangeEventRender(event, _elements.mainCanvas, containerElement);
 
-            _mainCanvasElement.appendChild(containerElement);
+            _elements.mainCanvas.appendChild(containerElement);
             _globalRangeEventItems.push({
                 startTime: eventStartTime,
                 endTime: eventEndTime,
@@ -1774,8 +1789,8 @@ namespace Services.PlumChart.Core {
                 scale = _options.maxZoomScale;
 
             // 줌 후 스크롤 위치 계산
-            let scrollLeft = _mainCanvasBoxElement.scrollLeft;
-            let scrollTop = _mainCanvasBoxElement.scrollTop;
+            let scrollLeft = _elements.mainCanvasBox.scrollLeft;
+            let scrollTop = _elements.mainCanvasBox.scrollTop;
 
             if (_options.hZoomEnabled) {
                 const newCellWidth = _originalCellWidth * scale;
@@ -1808,10 +1823,9 @@ namespace Services.PlumChart.Core {
             _refreshCanvas();
 
             // keep scroll position
-            _mainCanvasBoxElement.scrollLeft = scrollLeft;
-            _mainCanvasBoxElement.scrollTop = scrollTop;
+            _elements.mainCanvasBox.scrollLeft = scrollLeft;
+            _elements.mainCanvasBox.scrollTop = scrollTop;
 
-            _prevZoomScale = _currZoomScale;
             _currZoomScale = scale;
         }
 

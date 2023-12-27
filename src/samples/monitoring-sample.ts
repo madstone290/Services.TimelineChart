@@ -905,7 +905,7 @@ namespace Services.PlumChart.MonitoringSample {
             rowHoverColor: "#ccc",
         };
 
-        _chart = Services.PlumChart.Core.TimelineChart();
+        _chart = Services.PlumChart.Core.CoreChart();
         _chart.create(container);
         _chart.setOptions(_options);
         _chart.setData(_data);

@@ -235,7 +235,7 @@ namespace Services.PlumChart {
         /**
          * 타임라인 차트
          */
-        let _coreChart: ReturnType<typeof Services.PlumChart.Core.TimelineChart>;
+        let _coreChart: ReturnType<typeof Services.PlumChart.Core.CoreChart>;
 
         /**
          * 범례 엘리먼트
@@ -309,7 +309,7 @@ namespace Services.PlumChart {
         function create(containerEl: HTMLElement) {
             _containerEl = containerEl;
             _legendsEl = _createLegendEl();
-            _coreChart = Services.PlumChart.Core.TimelineChart();
+            _coreChart = Services.PlumChart.Core.CoreChart();
 
             const rootEl = document.createElement("div");
             rootEl.classList.add(CLS_ROOT_CONTAINER);
