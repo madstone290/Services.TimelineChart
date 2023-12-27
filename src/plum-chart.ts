@@ -373,12 +373,12 @@ namespace Services.PlumChart {
         }
 
         /**
-         * 캔버스 컬럼을 기본 렌더링한다.
+         * 캔버스 헤더 셀을 렌더링한다.
          * @param time 
          * @param containerEl 
          * @returns 
          */
-        function _defaultRenderCanvasColumn(time: Date, containerEl: HTMLElement): HTMLElement {
+        function _renderHeaderCell(time: Date, containerEl: HTMLElement): HTMLElement {
             const divElement = document.createElement("div");
             divElement.classList.add(CLS_CANVAS_COLUMN);
             divElement.innerText = dayjs(time).format("HH:mm");
@@ -648,7 +648,7 @@ namespace Services.PlumChart {
          * @param canvasEl 
          * @param containerEl 
          */
-        async function _defaultRenderEntityPointEvent(event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
+        async function _renderEntityPointEvent(event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
             _renderPointEvent(event, canvasEl, containerEl, {
                 img: CLS_ENTITY_POINT_EVENT,
             });
@@ -660,7 +660,7 @@ namespace Services.PlumChart {
          * @param canvasEl 
          * @param containerEl 
          */
-        async function _defaultRenderEntityRangeEvent(event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
+        async function _renderEntityRangeEvent(event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
             _renderRangeEvent(event, canvasEl, containerEl, {
                 box: CLS_ENTITY_RANGE_EVENT,
             });
@@ -672,9 +672,9 @@ namespace Services.PlumChart {
          * @param canvasEl 
          * @param containerEl 
          */
-        function _defaultRenderSidePointEvent(event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
+        function _renderSidePointEvent(event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
             // 엔티티 점 이벤트와 동일하게 렌더링한다.
-            _defaultRenderEntityPointEvent(event, canvasEl, containerEl);
+            _renderEntityPointEvent(event, canvasEl, containerEl);
         };
 
         /**
@@ -683,7 +683,7 @@ namespace Services.PlumChart {
          * @param canvasEl 
          * @param containerEl 
          */
-        async function _defaultRenderGlobalRangeEvent(event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
+        async function _renderGlobalRangeEvent(event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) {
             _renderRangeEvent(event, canvasEl, containerEl, {
                 box: CLS_GLOBAL_RANGE_EVENT
             });
@@ -694,7 +694,7 @@ namespace Services.PlumChart {
          * @param containerEl 
          * @param title 
          */
-        function _defaultRenderGridTitle(containerEl: HTMLElement, title: string) {
+        function _renderGridTitle(containerEl: HTMLElement, title: string) {
             const titleEl = document.createElement("div");
             titleEl.classList.add(CLS_GRID_TITLE);
             titleEl.innerText = title;
@@ -820,7 +820,7 @@ namespace Services.PlumChart {
          * @param entity 
          * @param containerEl 
          */
-        function _defaultRenderGridRow(index1: number, entity: Entity, containerEl: HTMLElement) {
+        function _renderGridRow(index1: number, entity: Entity, containerEl: HTMLElement) {
             containerEl.classList.add(CLS_GRID_ROW);
 
             let cellIndex = 0;
@@ -926,8 +926,8 @@ namespace Services.PlumChart {
             }
             const coreOptions: Services.PlumChart.Core.ChartOptions = {
                 renderMode: options.renderMode,
-                mainTitle: options.gridTitle,
-                columnTitle: options.canvasTitle,
+                gridTitle: options.gridTitle,
+                canvasTitle: options.canvasTitle,
                 chartStartTime: options.chartStartTime,
                 chartEndTime: options.chartEndTime,
                 columnTitleHeight: options.columnTitleHeight,
@@ -954,16 +954,16 @@ namespace Services.PlumChart {
                 buttonScrollStepY: 400,
                 borderColor: "#333c77",
                 canvasLineColor: "#e1edf8",
-                renderSidePointEvent: _defaultRenderSidePointEvent,
-                renderGridRow: _defaultRenderGridRow,
-                renderEntityPointEvent: _defaultRenderEntityPointEvent,
-                renderEntityRangeEvent: _defaultRenderEntityRangeEvent,
-                renderHeaderCell: _defaultRenderCanvasColumn,
-                renderGlobalRangeEvent: _defaultRenderGlobalRangeEvent,
-                renderGridTitle: _defaultRenderGridTitle,
+                renderGridRow: _renderGridRow,
+                renderHeaderCell: _renderHeaderCell,
+                renderGridTitle: _renderGridTitle,
                 renderGridColumns: _renderGridColumns,
                 renderCanvasTitle: _renderCanvasTitle,
                 customizeElements: _customizeElements,
+                renderSidePointEvent: _renderSidePointEvent,
+                renderGlobalRangeEvent: _renderGlobalRangeEvent,
+                renderEntityPointEvent: _renderEntityPointEvent,
+                renderEntityRangeEvent: _renderEntityRangeEvent,
             };
 
             _coreChart.setOptions(coreOptions);

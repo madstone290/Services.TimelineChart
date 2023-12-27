@@ -884,8 +884,8 @@ namespace Services.PlumChart.MonitoringSample {
         const cellWidth = 100;
         const cellHeight = 30;
         _options = {
-            mainTitle: "XXX H/L LH Line 03",
-            columnTitle: "Time Line",
+            gridTitle: "XXX H/L LH Line 03",
+            canvasTitle: "Time Line",
             chartStartTime: new Date(Date.parse("2020-01-01T06:00:00")),
             chartEndTime: new Date(Date.parse("2020-01-01T09:00:00")),
             columnTitleHeight: cellHeight,

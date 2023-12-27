@@ -104,8 +104,8 @@ namespace Services.PlumChart.Core {
         renderMode?: CanvasRenderType;
         paddingCellCount?: number;
         scrollWidth?: number;
-        mainTitle?: string;
-        columnTitle?: string;
+        gridTitle?: string;
+        canvasTitle?: string;
         leftPanelWidth?: number;
         borderColor?: string;
         canvasLineColor?: string;
@@ -471,8 +471,8 @@ namespace Services.PlumChart.Core {
             cellWidth: 100,
             cellHeight: 50,
             leftPanelWidth: 200,
-            mainTitle: "",
-            columnTitle: "",
+            gridTitle: "",
+            canvasTitle: "",
             columnTitleHeight: 30,
             columnHeaderHeight: 30,
             sideCanvasHeight: 30,
@@ -1024,7 +1024,7 @@ namespace Services.PlumChart.Core {
 
         function _renderMainTitle() {
             _elements.gridTitle.replaceChildren();
-            _options.renderGridTitle(_elements.gridTitle, _options.mainTitle);
+            _options.renderGridTitle(_elements.gridTitle, _options.gridTitle);
         }
 
         function _renderGridColumns() {
@@ -1050,7 +1050,7 @@ namespace Services.PlumChart.Core {
 
         function _renderColumnTitle() {
             _elements.canvasTitle.replaceChildren();
-            _options.renderCanvasTitle(_elements.canvasTitle, _options.columnTitle);
+            _options.renderCanvasTitle(_elements.canvasTitle, _options.canvasTitle);
         }
 
         let _headerElements = new Map<number, HTMLElement>();
