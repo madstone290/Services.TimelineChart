@@ -113,10 +113,11 @@ namespace Services.PlumChart.Core {
     }
 
     export interface ChartOptions {
-        renderMode?: CanvasRenderMode;
         chartStartTime: Date;
         chartEndTime: Date;
+        renderMode?: CanvasRenderMode;
         paddingCellCount?: number;
+        scrollWidth?: number;
         mainTitle?: string;
         columnTitle?: string;
         leftPanelWidth?: number;
@@ -129,6 +130,7 @@ namespace Services.PlumChart.Core {
         cellMinutes?: number;
         cellWidth?: number;
         cellHeight?: number;
+        cellContentHeightRatio?: number;
         mainRangeContentRatio?: number;
         mainPointContentRatio?: number;
         minZoomScale?: number;
@@ -174,13 +176,18 @@ namespace Services.PlumChart.Core {
          */
         controllerLocation?: ControllerLocation;
 
+        /**
+         * 엔티티클릭으로 이벤트 검색결과를 표시할 때 사용하는 오프셋. 오프셋만큼 스크롤위치를 보정한다.
+         */
+        entityEventSearchScrollOffset?: number;
+
         headerTimeFormat?: (time: Date) => string;
         headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
         tableRowRender?: (entity: Entity, containerEl: HTMLElement) => void;
-        sidePointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        sidePointEventRender?: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        entityPointEventRender?: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        entityRangeEventRender?: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        globalRangeEventRender?: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
         mainTitleRender?: (containerEl: HTMLElement, title: string) => void;
         columnTitleRender?: (containerEl: HTMLElement, title: string) => void;
         tableColumnRender?: (containerEl: HTMLElement) => void;
@@ -188,54 +195,10 @@ namespace Services.PlumChart.Core {
     }
 
     interface ChartState {
-        paddingCellCount: number;
-        mainTitle: string;
-        columnTitle?: string;
-        leftPanelWidth: number;
-        columnTitleHeight: number;
-        columnHeaderHeight: number;
-        sideCanvasHeight: number;
-        sideCanvasContentHeightRatio: number;
-        sideCanvasContentHeight: number;
-        scrollWidth: number;
-
-        currentZoomScale: number;
         chartHeight: number;
         chartWidth: number;
-        cellContentHeightRatio: number;
+        currentZoomScale: number;
         cellContentHeight: number;
-        hasHorizontalLine: boolean;
-        hasVerticalLine: boolean;
-        columnAutoWidth: boolean;
-        /**
-        * 수평 줌 활성화 여부
-        */
-        hZoomEnabled: boolean;
-
-        /**
-        * 수직 줌 활성화 여부
-        */
-        vZoomEnabled: boolean;
-        headerTimeFormat: (time: Date) => string;
-        headerCellRender: (time: Date, containerElement: HTMLElement) => void;
-        mainTitleRender: (containerEl: HTMLElement, title: string) => void;
-        columnTitleRender: (containerEl: HTMLElement, title: string) => void;
-        tableColumnRender: (containerEl: HTMLElement) => void;
-        tableRowRender: (entity: Entity, containerEl: HTMLElement) => void;
-        sidePointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        entityPointEventRender: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        entityRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        globalRangeEventRender: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-
-        /**
-         * x축 줌 속도. 
-         */
-        zoomVelocityX: number;
-
-        /**
-         * y축 줌 속도.
-         */
-        zoomVelocityY: number;
 
         /**
          * 이전 줌 방향. 줌 방향이 바뀌면 가속도를 초기화한다.
@@ -250,31 +213,6 @@ namespace Services.PlumChart.Core {
          * 최근 줌 시간. 줌 이전에 렌더링된 엘리먼트는 새로 렌더링한다.
          */
         lastZoomTime: Date;
-
-        /**
-         * 시간범위를 엄격하게 적용할지 여부. true인 경우 시간범위를 벗어나는 이벤트는 렌더링하지 않는다.
-         */
-        strictTimeRange: boolean;
-
-        /**
-         * 버튼 클릭시 작동할 세로스크롤 길이
-         */
-        buttonScrollStepY: number;
-
-        /**
-         * 버튼 클릭시 작동할 가로스크롤 길이
-         */
-        buttonScrollStepX: number;
-
-        /**
-         * 테이블 행에 마우스를 올렸을 때 배경색
-         */
-        rowHoverColor?: string;
-
-        /**
-         * 엔티티클릭으로 이벤트 검색결과를 표시할 때 사용하는 오프셋. 오프셋만큼 스크롤위치를 보정한다.
-         */
-        entityEventSearchScrollOffset: number;
     }
 
     export const TimelineChart = function () {
@@ -401,47 +339,63 @@ namespace Services.PlumChart.Core {
                     </div>
                     `;
 
-        let _data: ChartData;
+        const SCROLL_WIDTH = 15;
 
-        let _state: ChartState = {
-            paddingCellCount: 2,
-            mainTitle: "",
-            leftPanelWidth: 200,
-            scrollWidth: 15,
-            columnTitleHeight: 40,
-            columnHeaderHeight: 40,
-            sideCanvasHeight: 40,
-            sideCanvasContentHeightRatio: 0.8,
-            chartHeight: 0,
-            chartWidth: 0,
-            cellContentHeightRatio: 0.8,
-            currentZoomScale: 1,
-            headerTimeFormat: null,
-            headerCellRender: null,
-            tableRowRender: null,
-            sidePointEventRender: null,
-            entityPointEventRender: null,
-            entityRangeEventRender: null,
-            globalRangeEventRender: null,
-            hasHorizontalLine: true,
-            hasVerticalLine: true,
-            zoomVelocityX: 0,
-            zoomVelocityY: 0,
-            prevZoomDirection: null,
-            cellContentHeight: 0,
-            sideCanvasContentHeight: 0,
-            lastZoomTime: new Date(),
-            accelResetTimeout: 300,
-            columnAutoWidth: true,
-            hZoomEnabled: true,
-            vZoomEnabled: false,
-            mainTitleRender: null,
-            columnTitleRender: null,
-            strictTimeRange: false,
+        let _data: ChartData;
+        let _options: ChartOptions = {
+            chartStartTime: new Date(),
+            chartEndTime: new Date(new Date().getDate() + 1),
+            controllerLocation: "bottomRight",
+            canvasLineColor: "#ccc",
+            rowHoverColor: "#eee",
+            borderColor: "#ccc",
+            fixedController: true,
             buttonScrollStepX: 400,
             buttonScrollStepY: 200,
-            tableColumnRender: null,
-            entityEventSearchScrollOffset: -100
+            mainRangeContentRatio: 0.8,
+            mainPointContentRatio: 0.6,
+            maxZoomScale: 5,
+            minZoomScale: 1,
+            cellMinutes: 30,
+            cellWidth: 100,
+            cellHeight: 50,
+            cellContentHeightRatio: 0.8,
+            leftPanelWidth: 200,
+            mainTitle: "",
+            columnTitle: "",
+            columnTitleHeight: 30,
+            columnHeaderHeight: 30,
+            sideCanvasHeight: 30,
+            sideCanvasContentHeightRatio: 0.8,
+            paddingCellCount: 1,
+            scrollWidth: 15,
+            hZoomEnabled: true,
+            vZoomEnabled: false,
+            hasHorizontalLine: true,
+            hasVerticalLine: true,
+            columnAutoWidth: true,
+            entityEventSearchScrollOffset: -100,
+
+
+
+            headerTimeFormat: (time: Date) => { return time.toLocaleString(); },
+            customizeElements: (_) => { },
+            headerCellRender: (time: Date, containerEl: HTMLElement) => {
+                const div = document.createElement("div");
+                div.innerText = _options.headerTimeFormat(time);
+                containerEl.appendChild(div);
+            },
+        }
+
+        let _state: ChartState = {
+            chartHeight: 0,
+            chartWidth: 0,
+            currentZoomScale: 1,
+            prevZoomDirection: null,
+            cellContentHeight: 0,
+
+            lastZoomTime: new Date(),
+            accelResetTimeout: 300,
         }
 
         /* Html Elements */
@@ -501,6 +455,7 @@ namespace Services.PlumChart.Core {
          * 원본 셀 높이.
          */
         let _originalCellHeight = 0;
+
         /**
          * 현재 Y축 줌값.
          */
@@ -510,14 +465,6 @@ namespace Services.PlumChart.Core {
          */
         let _prevZoomScale = 1;
         /**
-         * 최대 X축 줌값.
-         */
-        let _minZoomScale = 1;
-        /**
-         * 최소 Y축 줌값.
-         */
-        let _maxZoomScale = 5;
-        /**
          * 기본 줌 스텝.
          */
         let _defaultZoomStep = 0.1;
@@ -525,10 +472,7 @@ namespace Services.PlumChart.Core {
          * 현재 줌 속도
          */
         let _zoomVelocity = 0;
-        /**
-         * 컨트롤러 고정 여부
-         */
-        let _fixedController: boolean = true;
+
         /**
          * 버튼 클릭시 작동할 가로스크롤 길이
          */
@@ -559,14 +503,6 @@ namespace Services.PlumChart.Core {
          */
         let _mainPointContentRatio: number = 0.6;
         /**
-         * 차트 시작 시간.
-         */
-        let _chartStartTime: Date;
-        /**
-         * 차트 종료 시간.
-         */
-        let _chartEndTime: Date;
-        /**
          * 차트 렌더링 시작 시간. 패딩을 포함한 시간.
          */
         let _chartRenderStartTime: Date;
@@ -576,13 +512,6 @@ namespace Services.PlumChart.Core {
         let _chartRenderEndTime: Date;
 
         /**
-         * 셀당 분(minute)
-         */
-        let _cellMinutes: number = 30;
-
-        let _rowHoverColor: string = "#eee";
-
-        /**
          * 셀 너비(px)
          */
         let _cellWidth: number;
@@ -590,14 +519,6 @@ namespace Services.PlumChart.Core {
          * 셀 높이(px)
          */
         let _cellHeight: number;
-        /**
-         * HTML요소를 커스텀한다.
-         */
-        let _customizeElements: (elements: { rootElement: HTMLElement }) => void = (_) => { };
-
-        let _borderColor: string = "#ccc";
-
-        let _canvasLineColor: string = "red";
 
         let _canvasColumnCount: number = 0;
 
@@ -718,31 +639,6 @@ namespace Services.PlumChart.Core {
             css.setChartHeight(height);
         }
 
-        function _setLeftPanelWidth(width: number) {
-            _state.leftPanelWidth = width;
-            css.setLeftPanelWidth(width);
-        }
-
-        function _setColumnTitleHeight(height: number) {
-            _state.columnTitleHeight = height;
-            css.setColumnTitleHeight(height);
-        }
-
-        function _setColumnHeaderHeight(height: number) {
-            _state.columnHeaderHeight = height;
-            css.setColumnHeaderHeight(height);
-        }
-
-        function _setSideCanvasHeight(height: number) {
-            _state.sideCanvasHeight = height;
-            css.setSideCanvasHeight(height);
-        }
-
-        function _setSideCanvasContentHeight(height: number) {
-            _state.sideCanvasContentHeight = height;
-            css.setSideCanvasContentHeight(height);
-        }
-
         function _setCellWidth(width: number) {
             _cellWidth = width;
         }
@@ -752,11 +648,6 @@ namespace Services.PlumChart.Core {
             css.setCellHeight(height);
             css.setMainRangeContentHeight(height * _mainRangeContentRatio);
             css.setMainPointContentHeight(height * _mainPointContentRatio);
-        }
-
-        function _setScrollWidth(width: number) {
-            _state.scrollWidth = width;
-            css.setScrollWidth(width);
         }
 
         /**
@@ -868,10 +759,10 @@ namespace Services.PlumChart.Core {
             const fabIntervalTimeout = 30;
             const fabTimeoutTimeout = 300;
 
-            const shortStepX = () => _state.buttonScrollStepX;
-            const shortStepY = () => _state.buttonScrollStepY;
-            const longStepX = () => _state.buttonScrollStepX / 2;
-            const longStepY = () => _state.buttonScrollStepY / 2;
+            const shortStepX = () => _options.buttonScrollStepX;
+            const shortStepY = () => _options.buttonScrollStepY;
+            const longStepX = () => _options.buttonScrollStepX / 2;
+            const longStepY = () => _options.buttonScrollStepY / 2;
 
             const addDirectionDownHandler = (btn: HTMLElement, shortX: () => number, longX: () => number, shortY: () => number, longY: () => number) => {
                 btn.addEventListener("mousedown", function (e) {
@@ -903,7 +794,7 @@ namespace Services.PlumChart.Core {
             addDirectionDownHandler(_rightMenuItemEl, () => shortStepX(), () => longStepX(), () => 0, () => 0);
 
             _zoomInMenuItemEl.addEventListener("click", (e) => {
-                if (_fixedController) {
+                if (_options.fixedController) {
                     const { clientX, clientY } = _getClientCenterPositionInMainCanvasBox();
                     const { x, y } = _getPositionInMainCanvas(clientX, clientY);
                     _zoomIn(x, y);
@@ -913,7 +804,7 @@ namespace Services.PlumChart.Core {
                 }
             });
             _zoomOutMenuItemEl.addEventListener("click", (e) => {
-                if (_fixedController) {
+                if (_options.fixedController) {
                     const { clientX, clientY } = _getClientCenterPositionInMainCanvasBox();
                     const { x, y } = _getPositionInMainCanvas(clientX, clientY);
                     _zoomOut(x, y);
@@ -923,7 +814,7 @@ namespace Services.PlumChart.Core {
                 }
             });
             _closeMenuItemEl.addEventListener("click", (e) => {
-                if (_fixedController) {
+                if (_options.fixedController) {
                     _contextMenuEl.classList.toggle(CLS_CONTEXT_MENU_COLLAPSED);
                 } else {
                     _contextMenuEl.classList.toggle(CLS_CONTEXT_MENU_CLOSED);
@@ -938,7 +829,7 @@ namespace Services.PlumChart.Core {
                 if (!DEBUG) {
                     e.preventDefault();
                 }
-                if (_fixedController)
+                if (_options.fixedController)
                     return;
                 const { x, y } = _getPositionInMainCanvasBox(e.clientX, e.clientY);
                 _contextMenuEl.style.left = `${x}px`;
@@ -959,7 +850,7 @@ namespace Services.PlumChart.Core {
             });
 
             _mainCanvasElement.addEventListener("click", (e) => {
-                if (_fixedController)
+                if (_options.fixedController)
                     return;
                 const targetEl = e.target as HTMLElement;
                 if (targetEl == _zoomInMenuItemEl || targetEl == _zoomOutMenuItemEl) {
@@ -970,53 +861,18 @@ namespace Services.PlumChart.Core {
         }
 
         function setOptions(options: ChartOptions) {
-            Object.entries(options)
-                .filter(([key, value]) => value !== undefined)
-                .forEach(([key, value]) => {
-                    (_state as any)[key] = value;
-                });
+            Object.assign(_options, options);
 
-            _originalCellWidth = options.cellWidth ?? _cellWidth;
-            _originalCellHeight = options.cellHeight ?? _cellHeight;
-            _fixedController = options.fixedController ?? _fixedController;
-            _buttonScrollStepX = options.buttonScrollStepX ?? _buttonScrollStepX;
-            _buttonScrollStepY = options.buttonScrollStepY ?? _buttonScrollStepY;
-            _controllerLocation = options.controllerLocation ?? _controllerLocation;
-            _mainRangeContentRatio = options.mainRangeContentRatio ?? _mainRangeContentRatio;
-            _mainPointContentRatio = options.mainPointContentRatio ?? _mainPointContentRatio;
-            _maxZoomScale = options.maxZoomScale ?? _maxZoomScale;
-            _cellMinutes = options.cellMinutes ?? _cellMinutes;
-            _rowHoverColor = options.rowHoverColor ?? _rowHoverColor;
-            _canvasLineColor = options.canvasLineColor ?? _canvasLineColor;
-            _borderColor = options.borderColor ?? _borderColor;
-            _customizeElements = options.customizeElements ?? _customizeElements;
-
-            _setCellWidth(options.cellWidth ?? _cellWidth);
-            _setCellHeight(options.cellHeight ?? _cellHeight);
-            setChartTimeRange(options.chartStartTime, options.chartEndTime);
-
-            _setLeftPanelWidth(options.leftPanelWidth ?? _state.leftPanelWidth);
-            _setColumnTitleHeight(options.columnTitleHeight ?? _state.columnTitleHeight);
-            _setColumnHeaderHeight(options.columnHeaderHeight ?? _state.columnHeaderHeight);
-            _setSideCanvasHeight(options.sideCanvasHeight ?? _state.sideCanvasHeight);
-            _setSideCanvasContentHeight(_cellHeight * (options.sideCanvasContentHeightRatio ?? _state.sideCanvasContentHeightRatio));
-
-            _setScrollWidth(_state.scrollWidth);
-            _state.sideCanvasContentHeight = _state.sideCanvasContentHeightRatio * _state.sideCanvasHeight;
-
-            _state.headerTimeFormat = options.headerTimeFormat ?? ((time: Date) => { return time.toLocaleString(); });
-            _state.headerCellRender = options.headerCellRender ?? ((time: Date, containerElement: HTMLElement) => {
-                const div = document.createElement("div");
-                div.innerText = _state.headerTimeFormat(time);
-                containerElement.appendChild(div);
-            });
+            setChartTimeRange(_options.chartStartTime, _options.chartEndTime);
+            _originalCellWidth = _options.cellWidth;
+            _originalCellHeight = _options.cellHeight;
         }
 
         function setChartTimeRange(startTime: Date, endTime: Date) {
-            _chartStartTime = startTime;
-            _chartEndTime = endTime;
-            _chartRenderStartTime = new Date(startTime.valueOf() - toTime(_cellMinutes * _state.paddingCellCount))
-            _chartRenderEndTime = new Date(endTime.valueOf() + toTime(_cellMinutes * _state.paddingCellCount))
+            _options.chartStartTime = startTime;
+            _options.chartEndTime = endTime;
+            _chartRenderStartTime = new Date(startTime.valueOf() - toTime(_options.cellMinutes * _options.paddingCellCount))
+            _chartRenderEndTime = new Date(endTime.valueOf() + toTime(_options.cellMinutes * _options.paddingCellCount))
         }
 
         function setData(data: ChartData) {
@@ -1032,7 +888,7 @@ namespace Services.PlumChart.Core {
                 return _chartRenderStartTime <= startTime && startTime <= _chartRenderEndTime;
             }
             else {
-                return _chartStartTime <= endTime && startTime <= _chartEndTime;
+                return _options.chartStartTime <= endTime && startTime <= _options.chartEndTime;
             }
         }
 
@@ -1055,7 +911,7 @@ namespace Services.PlumChart.Core {
             _contextMenuEl.classList.remove(CLS_CONTEXT_MENU_CLOSED);
             _contextMenuEl.classList.remove(CLS_CONTEXT_MENU_COLLAPSED);
 
-            if (_fixedController) {
+            if (_options.fixedController) {
                 // 고정 컨트롤러인 경우 컨텍스트 메뉴를 미니 상태로 설정.
                 _contextMenuEl.classList.add(CLS_CONTEXT_MENU_COLLAPSED);
                 // 컨트롤러 위치 적용
@@ -1064,28 +920,39 @@ namespace Services.PlumChart.Core {
             }
         }
 
+
+        function _applyCssOptions() {
+            css.setBorderColor(_options.borderColor);
+            css.setCanvasLineColor(_options.canvasLineColor);
+
+            _setCellWidth(_options.cellWidth);
+            _setCellHeight(_options.cellHeight);
+
+            css.setLeftPanelWidth(_options.leftPanelWidth);
+            css.setColumnTitleHeight(_options.columnTitleHeight);
+            css.setColumnHeaderHeight(_options.columnHeaderHeight);
+            css.setSideCanvasHeight(_options.sideCanvasHeight);
+            css.setSideCanvasContentHeight(_options.cellHeight * _options.sideCanvasContentHeightRatio);
+            css.setScrollWidth(_options.scrollWidth);
+        }
         /**
          * 차트를 그린다.
          */
         function render() {
-            css.setBorderColor(_borderColor);
-            css.setCanvasLineColor(_canvasLineColor);
-
+            _applyCssOptions();
             _resetController();
 
-            _customizeElements({
-                rootElement: _rootElement
-            });
+            _options.customizeElements({ rootElement: _rootElement });
 
             _renderMainTitle();
             _renderTableColumn();
 
             // 캔버스 컬럼 수를 계산한다. 
             // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
-            _canvasColumnCount = Math.floor((_chartRenderEndTime.valueOf() - _chartRenderStartTime.valueOf()) / toTime(_cellMinutes));
+            _canvasColumnCount = Math.floor((_chartRenderEndTime.valueOf() - _chartRenderStartTime.valueOf()) / toTime(_options.cellMinutes));
 
             // 캔버스 컬럼 수에 따라 캔버스 너비를 계산한다.
-            if (_state.columnAutoWidth) {
+            if (_options.columnAutoWidth) {
                 _originalCellWidth = _mainCanvasBoxElement.clientWidth / _canvasColumnCount;
                 const cellWidth = _originalCellWidth * _currZoomScale;
                 _setCellWidth(cellWidth);
@@ -1107,6 +974,7 @@ namespace Services.PlumChart.Core {
             _renderMainCanvas();
             _renderEntities();
 
+
             // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
             _mainCanvasBoxElement.scrollTo(_mainCanvasBoxElement.scrollLeft, _mainCanvasBoxElement.scrollTop - 1);
         }
@@ -1115,7 +983,7 @@ namespace Services.PlumChart.Core {
          * 캔버스 박스의 크기가 변경될 경우 셀 너비를 재계산한다.
          */
         function _mainCanvasBoxResizeCallback() {
-            if (_state.columnAutoWidth) {
+            if (_options.columnAutoWidth) {
                 // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
                 const canvasWidth = _mainCanvasBoxElement.clientWidth;
                 _originalCellWidth = canvasWidth / _canvasColumnCount;
@@ -1137,17 +1005,17 @@ namespace Services.PlumChart.Core {
 
         function _renderMainTitle() {
             _mainTitleElement.replaceChildren();
-            if (_state.mainTitleRender != null) {
-                _state.mainTitleRender(_mainTitleElement, _state.mainTitle);
+            if (_options.mainTitleRender != null) {
+                _options.mainTitleRender(_mainTitleElement, _options.mainTitle);
             } else {
-                _mainTitleElement.innerText = _state.mainTitle;
+                _mainTitleElement.innerText = _options.mainTitle;
             }
         }
 
         function _renderTableColumn() {
             _tableColumnBoxElement.replaceChildren();
-            if (_state.tableColumnRender != null)
-                _state.tableColumnRender(_tableColumnBoxElement);
+            if (_options.tableColumnRender != null)
+                _options.tableColumnRender(_tableColumnBoxElement);
         }
 
         function _updateCanvasSize() {
@@ -1159,8 +1027,8 @@ namespace Services.PlumChart.Core {
             let canvasWidth = Math.max(_cellWidth * _canvasColumnCount, _mainCanvasBoxElement.clientWidth);
             let canvasHeight = Math.max(_cellHeight * _data.entities.length, _mainCanvasBoxElement.clientHeight);
 
-            _columnHeaderElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
-            _sideCanvasElement.style.width = `${canvasWidth + _state.scrollWidth}px`;
+            _columnHeaderElement.style.width = `${canvasWidth + _options.scrollWidth}px`;
+            _sideCanvasElement.style.width = `${canvasWidth + _options.scrollWidth}px`;
             _mainCanvasElement.style.width = `${canvasWidth}px`;
             _mainCanvasElement.style.height = `${canvasHeight}px`;
         }
@@ -1168,10 +1036,10 @@ namespace Services.PlumChart.Core {
 
         function _renderColumnTitle() {
             _columnTitleElement.replaceChildren();
-            if (_state.columnTitleRender != null) {
-                _state.columnTitleRender(_columnTitleElement, _state.columnTitle);
+            if (_options.columnTitleRender != null) {
+                _options.columnTitleRender(_columnTitleElement, _options.columnTitle);
             } else {
-                _columnTitleElement.innerText = _state.columnTitle;
+                _columnTitleElement.innerText = _options.columnTitle;
             }
         }
 
@@ -1189,11 +1057,11 @@ namespace Services.PlumChart.Core {
                 const left = cellIndex == 0 ? 0 : (cellIndex * _cellWidth) + 1;
                 containerElement.style.left = `${left}px`;
                 containerElement.style.width = `${_cellWidth}px`;
-                _state.headerCellRender(currentTime, containerElement);
+                _options.headerCellRender(currentTime, containerElement);
                 _columnHeaderElement.appendChild(containerElement);
                 _headerElements.set(cellIndex, containerElement);
 
-                currentTime = new Date(currentTime.getTime() + toTime(_cellMinutes));
+                currentTime = new Date(currentTime.getTime() + toTime(_options.cellMinutes));
                 cellIndex++;
             }
             _renderCanvasHeaderVLines();
@@ -1269,7 +1137,7 @@ namespace Services.PlumChart.Core {
          */
         function _renderSideCanvas() {
             _sideCanvasElement.replaceChildren();
-            if (_state.hasVerticalLine)
+            if (_options.hasVerticalLine)
                 _renderSideCanvasVerticalLine();
 
             _renderSidePointEvents();
@@ -1319,13 +1187,13 @@ namespace Services.PlumChart.Core {
             if (!isTimeInRange(eventTime))
                 return;
             const containerElement = document.createElement("div");
-            const { top, left } = __calcSidePointEventPosition(eventTime);
+            const { top, left } = _calcSidePointEventPosition(eventTime);
             containerElement.style.top = `${top}px`;
             containerElement.style.left = `${left}px`;
             containerElement.classList.add(CLS_SIDE_CANVAS_POINT_EVENT);
 
-            if (_state.sidePointEventRender != null)
-                _state.sidePointEventRender(event, _sideCanvasElement, containerElement);
+            if (_options.sidePointEventRender != null)
+                _options.sidePointEventRender(event, _sideCanvasElement, containerElement);
             _sideCanvasElement.appendChild(containerElement);
             _sidePointEventItems.push({
                 time: eventTime,
@@ -1337,18 +1205,19 @@ namespace Services.PlumChart.Core {
             for (const container of _sidePointEventItems) {
                 const time = container.time;
                 const containerEl = container.containerEl;
-                const { top, left } = __calcSidePointEventPosition(time);
+                const { top, left } = _calcSidePointEventPosition(time);
                 containerEl.style.top = `${top}px`;
                 containerEl.style.left = `${left}px`;
             }
         }
 
-        function __calcSidePointEventPosition(eventTime: Date) {
+        function _calcSidePointEventPosition(eventTime: Date) {
             const [renderStartTime] = trucateTimeRange(eventTime);
             const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-            const center = time * _cellWidth / _cellMinutes;
-            const top = (_state.sideCanvasHeight - _state.sideCanvasContentHeight) / 2;
-            const width = _state.sideCanvasContentHeight;
+            const center = time * _cellWidth / _options.cellMinutes;
+            const sideCanvasContentHeight = _options.sideCanvasHeight * _options.sideCanvasContentHeightRatio;
+            const top = (_options.sideCanvasHeight - sideCanvasContentHeight) / 2;
+            const width = sideCanvasContentHeight;
             const left = center - (width / 2);
             return {
                 left: left,
@@ -1358,7 +1227,7 @@ namespace Services.PlumChart.Core {
 
         function _renderMainCanvas() {
             _mainCanvasElement.replaceChildren();
-            if (_state.hasVerticalLine)
+            if (_options.hasVerticalLine)
                 _renderMainCanvasVLine();
             _renderGlobalRangeEvents();
         }
@@ -1416,10 +1285,10 @@ namespace Services.PlumChart.Core {
 
         function _renderEntityRow(entityRow: EntityRow) {
             const { index, entity, containerEl } = entityRow;
-            _state.tableRowRender(entity, containerEl);
+            _options.tableRowRender(entity, containerEl);
             _renderEntityEvents(entity, entityRow);
 
-            if (_state.hasHorizontalLine) {
+            if (_options.hasHorizontalLine) {
                 const mainCanvasHLine = document.createElement("div");
                 mainCanvasHLine.classList.add(CLS_MAIN_CANVAS_H_BORDER);
                 mainCanvasHLine.style.top = `${_cellHeight * (index)}px`;
@@ -1493,7 +1362,7 @@ namespace Services.PlumChart.Core {
                 containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
                 containerEl.addEventListener("mouseenter", (e) => {
                     (containerEl as any).tag = containerEl.style.backgroundColor;
-                    containerEl.style.backgroundColor = _rowHoverColor;
+                    containerEl.style.backgroundColor = _options.rowHoverColor;
                 });
                 containerEl.addEventListener("mouseleave", (e) => {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
@@ -1506,8 +1375,8 @@ namespace Services.PlumChart.Core {
                     if (evtStartTime != null) {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
                         const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-                        const left = time * _cellWidth / _cellMinutes;
-                        _mainCanvasBoxElement.scrollLeft = left + _state.entityEventSearchScrollOffset;
+                        const left = time * _cellWidth / _options.cellMinutes;
+                        _mainCanvasBoxElement.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
                 _entityTableBoxElement.appendChild(containerEl);
@@ -1537,7 +1406,7 @@ namespace Services.PlumChart.Core {
                 containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
                 containerEl.addEventListener("mouseenter", (e) => {
                     (containerEl as any).tag = containerEl.style.backgroundColor;
-                    containerEl.style.backgroundColor = _rowHoverColor;
+                    containerEl.style.backgroundColor = _options.rowHoverColor;
                 });
                 containerEl.addEventListener("mouseleave", (e) => {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
@@ -1550,8 +1419,8 @@ namespace Services.PlumChart.Core {
                     if (evtStartTime != null) {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
                         const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-                        const left = time * _cellWidth / _cellMinutes;
-                        _mainCanvasBoxElement.scrollLeft = left + _state.entityEventSearchScrollOffset;
+                        const left = time * _cellWidth / _options.cellMinutes;
+                        _mainCanvasBoxElement.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
                 _entityTableBoxElement.appendChild(containerEl);
@@ -1621,7 +1490,7 @@ namespace Services.PlumChart.Core {
                 containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
                 containerEl.addEventListener("mouseenter", (e) => {
                     (containerEl as any).tag = containerEl.style.backgroundColor;
-                    containerEl.style.backgroundColor = _rowHoverColor;
+                    containerEl.style.backgroundColor = _options.rowHoverColor;
                 });
                 containerEl.addEventListener("mouseleave", (e) => {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
@@ -1634,8 +1503,8 @@ namespace Services.PlumChart.Core {
                     if (evtStartTime != null) {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
                         const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-                        const left = time * _cellWidth / _cellMinutes;
-                        _mainCanvasBoxElement.scrollLeft = left + _state.entityEventSearchScrollOffset;
+                        const left = time * _cellWidth / _options.cellMinutes;
+                        _mainCanvasBoxElement.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
                 _entityTableBoxElement.appendChild(containerEl);
@@ -1757,8 +1626,8 @@ namespace Services.PlumChart.Core {
             containerElement.style.left = `${left}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_POINT_EVENT);
 
-            if (_state.entityPointEventRender != null)
-                _state.entityPointEventRender(event, _mainCanvasElement, containerElement);
+            if (_options.entityPointEventRender != null)
+                _options.entityPointEventRender(event, _mainCanvasElement, containerElement);
 
             _mainCanvasElement.appendChild(containerElement);
             entityRow.pointEventContainers.push({
@@ -1770,7 +1639,7 @@ namespace Services.PlumChart.Core {
         function _calcPointEventPosition(eventTime: Date, rowIndex: number): { top: number, left: number } {
             const [renderStartTime] = trucateTimeRange(eventTime);
             const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-            const center = time * _cellWidth / _cellMinutes;
+            const center = time * _cellWidth / _options.cellMinutes;
             const contentHeight = _getMainPointContentHeight();
             const top = (_cellHeight * rowIndex) + ((_cellHeight - contentHeight) / 2) - 1;
             const width = contentHeight;
@@ -1796,8 +1665,8 @@ namespace Services.PlumChart.Core {
             const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
             const startTime = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
             const duration = toMinutes(renderEndTime.valueOf() - renderStartTime.valueOf());
-            const left = startTime * _cellWidth / _cellMinutes;
-            const width = duration * _cellWidth / _cellMinutes;
+            const left = startTime * _cellWidth / _options.cellMinutes;
+            const width = duration * _cellWidth / _options.cellMinutes;
             const top = (_cellHeight * rowIndex)
                 + (_cellHeight - _getMainRangeContentHeight()) / 2
                 - 1;
@@ -1822,8 +1691,8 @@ namespace Services.PlumChart.Core {
             containerElement.style.top = `${top}px`;
             containerElement.style.width = `${width}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT);
-            if (_state.entityRangeEventRender != null)
-                _state.entityRangeEventRender(event, _mainCanvasElement, containerElement);
+            if (_options.entityRangeEventRender != null)
+                _options.entityRangeEventRender(event, _mainCanvasElement, containerElement);
 
             _mainCanvasElement.appendChild(containerElement);
             entityRow.rangeEventContainers.push({
@@ -1863,8 +1732,8 @@ namespace Services.PlumChart.Core {
             containerElement.style.width = `${width}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT);
 
-            if (_state.globalRangeEventRender != null)
-                _state.globalRangeEventRender(event, _mainCanvasElement, containerElement);
+            if (_options.globalRangeEventRender != null)
+                _options.globalRangeEventRender(event, _mainCanvasElement, containerElement);
 
             _mainCanvasElement.appendChild(containerElement);
             _globalRangeEventItems.push({
@@ -1899,17 +1768,16 @@ namespace Services.PlumChart.Core {
         }
 
         function _zoom(scale: number, pivotPointX?: number, pivotPointY?: number) {
-            console.log(`zoom: ${scale} x: ${pivotPointX} y: ${pivotPointY}`);
-            if (scale <= _minZoomScale)
-                scale = _minZoomScale;
-            if (_maxZoomScale <= scale)
-                scale = _maxZoomScale;
+            if (scale <= _options.minZoomScale)
+                scale = _options.minZoomScale;
+            if (_options.maxZoomScale <= scale)
+                scale = _options.maxZoomScale;
 
             // 줌 후 스크롤 위치 계산
             let scrollLeft = _mainCanvasBoxElement.scrollLeft;
             let scrollTop = _mainCanvasBoxElement.scrollTop;
 
-            if (_state.hZoomEnabled) {
+            if (_options.hZoomEnabled) {
                 const newCellWidth = _originalCellWidth * scale;
                 const prevCellWidth = _cellWidth;
                 _cellWidth = newCellWidth;
@@ -1921,10 +1789,10 @@ namespace Services.PlumChart.Core {
                 }
 
             }
-            if (_state.vZoomEnabled) {
+            if (_options.vZoomEnabled) {
                 const prevCellHeight = _cellHeight;
                 const newCellHeight = _originalCellHeight * scale;
-                const newCellContentHeight = _state.cellContentHeightRatio * newCellHeight;
+                const newCellContentHeight = _options.cellContentHeightRatio * newCellHeight;
                 _setCellHeight(newCellHeight);
                 if (pivotPointY) {
                     const scrollOffset = pivotPointY - scrollTop;
