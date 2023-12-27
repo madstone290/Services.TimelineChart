@@ -196,8 +196,27 @@ namespace Services.PlumChart.Core {
 
     interface ChartState {
         chartHeight: number;
+
         chartWidth: number;
+
+
+        /**
+         * 현재 셀 너비(px)
+         */
+        cellWidth: number;
+
+        /**
+         * 현재 셀 높이(px)
+         */
+        cellHeight: number;
+
+        /**
+         * 현재 캔버스 열 개수
+         */
+        canvasColumnCount: number;
+
         currentZoomScale: number;
+
         cellContentHeight: number;
 
         /**
@@ -213,6 +232,76 @@ namespace Services.PlumChart.Core {
          * 최근 줌 시간. 줌 이전에 렌더링된 엘리먼트는 새로 렌더링한다.
          */
         lastZoomTime: Date;
+
+        /**
+         * 차트 렌더링 시작 시간. 패딩을 포함한 시간.
+         */
+        chartRenderStartTime: Date;
+        /**
+         * 차트 렌더링 종료 시간. 패딩을 포함한 시간.
+         */
+        chartRenderEndTime: Date;
+
+
+        /**
+ * 원본 셀 너비.
+ */
+        originalCellWidth: number;
+        /**
+         * 원본 셀 높이.
+         */
+        originalCellHeight: number;
+
+        /**
+         * 현재 Y축 줌값.
+         */
+        currZoomScale: number;
+
+        /**
+         * 기본 줌 스텝.
+         */
+        defaultZoomStep: number;
+        /**
+         * 현재 줌 속도
+         */
+        zoomVelocity: number;
+
+        /**
+         * 렌더링된 캔버스 수직경계 엘리먼트 목록
+         */
+        canvasColumnVLines: HTMLElement[];
+
+        /**
+         * 렌더링된 사이드캔버스 수직경계 엘리먼트 목록
+         */
+        sideCanvasVLines: HTMLElement[];
+
+        /**
+         * 렌더링된 메인캔버스 수직경계 엘리먼트 목록
+         */
+        mainCanvasVLines: HTMLElement[];
+
+        /**
+         * 엔티티 컨테이너 목록. key: 컨테이너 엘리먼트, value: 엔티티 행
+         */
+        entityContainerRows: Map<HTMLElement, EntityRow>;
+
+        /**
+         * 활성화 엔티티 목록. key: 엔티티 인덱스, value: 엔티티 행
+         */
+        activeEntityRows: Map<number, EntityRow>;
+
+        /**
+         * 사이드캔버스 포인트 이벤트 엘리먼트 목록
+         */
+        sidePointEventItems: Array<PointEventItem>;
+
+
+        /**
+         * 글로벌 레인지 이벤트 엘리먼트 목록
+         */
+        globalRangeEventItems: Array<RangeEventItem>;
+
     }
 
     interface ChartElements {
@@ -235,8 +324,6 @@ namespace Services.PlumChart.Core {
         zoomInMenuItem: HTMLElement;
         zoomOutMenuItem: HTMLElement;
         closeMenuItem: HTMLElement;
-        canvasColumnVLines: HTMLElement[];
-        sideCanvasVLines: HTMLElement[];
     }
 
     // #region Constants
@@ -304,14 +391,24 @@ namespace Services.PlumChart.Core {
     const VAR_CANVAS_LINE_COLOR = "--plc-canvas-line-color";
     // #endregion
 
+    /**
+     * 컨트롤러 위치 클래스 맵
+     */
+    const CONTROLLER_LOCATION_CLS_MAP = new Map<ControllerLocation, string>([
+        ["topLeft", CLS_CONTEXT_MENU_TOP_LEFT],
+        ["topRight", CLS_CONTEXT_MENU_TOP_RIGHT],
+        ["bottomLeft", CLS_CONTEXT_MENU_BOTTOM_LEFT],
+        ["bottomRight", CLS_CONTEXT_MENU_BOTTOM_RIGHT]
+    ]);
+
     export const CoreChart = function () {
 
         /* Layout
         |---------------|-------------------|
-        | main title    | column title      |
+        | grid title    | canvas title      |
         |---------------|-------------------|
-        |               | column header     |
-        | sub title     |-------------------|
+        |               | canvas column     |
+        | grid column   |-------------------|
         |               | side canvas       |
         |---------------|-------------------|
         |               |                   |
@@ -395,7 +492,7 @@ namespace Services.PlumChart.Core {
             columnHeaderHeight: 30,
             sideCanvasHeight: 30,
             sideCanvasContentHeightRatio: 0.8,
-            paddingCellCount: 1,
+            paddingCellCount: 0,
             scrollWidth: 15,
             hZoomEnabled: true,
             vZoomEnabled: false,
@@ -415,17 +512,39 @@ namespace Services.PlumChart.Core {
             },
         }
 
+        /**
+         * 차트 상태 변수
+         */
         const _state: ChartState = {
             chartHeight: 0,
             chartWidth: 0,
             currentZoomScale: 1,
             prevZoomDirection: null,
             cellContentHeight: 0,
-
             lastZoomTime: new Date(),
             accelResetTimeout: 300,
+            cellWidth: _options.cellWidth,
+            cellHeight: _options.cellHeight,
+            canvasColumnCount: 0,
+            currZoomScale: 1,
+            zoomVelocity: 0,
+            defaultZoomStep: 0.1,
+            originalCellWidth: 0,
+            originalCellHeight: 0,
+            chartRenderStartTime: _options.chartStartTime,
+            chartRenderEndTime: _options.chartEndTime,
+            canvasColumnVLines: [],
+            sideCanvasVLines: [],
+            mainCanvasVLines: [],
+            sidePointEventItems: [],
+            globalRangeEventItems: [],
+            entityContainerRows: new Map(),
+            activeEntityRows: new Map(),
         }
 
+        /**
+         * 차트에서 사용하는 HTML 엘리먼트 목록
+         */
         const _elements: ChartElements = {
             root: null,
             mainTitle: null,
@@ -446,100 +565,17 @@ namespace Services.PlumChart.Core {
             zoomInMenuItem: null,
             zoomOutMenuItem: null,
             closeMenuItem: null,
-            canvasColumnVLines: [],
-            sideCanvasVLines: [],
         };
-
-        let _sidePointEventItems = new Array<PointEventItem>();
 
         /**
          * 교차 관찰자. 엔티티 행의 가시성을 관찰한다.
          */
         let _intersecionObserver: IntersectionObserver;
+
         /**
          * 메인캔버스 사이즈 변경 관찰자. fab버튼 및 컬럼헤더 크기 조정에 사용한다.
          */
         let _mainCanvasBoxResizeObserver: ResizeObserver;
-        /**
-         * 엔티티 컨테이너 목록. key: 컨테이너 엘리먼트, value: 엔티티 행
-         */
-        let _entityContainerRows = new Map<HTMLElement, EntityRow>();
-        /**
-         * 엔티티 컨테이너 목록. key: 컨테이너 엘리먼트, value: 엔티티 행
-         */
-        let _activeEntityRows = new Map<number, EntityRow>();
-        /**
-         * 메인캔버스 수직 경계선 엘리먼트 목록
-         */
-        let _mainCanvasVLines: HTMLElement[] = [];
-        /**
-         * 글로벌 레인지 이벤트 엘리먼트 목록
-         */
-        let _globalRangeEventItems = new Array<RangeEventItem>();
-        /**
-         * 원본 셀 너비.
-         */
-        let _originalCellWidth = 0;
-        /**
-         * 원본 셀 높이.
-         */
-        let _originalCellHeight = 0;
-
-        /**
-         * 현재 Y축 줌값.
-         */
-        let _currZoomScale = 1;
-
-        /**
-         * 기본 줌 스텝.
-         */
-        let _defaultZoomStep = 0.1;
-        /**
-         * 현재 줌 속도
-         */
-        let _zoomVelocity = 0;
-
-        /**
-         * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
-         */
-        let _controllerLocation: ControllerLocation = "bottomRight";
-        /**
-         * 컨트롤러 위치 클래스 맵
-         */
-        let _controllerLocationClassMap = new Map<ControllerLocation, string>([
-            ["topLeft", CLS_CONTEXT_MENU_TOP_LEFT],
-            ["topRight", CLS_CONTEXT_MENU_TOP_RIGHT],
-            ["bottomLeft", CLS_CONTEXT_MENU_BOTTOM_LEFT],
-            ["bottomRight", CLS_CONTEXT_MENU_BOTTOM_RIGHT]
-        ]);
-        /**
-         * 메인 캔버스 레인지 이벤트의 컨텐츠 영역의 높이 비율
-         */
-        let _mainRangeContentRatio: number = 0.8;
-        /**
-         * 메인 캔버스 포인트 이벤트의 컨텐츠 영역의 높이 비율
-         */
-        let _mainPointContentRatio: number = 0.6;
-        /**
-         * 차트 렌더링 시작 시간. 패딩을 포함한 시간.
-         */
-        let _chartRenderStartTime: Date;
-        /**
-         * 차트 렌더링 종료 시간. 패딩을 포함한 시간.
-         */
-        let _chartRenderEndTime: Date;
-
-        /**
-         * 셀 너비(px)
-         */
-        let _cellWidth: number;
-        /**
-         * 셀 높이(px)
-         */
-        let _cellHeight: number;
-
-        let _canvasColumnCount: number = 0;
-
 
         const css = function () {
             function getVariable(name: string) {
@@ -548,64 +584,24 @@ namespace Services.PlumChart.Core {
             function setVariable(name: string, value: string) {
                 _elements.root.style.setProperty(name, value);
             }
-            function setChartWidth(width: number) {
-                setVariable(VAR_CHART_WIDTH, `${width}px`);
-            }
-            function setLeftPanelWidth(width: number) {
-                setVariable(VAR_LEFT_PANEL_WIDTH, `${width}px`);
-            }
-            function getChartHeight() { return parseInt(getVariable(VAR_CHART_HEIGHT)); }
-            function setChartHeight(height: number) { setVariable(VAR_CHART_HEIGHT, `${height}px`); }
-
-            function getColumnTitleHeight() { return parseInt(getVariable(VAR_COLUMN_TITLE_HEIGHT)); }
-            function setColumnTitleHeight(height: number) { setVariable(VAR_COLUMN_TITLE_HEIGHT, `${height}px`); }
-
-            function getColumnHeaderHeight() { return parseInt(getVariable(VAR_COLUMN_HEADER_HEIGHT)); }
-            function setColumnHeaderHeight(height: number) { setVariable(VAR_COLUMN_HEADER_HEIGHT, `${height}px`); }
-
-            function getSideCanvasHeight() { return parseInt(getVariable(VAR_SIDE_CANVAS_HEIGHT)); }
-            function setSideCanvasHeight(height: number) { setVariable(VAR_SIDE_CANVAS_HEIGHT, `${height}px`); }
-
-            function getSideCanvasContentHeight() { return parseInt(getVariable(VAR_SIDE_CANVAS_CONTENT_HEIGHT)); }
-            function setSideCanvasContentHeight(height: number) { setVariable(VAR_SIDE_CANVAS_CONTENT_HEIGHT, `${height}px`); }
-
-            function getColumnPanelHeight() { return getColumnTitleHeight() + getColumnHeaderHeight() + getSideCanvasHeight(); }
-
-            function setCellHeight(height: number) { setVariable(VAR_CELL_HEIGHT, `${height}px`); }
-            function setScrollWidth(width: number) { setVariable(VAR_SCROLL_WIDTH, `${width}px`); }
-
-            function setMainRangeContentHeight(height: number) { setVariable(VAR_MAIN_RANGE_CONTENT_HEIGHT, `${height}px`); }
-            function setMainPointContentHeight(height: number) { setVariable(VAR_MAIN_POINT_CONTENT_HEIGHT, `${height}px`); }
 
             return {
                 getVariable,
                 setVariable,
 
-                setBorderColor: (color: string) => { setVariable(VAR_BORDER_COLOR, color); },
                 setCanvasLineColor: (color: string) => { setVariable(VAR_CANVAS_LINE_COLOR, color); },
-
-
-                setLeftPanelWidth,
-
-                setChartWidth,
-                getChartHeight,
-                setChartHeight,
-
-                getColumnTitleHeight,
-                setColumnTitleHeight,
-                getColumnHeaderHeight,
-                setColumnHeaderHeight,
-                getSideCanvasHeight,
-                setSideCanvasHeight,
-                getSideCanvasContentHeight,
-                setSideCanvasContentHeight,
-                getColumnPanelHeight,
-
-                setCellHeight,
-
-                setScrollWidth,
-                setMainRangeContentHeight,
-                setMainPointContentHeight
+                setBorderColor: (color: string) => { setVariable(VAR_BORDER_COLOR, color); },
+                setLeftPanelWidth: (width: number) => { setVariable(VAR_LEFT_PANEL_WIDTH, `${width}px`); },
+                setChartWidth: (width: number) => { setVariable(VAR_CHART_WIDTH, `${width}px`); },
+                setChartHeight: (height: number) => { setVariable(VAR_CHART_HEIGHT, `${height}px`); },
+                setColumnTitleHeight: (height: number) => { setVariable(VAR_COLUMN_TITLE_HEIGHT, `${height}px`); },
+                setColumnHeaderHeight: (height: number) => { setVariable(VAR_COLUMN_HEADER_HEIGHT, `${height}px`); },
+                setSideCanvasHeight: (height: number) => { setVariable(VAR_SIDE_CANVAS_HEIGHT, `${height}px`); },
+                setSideCanvasContentHeight: (height: number) => { setVariable(VAR_SIDE_CANVAS_CONTENT_HEIGHT, `${height}px`); },
+                setCellHeight: (height: number) => { setVariable(VAR_CELL_HEIGHT, `${height}px`); },
+                setScrollWidth: (width: number) => { setVariable(VAR_SCROLL_WIDTH, `${width}px`); },
+                setMainRangeContentHeight: (height: number) => { setVariable(VAR_MAIN_RANGE_CONTENT_HEIGHT, `${height}px`); },
+                setMainPointContentHeight: (height: number) => { setVariable(VAR_MAIN_POINT_CONTENT_HEIGHT, `${height}px`); },
             }
         }();
 
@@ -654,15 +650,11 @@ namespace Services.PlumChart.Core {
             css.setChartHeight(height);
         }
 
-        function _setCellWidth(width: number) {
-            _cellWidth = width;
-        }
-
         function _setCellHeight(height: number) {
-            _cellHeight = height;
+            _state.cellHeight = height;
             css.setCellHeight(height);
-            css.setMainRangeContentHeight(height * _mainRangeContentRatio);
-            css.setMainPointContentHeight(height * _mainPointContentRatio);
+            css.setMainRangeContentHeight(_calcMainRangeContentHeight());
+            css.setMainPointContentHeight(_calcMainPointContentHeight());
         }
 
         /**
@@ -682,33 +674,37 @@ namespace Services.PlumChart.Core {
             return minutes * 60 * 1000;
         }
 
-        function _getPositionInContainer(clientX: number, clientY: number, container: HTMLElement) {
+        function _calcPositionInContainer(clientX: number, clientY: number, container: HTMLElement) {
             const rect = container.getBoundingClientRect();
             const x = clientX - rect.left;
             const y = clientY - rect.top;
             return { x, y };
         }
 
-        function _getPositionInMainCanvas(clientX: number, clientY: number) {
-            return _getPositionInContainer(clientX, clientY, _elements.mainCanvas);
+        function _calcPositionInMainCanvas(clientX: number, clientY: number) {
+            return _calcPositionInContainer(clientX, clientY, _elements.mainCanvas);
         }
 
-        function _getPositionInMainCanvasBox(clientX: number, clientY: number) {
-            return _getPositionInContainer(clientX, clientY, _elements.mainCanvasBox);
+        function _calcPositionInMainCanvasBox(clientX: number, clientY: number) {
+            return _calcPositionInContainer(clientX, clientY, _elements.mainCanvasBox);
         }
 
-        function _getClientCenterPositionInMainCanvasBox() {
+        function _calcClientCenterPositionInMainCanvasBox() {
             const rect = _elements.mainCanvasBox.getBoundingClientRect();
             const clientX = rect.left + rect.width / 2;
             const clientY = rect.top + rect.height / 2;
             return { clientX, clientY };
         }
 
-        function _getMainRangeContentHeight() {
-            return _cellHeight * _mainRangeContentRatio;
+        function _calcMainRangeContentHeight() {
+            return _state.cellHeight * _options.mainRangeContentRatio;
         }
-        function _getMainPointContentHeight() {
-            return _cellHeight * _mainPointContentRatio;
+        function _calcMainPointContentHeight() {
+            return _state.cellHeight * _options.mainPointContentRatio;
+        }
+
+        function _calcSideCanvasContentHeight() {
+            return _options.sideCanvasHeight * _options.sideCanvasContentHeightRatio;
         }
 
         /**
@@ -810,21 +806,21 @@ namespace Services.PlumChart.Core {
 
             _elements.zoomInMenuItem.addEventListener("click", (e) => {
                 if (_options.fixedController) {
-                    const { clientX, clientY } = _getClientCenterPositionInMainCanvasBox();
-                    const { x, y } = _getPositionInMainCanvas(clientX, clientY);
+                    const { clientX, clientY } = _calcClientCenterPositionInMainCanvasBox();
+                    const { x, y } = _calcPositionInMainCanvas(clientX, clientY);
                     _zoomIn(x, y);
                 } else {
-                    const { x, y } = _getPositionInMainCanvas(e.clientX, e.clientY);
+                    const { x, y } = _calcPositionInMainCanvas(e.clientX, e.clientY);
                     _zoomIn(x, y);
                 }
             });
             _elements.zoomOutMenuItem.addEventListener("click", (e) => {
                 if (_options.fixedController) {
-                    const { clientX, clientY } = _getClientCenterPositionInMainCanvasBox();
-                    const { x, y } = _getPositionInMainCanvas(clientX, clientY);
+                    const { clientX, clientY } = _calcClientCenterPositionInMainCanvasBox();
+                    const { x, y } = _calcPositionInMainCanvas(clientX, clientY);
                     _zoomOut(x, y);
                 } else {
-                    const { x, y } = _getPositionInMainCanvas(e.clientX, e.clientY);
+                    const { x, y } = _calcPositionInMainCanvas(e.clientX, e.clientY);
                     _zoomOut(x, y);
                 }
             });
@@ -846,7 +842,7 @@ namespace Services.PlumChart.Core {
                 }
                 if (_options.fixedController)
                     return;
-                const { x, y } = _getPositionInMainCanvasBox(e.clientX, e.clientY);
+                const { x, y } = _calcPositionInMainCanvasBox(e.clientX, e.clientY);
                 _elements.contextMenu.style.left = `${x}px`;
                 _elements.contextMenu.style.top = `${y}px`;
                 _elements.contextMenu.classList.remove(CLS_CONTEXT_MENU_CLOSED);
@@ -856,7 +852,6 @@ namespace Services.PlumChart.Core {
             let longTouchDuration = 300;
             _elements.mainCanvas.addEventListener("touchstart", (e) => {
                 touchTimer = setTimeout(() => {
-                    console.log("long touch", e);
                 }, longTouchDuration);
             });
             _elements.mainCanvas.addEventListener("touchend", (e) => {
@@ -879,15 +874,21 @@ namespace Services.PlumChart.Core {
             Object.assign(_options, options);
 
             setChartTimeRange(_options.chartStartTime, _options.chartEndTime);
-            _originalCellWidth = _options.cellWidth;
-            _originalCellHeight = _options.cellHeight;
+            _state.originalCellWidth = _options.cellWidth;
+            _state.originalCellHeight = _options.cellHeight;
+            _state.cellWidth = _options.cellWidth;
+            _state.cellHeight = _options.cellHeight;
+        }
+
+        function getOptions() {
+            return _options;
         }
 
         function setChartTimeRange(startTime: Date, endTime: Date) {
             _options.chartStartTime = startTime;
             _options.chartEndTime = endTime;
-            _chartRenderStartTime = new Date(startTime.valueOf() - toTime(_options.cellMinutes * _options.paddingCellCount))
-            _chartRenderEndTime = new Date(endTime.valueOf() + toTime(_options.cellMinutes * _options.paddingCellCount))
+            _state.chartRenderStartTime = new Date(startTime.valueOf() - toTime(_options.cellMinutes * _options.paddingCellCount))
+            _state.chartRenderEndTime = new Date(endTime.valueOf() + toTime(_options.cellMinutes * _options.paddingCellCount))
         }
 
         function setData(data: ChartData) {
@@ -900,7 +901,7 @@ namespace Services.PlumChart.Core {
 
         function isTimeInRange(startTime: Date, endTime?: Date): boolean {
             if (endTime == null) {
-                return _chartRenderStartTime <= startTime && startTime <= _chartRenderEndTime;
+                return _state.chartRenderStartTime <= startTime && startTime <= _state.chartRenderEndTime;
             }
             else {
                 return _options.chartStartTime <= endTime && startTime <= _options.chartEndTime;
@@ -914,15 +915,15 @@ namespace Services.PlumChart.Core {
          * @returns 
          */
         function trucateTimeRange(startTime: Date, endTime?: Date): [Date, Date?] {
-            const trucateStartTime = new Date(Math.max(startTime.getTime(), _chartRenderStartTime.getTime()));
-            const trucateEndTime = endTime == null ? null : new Date(Math.min(endTime.getTime(), _chartRenderEndTime.getTime()));
+            const trucateStartTime = new Date(Math.max(startTime.getTime(), _state.chartRenderStartTime.getTime()));
+            const trucateEndTime = endTime == null ? null : new Date(Math.min(endTime.getTime(), _state.chartRenderEndTime.getTime()));
             return [trucateStartTime, trucateEndTime];
         }
 
         /** 컨트롤러를 초기화한다 */
         function _resetController() {
             // 클래스 초기화
-            _controllerLocationClassMap.forEach(cls => { _elements.contextMenu.classList.remove(cls) });
+            CONTROLLER_LOCATION_CLS_MAP.forEach(cls => { _elements.contextMenu.classList.remove(cls) });
             _elements.contextMenu.classList.remove(CLS_CONTEXT_MENU_CLOSED);
             _elements.contextMenu.classList.remove(CLS_CONTEXT_MENU_COLLAPSED);
 
@@ -930,7 +931,7 @@ namespace Services.PlumChart.Core {
                 // 고정 컨트롤러인 경우 컨텍스트 메뉴를 미니 상태로 설정.
                 _elements.contextMenu.classList.add(CLS_CONTEXT_MENU_COLLAPSED);
                 // 컨트롤러 위치 적용
-                const locationClass = _controllerLocationClassMap.get(_controllerLocation);
+                const locationClass = CONTROLLER_LOCATION_CLS_MAP.get(_options.controllerLocation);
                 _elements.contextMenu.classList.add(locationClass);
             }
         }
@@ -940,14 +941,13 @@ namespace Services.PlumChart.Core {
             css.setBorderColor(_options.borderColor);
             css.setCanvasLineColor(_options.canvasLineColor);
 
-            _setCellWidth(_options.cellWidth);
             _setCellHeight(_options.cellHeight);
 
             css.setLeftPanelWidth(_options.leftPanelWidth);
             css.setColumnTitleHeight(_options.columnTitleHeight);
             css.setColumnHeaderHeight(_options.columnHeaderHeight);
             css.setSideCanvasHeight(_options.sideCanvasHeight);
-            css.setSideCanvasContentHeight(_options.cellHeight * _options.sideCanvasContentHeightRatio);
+            css.setSideCanvasContentHeight(_calcSideCanvasContentHeight());
             css.setScrollWidth(_options.scrollWidth);
         }
         /**
@@ -964,31 +964,26 @@ namespace Services.PlumChart.Core {
 
             // 캔버스 컬럼 수를 계산한다. 
             // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
-            _canvasColumnCount = Math.floor((_chartRenderEndTime.valueOf() - _chartRenderStartTime.valueOf()) / toTime(_options.cellMinutes));
+            _state.canvasColumnCount = Math.floor((_state.chartRenderEndTime.valueOf() - _state.chartRenderStartTime.valueOf()) / toTime(_options.cellMinutes));
 
             // 캔버스 컬럼 수에 따라 캔버스 너비를 계산한다.
             if (_options.columnAutoWidth) {
-                _originalCellWidth = _elements.mainCanvasBox.clientWidth / _canvasColumnCount;
-                const cellWidth = _originalCellWidth * _currZoomScale;
-                _setCellWidth(cellWidth);
+                _state.originalCellWidth = _elements.mainCanvasBox.clientWidth / _state.canvasColumnCount;
+                _state.cellWidth = _state.originalCellWidth * _state.currZoomScale;
             }
-
             renderCanvas();
 
             _startResizeObserver();
         }
 
         function renderCanvas() {
-
             // 캔버스 사이즈를 갱신한 후 갱신된 사이즈에 맞춰 렌더링을 실행한다.
             _updateCanvasSize();
-
             _renderColumnTitle();
             _renderColumnHeader();
             _renderSideCanvas();
             _renderMainCanvas();
             _renderEntities();
-
 
             // 스크롤 위치를 강제로 변경시켜 렌더링을 유도한다.
             _elements.mainCanvasBox.scrollTo(_elements.mainCanvasBox.scrollLeft, _elements.mainCanvasBox.scrollTop - 1);
@@ -1001,9 +996,8 @@ namespace Services.PlumChart.Core {
             if (_options.columnAutoWidth) {
                 // 컬럼헤더에 따라 캔버스 사이즈가 변경된다.
                 const canvasWidth = _elements.mainCanvasBox.clientWidth;
-                _originalCellWidth = canvasWidth / _canvasColumnCount;
-                const cellWidth = _originalCellWidth * _currZoomScale;
-                _setCellWidth(cellWidth);
+                _state.originalCellWidth = canvasWidth / _state.canvasColumnCount;
+                _state.cellWidth = _state.originalCellWidth * _state.currZoomScale;
                 _refreshCanvas();
             }
         }
@@ -1039,8 +1033,8 @@ namespace Services.PlumChart.Core {
             * timeline header와 timeline canvas는 main canvas 수평스크롤과 동기화한다.
             * entity list는 main canvas 수직스크롤과 동기화한다.
             */
-            let canvasWidth = Math.max(_cellWidth * _canvasColumnCount, _elements.mainCanvasBox.clientWidth);
-            let canvasHeight = Math.max(_cellHeight * _data.entities.length, _elements.mainCanvasBox.clientHeight);
+            let canvasWidth = Math.max(_state.cellWidth * _state.canvasColumnCount, _elements.mainCanvasBox.clientWidth);
+            let canvasHeight = Math.max(_state.cellHeight * _data.entities.length, _elements.mainCanvasBox.clientHeight);
 
             _elements.columnHeader.style.width = `${canvasWidth + _options.scrollWidth}px`;
             _elements.sideCanvas.style.width = `${canvasWidth + _options.scrollWidth}px`;
@@ -1065,13 +1059,13 @@ namespace Services.PlumChart.Core {
             _headerElements.clear();
 
             let cellIndex = 0;
-            let currentTime = _chartRenderStartTime;
-            while (cellIndex < _canvasColumnCount) {
+            let currentTime = _state.chartRenderStartTime;
+            while (cellIndex < _state.canvasColumnCount) {
                 const containerElement = document.createElement("div");
                 containerElement.classList.add(CLS_COLUMN_HEADER_ITEM);
-                const left = cellIndex == 0 ? 0 : (cellIndex * _cellWidth) + 1;
+                const left = cellIndex == 0 ? 0 : (cellIndex * _state.cellWidth) + 1;
                 containerElement.style.left = `${left}px`;
-                containerElement.style.width = `${_cellWidth}px`;
+                containerElement.style.width = `${_state.cellWidth}px`;
                 _options.headerCellRender(currentTime, containerElement);
                 _elements.columnHeader.appendChild(containerElement);
                 _headerElements.set(cellIndex, containerElement);
@@ -1083,32 +1077,32 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderCanvasHeaderVLines() {
-            _elements.canvasColumnVLines.length = 0;
+            _state.canvasColumnVLines.length = 0;
             let left = 0;
-            for (let i = 0; i < _canvasColumnCount; i++) {
-                left += _cellWidth;
+            for (let i = 0; i < _state.canvasColumnCount; i++) {
+                left += _state.cellWidth;
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
                 line.style.left = `${left}px`;
                 _elements.columnHeader.appendChild(line);
-                _elements.canvasColumnVLines.push(line);
+                _state.canvasColumnVLines.push(line);
             }
         }
 
         function _refreshCanvasHeaderVLines() {
             let left = 0;
-            for (let i = 0; i < _elements.canvasColumnVLines.length; i++) {
-                left += _cellWidth;
-                const line = _elements.canvasColumnVLines[i];
+            for (let i = 0; i < _state.canvasColumnVLines.length; i++) {
+                left += _state.cellWidth;
+                const line = _state.canvasColumnVLines[i];
                 line.style.left = `${left}px`;
             }
         }
 
         function _refreshColumnHeaders() {
             for (const [index, el] of _headerElements) {
-                const left = index == 0 ? 0 : (index * _cellWidth) + 1;
+                const left = index == 0 ? 0 : (index * _state.cellWidth) + 1;
                 el.style.left = `${left}px`;
-                el.style.width = `${_cellWidth}px`;
+                el.style.width = `${_state.cellWidth}px`;
             }
             _refreshCanvasHeaderVLines();
         }
@@ -1159,18 +1153,18 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderSideCanvasVerticalLine() {
-            _elements.sideCanvasVLines.length = 0;
+            _state.sideCanvasVLines.length = 0;
             const canvasWidth = _elements.sideCanvas.scrollWidth;
-            const vLineCount = Math.ceil(canvasWidth / _cellWidth);
+            const vLineCount = Math.ceil(canvasWidth / _state.cellWidth);
 
             let left = 0;
             for (let i = 0; i < vLineCount; i++) {
-                left += _cellWidth;
+                left += _state.cellWidth;
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
                 line.style.left = `${left}px`;
                 _elements.sideCanvas.appendChild(line);
-                _elements.sideCanvasVLines.push(line);
+                _state.sideCanvasVLines.push(line);
             }
         }
 
@@ -1181,9 +1175,9 @@ namespace Services.PlumChart.Core {
 
         function _refreshSideCanvasVerticalLine() {
             let left = 0;
-            for (let i = 0; i < _elements.sideCanvasVLines.length; i++) {
-                left += _cellWidth;
-                const line = _elements.sideCanvasVLines[i];
+            for (let i = 0; i < _state.sideCanvasVLines.length; i++) {
+                left += _state.cellWidth;
+                const line = _state.sideCanvasVLines[i];
                 line.style.left = `${left}px`;
             }
         }
@@ -1210,14 +1204,14 @@ namespace Services.PlumChart.Core {
             if (_options.sidePointEventRender != null)
                 _options.sidePointEventRender(event, _elements.sideCanvas, containerElement);
             _elements.sideCanvas.appendChild(containerElement);
-            _sidePointEventItems.push({
+            _state.sidePointEventItems.push({
                 time: eventTime,
                 containerEl: containerElement
             });
         }
 
         function _refreshSidePointEvents() {
-            for (const container of _sidePointEventItems) {
+            for (const container of _state.sidePointEventItems) {
                 const time = container.time;
                 const containerEl = container.containerEl;
                 const { top, left } = _calcSidePointEventPosition(time);
@@ -1228,11 +1222,10 @@ namespace Services.PlumChart.Core {
 
         function _calcSidePointEventPosition(eventTime: Date) {
             const [renderStartTime] = trucateTimeRange(eventTime);
-            const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-            const center = time * _cellWidth / _options.cellMinutes;
-            const sideCanvasContentHeight = _options.sideCanvasHeight * _options.sideCanvasContentHeightRatio;
-            const top = (_options.sideCanvasHeight - sideCanvasContentHeight) / 2;
-            const width = sideCanvasContentHeight;
+            const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const center = time * _state.cellWidth / _options.cellMinutes;
+            const top = (_options.sideCanvasHeight - _calcSideCanvasContentHeight()) / 2;
+            const width = _calcSideCanvasContentHeight();
             const left = center - (width / 2);
             return {
                 left: left,
@@ -1253,16 +1246,15 @@ namespace Services.PlumChart.Core {
         }
 
         function _refreshActiveEntitiList() {
-            for (const [_, entityRow] of _activeEntityRows.entries()) {
-                console.log("_refreshActiveEntitiList", entityRow);
+            for (const [_, entityRow] of _state.activeEntityRows.entries()) {
                 _refreshEntityRow(entityRow);
             }
         }
 
         function _renderMainCanvasVLine() {
-            _mainCanvasVLines.length = 0;
+            _state.mainCanvasVLines.length = 0;
             const canvasWidth = _elements.mainCanvas.scrollWidth;
-            const lineGap = _cellWidth;
+            const lineGap = _state.cellWidth;
             const lineHeight = _elements.mainCanvas.scrollHeight;
             const vLineCount = Math.ceil(canvasWidth / lineGap);
 
@@ -1275,20 +1267,21 @@ namespace Services.PlumChart.Core {
                 line.style.height = `${lineHeight}px`;
 
                 _elements.mainCanvas.appendChild(line);
-                _mainCanvasVLines.push(line);
+                _state.mainCanvasVLines.push(line);
             }
         }
 
         function _refreshMainCanvasVLines() {
-            for (let i = 0; i < _mainCanvasVLines.length; i++) {
-                const line = _mainCanvasVLines[i];
-                line.style.left = `${(i + 1) * _cellWidth}px`;
+            for (let i = 0; i < _state.mainCanvasVLines.length; i++) {
+                const line = _state.mainCanvasVLines[i];
+                line.style.left = `${(i + 1) * _state.cellWidth}px`;
             }
         }
 
         function _renderEntities() {
-            _entityContainerRows.clear();
-            _activeEntityRows.clear();
+            _state.entityContainerRows.clear();
+            _state.activeEntityRows.clear();
+
             if (_options.renderMode == CanvasRenderMode.Intersection) {
                 _startRenderEntityRow();
             } else if (_options.renderMode == CanvasRenderMode.Scroll) {
@@ -1306,7 +1299,7 @@ namespace Services.PlumChart.Core {
             if (_options.hasHorizontalLine) {
                 const mainCanvasHLine = document.createElement("div");
                 mainCanvasHLine.classList.add(CLS_MAIN_CANVAS_H_BORDER);
-                mainCanvasHLine.style.top = `${_cellHeight * (index)}px`;
+                mainCanvasHLine.style.top = `${_state.cellHeight * (index)}px`;
                 _elements.mainCanvas.appendChild(mainCanvasHLine);
                 entityRow.hLine = mainCanvasHLine;
             }
@@ -1315,7 +1308,7 @@ namespace Services.PlumChart.Core {
 
         function _refreshEntityRow(entityRow: EntityRow) {
             const { index, entity, containerEl, lastRenderTime } = entityRow;
-            entityRow.hLine.style.top = `${_cellHeight * (index)}px`;
+            entityRow.hLine.style.top = `${_state.cellHeight * (index)}px`;
             _refreshEntityEvents(entityRow);
             entityRow.lastRenderTime = new Date();
         }
@@ -1327,10 +1320,8 @@ namespace Services.PlumChart.Core {
 
         const callback: IntersectionObserverCallback = (changedEntries: IntersectionObserverEntry[]) => {
             changedEntries.forEach((entry: IntersectionObserverEntry, i: number) => {
-                console.log(entry, (entry.target as any).tag);
-
                 const containerEl = entry.target as HTMLElement;
-                const entityRow = _entityContainerRows.get(containerEl);
+                const entityRow = _state.entityContainerRows.get(containerEl);
                 if (entry.isIntersecting) {
                     if (entityRow.lastRenderTime == null) {
                         // 최초 렌더링
@@ -1339,14 +1330,14 @@ namespace Services.PlumChart.Core {
                         // 리페인트
                         _refreshEntityRow(entityRow);
                     }
-                    _activeEntityRows.set(entityRow.index, entityRow);
+                    _state.activeEntityRows.set(entityRow.index, entityRow);
                 }
                 else {
                     // 스크롤에 의해 엔티티가 영역을 벗어나는 경우에만 교차엔티티 리스트에서 제거한다.
                     // 루트 요소의 가시성 변경(display:none)에 의한 경우에는 교차엔티티 리스트에서 제거하지 않는다.
                     const rootElDisplayNone = entry.rootBounds.width == 0 && entry.rootBounds.height == 0;
                     if (!rootElDisplayNone) {
-                        _activeEntityRows.delete(entityRow.index);
+                        _state.activeEntityRows.delete(entityRow.index);
                     }
                 }
             });
@@ -1368,9 +1359,9 @@ namespace Services.PlumChart.Core {
             const containerCount = _data.entities.length;
             for (let i = 0; i < containerCount; i++) {
                 /*
-엔티티 컨테이너(로우) 생성
--마우스 오버시 배경색 변경
--마우스 클릭시 해당 엔티티의 가장 빠른 이벤트로 이동
+    엔티티 컨테이너(로우) 생성
+    -마우스 오버시 배경색 변경
+    -마우스 클릭시 해당 엔티티의 가장 빠른 이벤트로 이동
                 */
 
                 const containerEl = document.createElement("div");
@@ -1383,20 +1374,20 @@ namespace Services.PlumChart.Core {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
                 });
                 containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _entityContainerRows.get(containerEl);
+                    const entityContainer = _state.entityContainerRows.get(containerEl);
                     const entity = entityContainer.entity;
                     const evtStartTime = _getFirstVisibleEventTime(entity);
 
                     if (evtStartTime != null) {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
-                        const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-                        const left = time * _cellWidth / _options.cellMinutes;
+                        const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+                        const left = time * _state.cellWidth / _options.cellMinutes;
                         _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
                 _elements.entityTableBox.appendChild(containerEl);
                 (containerEl as any).tag = i;
-                _entityContainerRows.set(containerEl, {
+                _state.entityContainerRows.set(containerEl, {
                     index: i,
                     containerEl: containerEl,
                     entity: _data.entities[i],
@@ -1427,20 +1418,20 @@ namespace Services.PlumChart.Core {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
                 });
                 containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _entityContainerRows.get(containerEl);
+                    const entityContainer = _state.entityContainerRows.get(containerEl);
                     const entity = entityContainer.entity;
                     const evtStartTime = _getFirstVisibleEventTime(entity);
 
                     if (evtStartTime != null) {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
-                        const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-                        const left = time * _cellWidth / _options.cellMinutes;
+                        const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+                        const left = time * _state.cellWidth / _options.cellMinutes;
                         _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
                 _elements.entityTableBox.appendChild(containerEl);
 
-                _entityContainerRows.set(containerEl, {
+                _state.entityContainerRows.set(containerEl, {
                     index: i,
                     containerEl: containerEl,
                     entity: _data.entities[i],
@@ -1455,38 +1446,32 @@ namespace Services.PlumChart.Core {
                 const scrollHeight = _elements.mainCanvasBox.scrollHeight;
                 const clientHeight = _elements.mainCanvasBox.clientHeight;
                 const scrollBottom = scrollTop + clientHeight;
-                const containerTop = i * _cellHeight;
-                const containerBottom = containerTop + _cellHeight;
+                const containerTop = i * _state.cellHeight;
+                const containerBottom = containerTop + _state.cellHeight;
                 if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
-                    _renderEntityRow(_entityContainerRows.get(containerEl));
-                    _activeEntityRows.set(i, _entityContainerRows.get(containerEl));
-                    console.log("render start", i, _entityContainerRows.get(containerEl).lastRenderTime);
+                    _renderEntityRow(_state.entityContainerRows.get(containerEl));
+                    _state.activeEntityRows.set(i, _state.entityContainerRows.get(containerEl));
                 }
             }
 
             if (!_scrollDetectorActive) {
-                console.log("scroll detector start");
                 _elements.mainCanvasBox.addEventListener("scroll", (e) => {
-                    console.log("scroll event");
                     const scrollTop = _elements.mainCanvasBox.scrollTop;
                     const scrollHeight = _elements.mainCanvasBox.scrollHeight;
                     const clientHeight = _elements.mainCanvasBox.clientHeight;
                     const scrollBottom = scrollTop + clientHeight;
-                    for (const [_, entityRow] of _entityContainerRows.entries()) {
-                        const containerTop = entityRow.index * _cellHeight;
-                        const containerBottom = containerTop + _cellHeight;
+                    for (const [_, entityRow] of _state.entityContainerRows.entries()) {
+                        const containerTop = entityRow.index * _state.cellHeight;
+                        const containerBottom = containerTop + _state.cellHeight;
                         if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
-                            _activeEntityRows.set(entityRow.index, entityRow);
+                            _state.activeEntityRows.set(entityRow.index, entityRow);
                             if (entityRow.lastRenderTime == null) {
-                                console.log("render start", entityRow.index, entityRow.lastRenderTime);
                                 _renderEntityRow(entityRow);
-                                console.log("render end", entityRow.index, entityRow.lastRenderTime);
                             } else if (entityRow.lastRenderTime < _state.lastZoomTime) {
-                                console.log("_refreshEntityRow", entityRow.index);
                                 _refreshEntityRow(entityRow);
                             }
                         } else {
-                            _activeEntityRows.delete(entityRow.index);
+                            _state.activeEntityRows.delete(entityRow.index);
                         }
                     }
                 });
@@ -1511,20 +1496,20 @@ namespace Services.PlumChart.Core {
                     containerEl.style.backgroundColor = (containerEl as any).tag;
                 });
                 containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _entityContainerRows.get(containerEl);
+                    const entityContainer = _state.entityContainerRows.get(containerEl);
                     const entity = entityContainer.entity;
                     const evtStartTime = _getFirstVisibleEventTime(entity);
 
                     if (evtStartTime != null) {
                         const [renderStartTime] = trucateTimeRange(evtStartTime);
-                        const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-                        const left = time * _cellWidth / _options.cellMinutes;
+                        const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+                        const left = time * _state.cellWidth / _options.cellMinutes;
                         _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
                     }
                 });
                 _elements.entityTableBox.appendChild(containerEl);
 
-                _entityContainerRows.set(containerEl, {
+                _state.entityContainerRows.set(containerEl, {
                     index: i,
                     containerEl: containerEl,
                     entity: _data.entities[i],
@@ -1533,8 +1518,8 @@ namespace Services.PlumChart.Core {
                     pointEventContainers: [],
                     rangeEventContainers: [],
                 });
-                _renderEntityRow(_entityContainerRows.get(containerEl));
-                _activeEntityRows.set(i, _entityContainerRows.get(containerEl));
+                _renderEntityRow(_state.entityContainerRows.get(containerEl));
+                _state.activeEntityRows.set(i, _state.entityContainerRows.get(containerEl));
             }
         }
 
@@ -1580,8 +1565,8 @@ namespace Services.PlumChart.Core {
                 return [];
 
             return rangeEvents.filter((evt: RangeEvent) => {
-                return _chartRenderStartTime.valueOf() <= evt.startTime.valueOf()
-                    && evt.startTime.valueOf() <= _chartRenderEndTime.valueOf();
+                return _state.chartRenderStartTime.valueOf() <= evt.startTime.valueOf()
+                    && evt.startTime.valueOf() <= _state.chartRenderEndTime.valueOf();
             }).sort((a: RangeEvent, b: RangeEvent) => {
                 return a.startTime.valueOf() - b.startTime.valueOf();
             });
@@ -1597,8 +1582,8 @@ namespace Services.PlumChart.Core {
                 return [];
 
             return pointEvents.filter((evt: PointEvent) => {
-                return _chartRenderStartTime.valueOf() <= evt.time.valueOf()
-                    && evt.time.valueOf() <= _chartRenderEndTime.valueOf();
+                return _state.chartRenderStartTime.valueOf() <= evt.time.valueOf()
+                    && evt.time.valueOf() <= _state.chartRenderEndTime.valueOf();
             }).sort((a: PointEvent, b: PointEvent) => {
                 return a.time.valueOf() - b.time.valueOf();
             });
@@ -1653,10 +1638,10 @@ namespace Services.PlumChart.Core {
 
         function _calcPointEventPosition(eventTime: Date, rowIndex: number): { top: number, left: number } {
             const [renderStartTime] = trucateTimeRange(eventTime);
-            const time = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
-            const center = time * _cellWidth / _options.cellMinutes;
-            const contentHeight = _getMainPointContentHeight();
-            const top = (_cellHeight * rowIndex) + ((_cellHeight - contentHeight) / 2) - 1;
+            const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+            const center = time * _state.cellWidth / _options.cellMinutes;
+            const contentHeight = _calcMainPointContentHeight();
+            const top = (_state.cellHeight * rowIndex) + ((_state.cellHeight - contentHeight) / 2) - 1;
             const width = contentHeight;
             const left = center - (width / 2);
             return {
@@ -1678,12 +1663,12 @@ namespace Services.PlumChart.Core {
 
         function _calcRangeEventPosition(eventStartTime: Date, eventEndTime: Date, rowIndex: number): { top: number, left: number, width: number } {
             const [renderStartTime, renderEndTime] = trucateTimeRange(eventStartTime, eventEndTime);
-            const startTime = toMinutes(renderStartTime.valueOf() - _chartRenderStartTime.valueOf());
+            const startTime = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
             const duration = toMinutes(renderEndTime.valueOf() - renderStartTime.valueOf());
-            const left = startTime * _cellWidth / _options.cellMinutes;
-            const width = duration * _cellWidth / _options.cellMinutes;
-            const top = (_cellHeight * rowIndex)
-                + (_cellHeight - _getMainRangeContentHeight()) / 2
+            const left = startTime * _state.cellWidth / _options.cellMinutes;
+            const width = duration * _state.cellWidth / _options.cellMinutes;
+            const top = (_state.cellHeight * rowIndex)
+                + (_state.cellHeight - _calcMainRangeContentHeight()) / 2
                 - 1;
             return {
                 left: left,
@@ -1726,7 +1711,7 @@ namespace Services.PlumChart.Core {
         }
 
         function _refreshGlobalRangeEvents() {
-            for (const container of _globalRangeEventItems) {
+            for (const container of _state.globalRangeEventItems) {
                 const startTime = container.startTime;
                 const endTime = container.endTime;
                 const { top, left, width } = _calcRangeEventPosition(startTime, endTime, 0);
@@ -1751,7 +1736,7 @@ namespace Services.PlumChart.Core {
                 _options.globalRangeEventRender(event, _elements.mainCanvas, containerElement);
 
             _elements.mainCanvas.appendChild(containerElement);
-            _globalRangeEventItems.push({
+            _state.globalRangeEventItems.push({
                 startTime: eventStartTime,
                 endTime: eventEndTime,
                 containerEl: containerElement
@@ -1762,10 +1747,10 @@ namespace Services.PlumChart.Core {
             const shouldReset = _state.prevZoomDirection == "out" ||
                 _state.accelResetTimeout < new Date().valueOf() - _state.lastZoomTime.valueOf();
             if (shouldReset) {
-                _zoomVelocity = 0;
+                _state.zoomVelocity = 0;
             }
-            _zoomVelocity += _defaultZoomStep;
-            const nextZoomScaleX = _currZoomScale + _zoomVelocity;
+            _state.zoomVelocity += _state.defaultZoomStep;
+            const nextZoomScaleX = _state.currZoomScale + _state.zoomVelocity;
             _zoom(nextZoomScaleX, pivotPointX, pivotPointY);
             _state.prevZoomDirection = "in";
         }
@@ -1774,10 +1759,10 @@ namespace Services.PlumChart.Core {
             const shouldReset = _state.prevZoomDirection == "in" ||
                 _state.accelResetTimeout < new Date().valueOf() - _state.lastZoomTime.valueOf();
             if (shouldReset) {
-                _zoomVelocity = 0;
+                _state.zoomVelocity = 0;
             }
-            _zoomVelocity -= _defaultZoomStep;
-            const nextZoomScale = _currZoomScale + _zoomVelocity;
+            _state.zoomVelocity -= _state.defaultZoomStep;
+            const nextZoomScale = _state.currZoomScale + _state.zoomVelocity;
             _zoom(nextZoomScale, pivotPointX, pivotPointY);
             _state.prevZoomDirection = "out";
         }
@@ -1793,9 +1778,9 @@ namespace Services.PlumChart.Core {
             let scrollTop = _elements.mainCanvasBox.scrollTop;
 
             if (_options.hZoomEnabled) {
-                const newCellWidth = _originalCellWidth * scale;
-                const prevCellWidth = _cellWidth;
-                _cellWidth = newCellWidth;
+                const newCellWidth = _state.originalCellWidth * scale;
+                const prevCellWidth = _state.cellWidth;
+                _state.cellWidth = newCellWidth;
 
                 if (pivotPointX) {
                     const scrollOffset = pivotPointX - scrollLeft;
@@ -1805,8 +1790,8 @@ namespace Services.PlumChart.Core {
 
             }
             if (_options.vZoomEnabled) {
-                const prevCellHeight = _cellHeight;
-                const newCellHeight = _originalCellHeight * scale;
+                const prevCellHeight = _state.cellHeight;
+                const newCellHeight = _state.originalCellHeight * scale;
                 const newCellContentHeight = _options.cellContentHeightRatio * newCellHeight;
                 _setCellHeight(newCellHeight);
                 if (pivotPointY) {
@@ -1816,8 +1801,6 @@ namespace Services.PlumChart.Core {
                 }
             }
 
-
-
             // 일부 렌더링에는 마지막 줌 시간이 필요하므로 미리 저장해둔다.
             _state.lastZoomTime = new Date();
             _refreshCanvas();
@@ -1826,7 +1809,7 @@ namespace Services.PlumChart.Core {
             _elements.mainCanvasBox.scrollLeft = scrollLeft;
             _elements.mainCanvasBox.scrollTop = scrollTop;
 
-            _currZoomScale = scale;
+            _state.currZoomScale = scale;
         }
 
         /**
@@ -1843,12 +1826,12 @@ namespace Services.PlumChart.Core {
         return {
             create,
             setOptions,
+            getOptions,
             setData,
             getData,
             setChartTimeRange,
             render,
             renderCanvas,
-
         }
     };
 }
