@@ -59,6 +59,8 @@ img {
     height: var(--tc-column-title-height);
     border-right: 1px solid var(--plc-border-color);
     border-bottom: 1px solid var(--plc-border-color);
+    text-align: center;
+    line-height: var(--tc-column-title-height);
 }
 
 .tc-table-column-box {

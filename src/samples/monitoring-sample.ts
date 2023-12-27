@@ -92,6 +92,16 @@ namespace Services.PlumChart.MonitoringSample {
                     description: "도색불량",
                     time: new Date(Date.parse("2020-01-01T04:45:00")),
                     entityId: 1,
+                },
+                {
+                    description: "불량품",
+                    time: new Date(Date.parse("2020-01-01T06:30:00")),
+                    entityId: 1,
+                },
+                {
+                    description: "도색불량",
+                    time: new Date(Date.parse("2020-01-01T07:45:00")),
+                    entityId: 1,
                 }
             ],
             rangeEvents: [
@@ -415,22 +425,22 @@ namespace Services.PlumChart.MonitoringSample {
         {
             id: 1,
             description: "서보모터 이상",
-            time: new Date(Date.parse("2020-01-01T01:30:00")),
+            time: new Date(Date.parse("2020-01-01T06:30:00")),
         },
         {
             id: 2,
             description: "냉각기 이상",
-            time: new Date(Date.parse("2020-01-01T02:30:00")),
+            time: new Date(Date.parse("2020-01-01T07:30:00")),
         },
         {
             id: 3,
             description: "온수기 이상",
-            time: new Date(Date.parse("2020-01-01T03:00:00")),
+            time: new Date(Date.parse("2020-01-01T08:00:00")),
         },
         {
             id: 4,
             description: "냉각기 이상",
-            time: new Date(Date.parse("2020-01-01T03:02:00")),
+            time: new Date(Date.parse("2020-01-01T09:02:00")),
         },
         {
             id: 5,
@@ -813,12 +823,12 @@ namespace Services.PlumChart.MonitoringSample {
         addHoverColor(boxElement, COLOR_SELECTED_EVENT);
     };
 
-    const mainTitleRender = function (containerElement: HTMLElement) {
+    const renderGridTitle = function (containerElement: HTMLElement) {
         containerElement.classList.add("tr-main-title");
         containerElement.innerHTML = "ABC H/L LH Line 03";
     }
 
-    const tableColumnRender = function (containerElement: HTMLElement) {
+    const renderGridColumns = function (containerElement: HTMLElement) {
         const box = document.createElement("div");
         box.classList.add("tr-table-column-box");
         containerElement.appendChild(box);
@@ -834,7 +844,7 @@ namespace Services.PlumChart.MonitoringSample {
         box.appendChild(item2);
     }
 
-    const tableRowRender = function (entity: any, containerElement: HTMLElement) {
+    const renderGridRow = function (index: number, entity: any, containerElement: HTMLElement) {
         containerElement.classList.add("tr-table-row-box");
 
         const item1 = document.createElement("div");
@@ -848,7 +858,7 @@ namespace Services.PlumChart.MonitoringSample {
         containerElement.appendChild(item2);
     }
 
-    const columnTitleRender = function (containerElement: HTMLElement) {
+    const renderCanvasTitle = function (containerElement: HTMLElement) {
         containerElement.classList.add("tr-column-title");
         containerElement.innerText = "ABC TIME LINE";
     }
@@ -881,28 +891,27 @@ namespace Services.PlumChart.MonitoringSample {
             columnTitleHeight: cellHeight,
             columnHeaderHeight: cellHeight,
             sideCanvasHeight: cellHeight,
-            sideCanvasContentHeightRatio: 0.5,
             cellMinutes: cellMinutes,
             cellWidth: cellWidth,
             cellHeight: cellHeight,
             paddingCellCount: 1,
-            mainRangeContentRatio: 0.5,
             maxZoomScale: 10,
             hasHorizontalLine: true,
             hasVerticalLine: true,
             leftPanelWidth: 400,
-            sidePointEventRender: sidePointEventRender,
-            tableRowRender: tableRowRender,
-            tableColumnRender: tableColumnRender,
-            entityPointEventRender: entityPointEventRender,
-            entityRangeEventRender: entityRangeEventRender,
-            headerCellRender: headerCellRender,
-            globalRangeEventRender: globalRangeEventRender,
             columnAutoWidth: false,
             vZoomEnabled: false,
-            mainTitleRender: mainTitleRender,
-            columnTitleRender: columnTitleRender,
             rowHoverColor: "#ccc",
+
+            renderGridRow: renderGridRow,
+            renderGridColumns: renderGridColumns,
+            renderHeaderCell: headerCellRender,
+            renderGridTitle: renderGridTitle,
+            renderCanvasTitle: renderCanvasTitle,
+            renderSidePointEvent: sidePointEventRender,
+            renderEntityPointEvent: entityPointEventRender,
+            renderEntityRangeEvent: entityRangeEventRender,
+            renderGlobalRangeEvent: globalRangeEventRender,
         };
 
         _chart = Services.PlumChart.Core.CoreChart();
@@ -921,7 +930,7 @@ namespace Services.PlumChart.MonitoringSample {
     export function renderChart() {
         startTime = new Date(startTime.getTime() + 1 * 60 * 1000);
         endTime = new Date(endTime.getTime() + 1 * 60 * 1000);
-        
+
 
         _data.entities = [
             {
@@ -989,9 +998,9 @@ window.addEventListener("load", () => {
     };
 
     let intervalId = 0;
-    intervalId = setInterval(() => {
-        refresh();
-    }, 1000);
+    // intervalId = setInterval(() => {
+    //     refresh();
+    // }, 1000);
 
 
     let timeoutId = 0;

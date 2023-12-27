@@ -126,11 +126,10 @@ namespace Services.PlumChart.Core {
         columnTitleHeight?: number;
         columnHeaderHeight?: number;
         sideCanvasHeight?: number;
-        sideCanvasContentHeightRatio?: number;
         cellMinutes?: number;
         cellWidth?: number;
         cellHeight?: number;
-        cellContentHeightRatio?: number;
+        sideCanvasContentHeightRatio?: number;
         mainRangeContentRatio?: number;
         mainPointContentRatio?: number;
         minZoomScale?: number;
@@ -181,17 +180,17 @@ namespace Services.PlumChart.Core {
          */
         entityEventSearchScrollOffset?: number;
 
-        headerTimeFormat?: (time: Date) => string;
-        headerCellRender?: (time: Date, containerEl: HTMLElement) => void;
-        tableRowRender?: (entity: Entity, containerEl: HTMLElement) => void;
-        sidePointEventRender?: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        entityPointEventRender?: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        entityRangeEventRender?: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        globalRangeEventRender?: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
-        mainTitleRender?: (containerEl: HTMLElement, title: string) => void;
-        columnTitleRender?: (containerEl: HTMLElement, title: string) => void;
-        tableColumnRender?: (containerEl: HTMLElement) => void;
         customizeElements?: (elements: { rootElement: HTMLElement }) => void;
+        formatHeaderTime?: (time: Date) => string;
+        renderHeaderCell?: (time: Date, containerEl: HTMLElement) => void;
+        renderCanvasTitle?: (containerEl: HTMLElement, title: string) => void;
+        renderGridTitle?: (containerEl: HTMLElement, title: string) => void;
+        renderGridColumns?: (containerEl: HTMLElement) => void;
+        renderGridRow?: (idx: number, entity: Entity, containerEl: HTMLElement) => void;
+        renderSidePointEvent?: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        renderEntityPointEvent?: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        renderEntityRangeEvent?: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
+        renderGlobalRangeEvent?: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => void;
     }
 
     interface ChartState {
@@ -306,9 +305,9 @@ namespace Services.PlumChart.Core {
 
     interface ChartElements {
         root: HTMLElement;
-        mainTitle: HTMLElement;
-        tableColumnBox: HTMLElement;
-        columnTitle: HTMLElement;
+        gridTitle: HTMLElement;
+        gridColumnBox: HTMLElement;
+        canvasTitle: HTMLElement;
         entityTableBox: HTMLElement;
         columnHeaderBox: HTMLElement;
         columnHeader: HTMLElement;
@@ -479,19 +478,18 @@ namespace Services.PlumChart.Core {
             buttonScrollStepY: 200,
             mainRangeContentRatio: 0.8,
             mainPointContentRatio: 0.6,
+            sideCanvasContentHeightRatio: 0.6,
             maxZoomScale: 5,
             minZoomScale: 1,
             cellMinutes: 30,
             cellWidth: 100,
             cellHeight: 50,
-            cellContentHeightRatio: 0.8,
             leftPanelWidth: 200,
             mainTitle: "",
             columnTitle: "",
             columnTitleHeight: 30,
             columnHeaderHeight: 30,
             sideCanvasHeight: 30,
-            sideCanvasContentHeightRatio: 0.8,
             paddingCellCount: 0,
             scrollWidth: 15,
             hZoomEnabled: true,
@@ -503,12 +501,34 @@ namespace Services.PlumChart.Core {
             renderMode: CanvasRenderMode.Scroll,
 
 
-            headerTimeFormat: (time: Date) => { return time.toLocaleString(); },
             customizeElements: (_) => { },
-            headerCellRender: (time: Date, containerEl: HTMLElement) => {
-                const div = document.createElement("div");
-                div.innerText = _options.headerTimeFormat(time);
-                containerEl.appendChild(div);
+            formatHeaderTime: (time: Date) => { return time.toLocaleTimeString(); },
+            renderHeaderCell: (time: Date, containerEl: HTMLElement) => {
+                containerEl.innerText = _options.formatHeaderTime(time);
+            },
+            renderGridTitle: (containerEl: HTMLElement, title: string) => {
+                containerEl.innerText = title;
+            },
+            renderGridColumns: (containerEl: HTMLElement) => {
+                containerEl.innerText = "Column";
+            },
+            renderGridRow: (idx: number, entity: Entity, containerEl: HTMLElement) => {
+                containerEl.innerText = "Row #" + idx;
+            },
+            renderCanvasTitle: (containerEl: HTMLElement, title: string) => {
+                containerEl.innerText = title;
+            },
+            renderSidePointEvent: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => {
+                containerEl.style.backgroundColor = "yellow";
+            },
+            renderEntityPointEvent: (event: PointEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => {
+                containerEl.style.backgroundColor = "red";
+            },
+            renderEntityRangeEvent: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => {
+                containerEl.style.backgroundColor = "green";
+            },
+            renderGlobalRangeEvent: (event: RangeEvent, canvasEl: HTMLElement, containerEl: HTMLElement) => {
+                containerEl.style.backgroundColor = "blue";
             },
         }
 
@@ -547,9 +567,9 @@ namespace Services.PlumChart.Core {
          */
         const _elements: ChartElements = {
             root: null,
-            mainTitle: null,
-            tableColumnBox: null,
-            columnTitle: null,
+            gridTitle: null,
+            gridColumnBox: null,
+            canvasTitle: null,
             entityTableBox: null,
             columnHeaderBox: null,
             columnHeader: null,
@@ -616,9 +636,9 @@ namespace Services.PlumChart.Core {
             container.appendChild(element);
 
             _elements.root = container.getElementsByClassName(CLS_ROOT)[0] as HTMLElement;
-            _elements.mainTitle = container.getElementsByClassName(CLS_MAIN_TITLE)[0] as HTMLElement;
-            _elements.tableColumnBox = container.getElementsByClassName(CLS_TABLE_COLUMN_BOX)[0] as HTMLElement;
-            _elements.columnTitle = container.getElementsByClassName(CLS_COLUMN_TITLE)[0] as HTMLElement;
+            _elements.gridTitle = container.getElementsByClassName(CLS_MAIN_TITLE)[0] as HTMLElement;
+            _elements.gridColumnBox = container.getElementsByClassName(CLS_TABLE_COLUMN_BOX)[0] as HTMLElement;
+            _elements.canvasTitle = container.getElementsByClassName(CLS_COLUMN_TITLE)[0] as HTMLElement;
             _elements.entityTableBox = container.getElementsByClassName(CLS_ENTITY_TABLE_BOX)[0] as HTMLElement;
             _elements.columnHeaderBox = container.getElementsByClassName(CLS_COLUMN_HEADER_BOX)[0] as HTMLElement;
             _elements.columnHeader = container.getElementsByClassName(CLS_COLUMN_HEADER)[0] as HTMLElement;
@@ -960,7 +980,7 @@ namespace Services.PlumChart.Core {
             _options.customizeElements({ rootElement: _elements.root });
 
             _renderMainTitle();
-            _renderTableColumn();
+            _renderGridColumns();
 
             // 캔버스 컬럼 수를 계산한다. 
             // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
@@ -1013,18 +1033,13 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderMainTitle() {
-            _elements.mainTitle.replaceChildren();
-            if (_options.mainTitleRender != null) {
-                _options.mainTitleRender(_elements.mainTitle, _options.mainTitle);
-            } else {
-                _elements.mainTitle.innerText = _options.mainTitle;
-            }
+            _elements.gridTitle.replaceChildren();
+            _options.renderGridTitle(_elements.gridTitle, _options.mainTitle);
         }
 
-        function _renderTableColumn() {
-            _elements.tableColumnBox.replaceChildren();
-            if (_options.tableColumnRender != null)
-                _options.tableColumnRender(_elements.tableColumnBox);
+        function _renderGridColumns() {
+            _elements.gridColumnBox.replaceChildren();
+            _options.renderGridColumns(_elements.gridColumnBox);
         }
 
         function _updateCanvasSize() {
@@ -1044,12 +1059,8 @@ namespace Services.PlumChart.Core {
 
 
         function _renderColumnTitle() {
-            _elements.columnTitle.replaceChildren();
-            if (_options.columnTitleRender != null) {
-                _options.columnTitleRender(_elements.columnTitle, _options.columnTitle);
-            } else {
-                _elements.columnTitle.innerText = _options.columnTitle;
-            }
+            _elements.canvasTitle.replaceChildren();
+            _options.renderCanvasTitle(_elements.canvasTitle, _options.columnTitle);
         }
 
         let _headerElements = new Map<number, HTMLElement>();
@@ -1066,7 +1077,7 @@ namespace Services.PlumChart.Core {
                 const left = cellIndex == 0 ? 0 : (cellIndex * _state.cellWidth) + 1;
                 containerElement.style.left = `${left}px`;
                 containerElement.style.width = `${_state.cellWidth}px`;
-                _options.headerCellRender(currentTime, containerElement);
+                _options.renderHeaderCell(currentTime, containerElement);
                 _elements.columnHeader.appendChild(containerElement);
                 _headerElements.set(cellIndex, containerElement);
 
@@ -1201,8 +1212,8 @@ namespace Services.PlumChart.Core {
             containerElement.style.left = `${left}px`;
             containerElement.classList.add(CLS_SIDE_CANVAS_POINT_EVENT);
 
-            if (_options.sidePointEventRender != null)
-                _options.sidePointEventRender(event, _elements.sideCanvas, containerElement);
+            _options.renderSidePointEvent(event, _elements.sideCanvas, containerElement);
+
             _elements.sideCanvas.appendChild(containerElement);
             _state.sidePointEventItems.push({
                 time: eventTime,
@@ -1293,7 +1304,7 @@ namespace Services.PlumChart.Core {
 
         function _renderEntityRow(entityRow: EntityRow) {
             const { index, entity, containerEl } = entityRow;
-            _options.tableRowRender(entity, containerEl);
+            _options.renderGridRow(index, entity, containerEl);
             _renderEntityEvents(entity, entityRow);
 
             if (_options.hasHorizontalLine) {
@@ -1620,19 +1631,18 @@ namespace Services.PlumChart.Core {
             const rowIndex = entityRow.index;
             if (!isTimeInRange(eventTime))
                 return;
-            const containerElement = document.createElement("div");
+            const containerEl = document.createElement("div");
             const { top, left } = _calcPointEventPosition(eventTime, rowIndex);
-            containerElement.style.top = `${top}px`;
-            containerElement.style.left = `${left}px`;
-            containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_POINT_EVENT);
+            containerEl.style.top = `${top}px`;
+            containerEl.style.left = `${left}px`;
+            containerEl.classList.add(CLS_MAIN_CANVAS_ENTITY_POINT_EVENT);
 
-            if (_options.entityPointEventRender != null)
-                _options.entityPointEventRender(event, _elements.mainCanvas, containerElement);
+            _options.renderEntityPointEvent(event, _elements.mainCanvas, containerEl);
 
-            _elements.mainCanvas.appendChild(containerElement);
+            _elements.mainCanvas.appendChild(containerEl);
             entityRow.pointEventContainers.push({
                 time: eventTime,
-                containerEl: containerElement
+                containerEl: containerEl
             });
         }
 
@@ -1691,8 +1701,8 @@ namespace Services.PlumChart.Core {
             containerElement.style.top = `${top}px`;
             containerElement.style.width = `${width}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_ENTITY_RANGE_EVENT);
-            if (_options.entityRangeEventRender != null)
-                _options.entityRangeEventRender(event, _elements.mainCanvas, containerElement);
+
+            _options.renderEntityRangeEvent(event, _elements.mainCanvas, containerElement);
 
             _elements.mainCanvas.appendChild(containerElement);
             entityRow.rangeEventContainers.push({
@@ -1732,8 +1742,7 @@ namespace Services.PlumChart.Core {
             containerElement.style.width = `${width}px`;
             containerElement.classList.add(CLS_MAIN_CANVAS_GLOBAL_RANGE_EVENT);
 
-            if (_options.globalRangeEventRender != null)
-                _options.globalRangeEventRender(event, _elements.mainCanvas, containerElement);
+            _options.renderGlobalRangeEvent(event, _elements.mainCanvas, containerElement);
 
             _elements.mainCanvas.appendChild(containerElement);
             _state.globalRangeEventItems.push({
@@ -1792,11 +1801,10 @@ namespace Services.PlumChart.Core {
             if (_options.vZoomEnabled) {
                 const prevCellHeight = _state.cellHeight;
                 const newCellHeight = _state.originalCellHeight * scale;
-                const newCellContentHeight = _options.cellContentHeightRatio * newCellHeight;
                 _setCellHeight(newCellHeight);
                 if (pivotPointY) {
                     const scrollOffset = pivotPointY - scrollTop;
-                    const newPivotPointY = pivotPointY * newCellContentHeight / prevCellHeight; // 기준점까지의 거리
+                    const newPivotPointY = pivotPointY * newCellHeight / prevCellHeight; // 기준점까지의 거리
                     scrollTop = newPivotPointY - scrollOffset;
                 }
             }

@@ -839,13 +839,13 @@ namespace Services.PlumChart {
          * @param entity 
          * @param containerEl 
          */
-        function _defaultRenderGridRow(entity: Entity, containerEl: HTMLElement) {
+        function _defaultRenderGridRow(index1: number, entity: Entity, containerEl: HTMLElement) {
             containerEl.classList.add(CLS_GRID_ROW);
 
-            let index = 0;
+            let cellIndex = 0;
             for (const column of _gridColumnMap.keys()) {
                 const itemEl = document.createElement("div");
-                itemEl.setAttribute("data-index", (index++).toString());
+                itemEl.setAttribute("data-index", (cellIndex++).toString());
                 itemEl.classList.add(CLS_GRID_CELL);
                 itemEl.innerText = ((entity as any)[column.field] as object).toString() ?? "";
                 containerEl.appendChild(itemEl);
@@ -988,15 +988,15 @@ namespace Services.PlumChart {
                 leftPanelWidth: 350,
                 buttonScrollStepX: 400,
                 buttonScrollStepY: 400,
-                sidePointEventRender: _defaultRenderSidePointEvent,
-                tableRowRender: _defaultRenderGridRow,
-                entityPointEventRender: _defaultRenderEntityPointEvent,
-                entityRangeEventRender: _defaultRenderEntityRangeEvent,
-                headerCellRender: _defaultRenderCanvasColumn,
-                globalRangeEventRender: _defaultRenderGlobalRangeEvent,
-                mainTitleRender: _defaultRenderGridTitle,
-                tableColumnRender: _defaultRenderGridColumns,
-                columnTitleRender: _renderCanvasTitle,
+                renderSidePointEvent: _defaultRenderSidePointEvent,
+                renderGridRow: _defaultRenderGridRow,
+                renderEntityPointEvent: _defaultRenderEntityPointEvent,
+                renderEntityRangeEvent: _defaultRenderEntityRangeEvent,
+                renderHeaderCell: _defaultRenderCanvasColumn,
+                renderGlobalRangeEvent: _defaultRenderGlobalRangeEvent,
+                renderGridTitle: _defaultRenderGridTitle,
+                renderGridColumns: _defaultRenderGridColumns,
+                renderCanvasTitle: _renderCanvasTitle,
                 customizeElements: _customizeElements,
                 borderColor: "#333c77",
                 canvasLineColor: "#e1edf8",
