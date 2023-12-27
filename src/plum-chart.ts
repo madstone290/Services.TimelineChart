@@ -129,6 +129,7 @@ namespace Services.PlumChart {
     }
 
     export class PlumChartOptions {
+        renderMode?: Services.PlumChart.Core.CanvasRenderType = "scroll";
         useEventHoverColor?: boolean;
         eventHoverColor?: string = "#ccc";
         gridColumns: GridColumn[];
@@ -924,6 +925,7 @@ namespace Services.PlumChart {
                 }
             }
             const coreOptions: Services.PlumChart.Core.ChartOptions = {
+                renderMode: options.renderMode,
                 mainTitle: options.gridTitle,
                 columnTitle: options.canvasTitle,
                 chartStartTime: options.chartStartTime,

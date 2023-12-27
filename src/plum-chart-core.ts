@@ -17,22 +17,8 @@ namespace Services.PlumChart.Core {
         rangeEvents: RangeEvent[];
     }
 
-    export enum CanvasRenderMode {
-        /**
-        * 스크롤 이벤트를 이용하여 행을 레이지 렌더링한다.
-        */
-        Scroll,
-
-        /**
-         * IntersectionObserver를 사용하여 행을 레이지 렌더링한다.
-         */
-        Intersection,
-
-        /**
-         * 행을 즉시 렌더링한다.
-         */
-        Eager
-    }
+    export const CanvasRenderTypes = ["scroll", "intersection", "eager"] as const;
+    export type CanvasRenderType = typeof CanvasRenderTypes[number];
 
     interface PointEventItem {
         /**
@@ -115,7 +101,7 @@ namespace Services.PlumChart.Core {
     export interface ChartOptions {
         chartStartTime: Date;
         chartEndTime: Date;
-        renderMode?: CanvasRenderMode;
+        renderMode?: CanvasRenderType;
         paddingCellCount?: number;
         scrollWidth?: number;
         mainTitle?: string;
@@ -308,7 +294,7 @@ namespace Services.PlumChart.Core {
         gridTitle: HTMLElement;
         gridColumnBox: HTMLElement;
         canvasTitle: HTMLElement;
-        entityTableBox: HTMLElement;
+        entityGridBox: HTMLElement;
         columnHeaderBox: HTMLElement;
         columnHeader: HTMLElement;
         sideCanvasBox: HTMLElement;
@@ -498,7 +484,7 @@ namespace Services.PlumChart.Core {
             hasVerticalLine: true,
             columnAutoWidth: true,
             entityEventSearchScrollOffset: -100,
-            renderMode: CanvasRenderMode.Scroll,
+            renderMode: "scroll",
 
 
             customizeElements: (_) => { },
@@ -570,7 +556,7 @@ namespace Services.PlumChart.Core {
             gridTitle: null,
             gridColumnBox: null,
             canvasTitle: null,
-            entityTableBox: null,
+            entityGridBox: null,
             columnHeaderBox: null,
             columnHeader: null,
             sideCanvasBox: null,
@@ -639,7 +625,7 @@ namespace Services.PlumChart.Core {
             _elements.gridTitle = container.getElementsByClassName(CLS_MAIN_TITLE)[0] as HTMLElement;
             _elements.gridColumnBox = container.getElementsByClassName(CLS_TABLE_COLUMN_BOX)[0] as HTMLElement;
             _elements.canvasTitle = container.getElementsByClassName(CLS_COLUMN_TITLE)[0] as HTMLElement;
-            _elements.entityTableBox = container.getElementsByClassName(CLS_ENTITY_TABLE_BOX)[0] as HTMLElement;
+            _elements.entityGridBox = container.getElementsByClassName(CLS_ENTITY_TABLE_BOX)[0] as HTMLElement;
             _elements.columnHeaderBox = container.getElementsByClassName(CLS_COLUMN_HEADER_BOX)[0] as HTMLElement;
             _elements.columnHeader = container.getElementsByClassName(CLS_COLUMN_HEADER)[0] as HTMLElement;
             _elements.sideCanvasBox = container.getElementsByClassName(CLS_SIDE_CANVAS_BOX)[0] as HTMLElement;
@@ -736,9 +722,9 @@ namespace Services.PlumChart.Core {
                 _elements.columnHeaderBox.scrollLeft = _elements.mainCanvasBox.scrollLeft;
                 _elements.sideCanvasBox.scrollLeft = _elements.mainCanvasBox.scrollLeft;
                 // 세로스크롤 동기화
-                _elements.entityTableBox.scrollTop = _elements.mainCanvasBox.scrollTop;
+                _elements.entityGridBox.scrollTop = _elements.mainCanvasBox.scrollTop;
             });
-            _elements.entityTableBox.addEventListener("wheel", (e) => {
+            _elements.entityGridBox.addEventListener("wheel", (e) => {
                 // 세로스크롤 동기화
                 _elements.mainCanvasBox.scrollTop += e.deltaY;
             });
@@ -1293,16 +1279,22 @@ namespace Services.PlumChart.Core {
             }
         }
 
+        /**
+         * 엔티티를 렌더링한다.
+         * 그리드 로우 및 캔버스 이벤트를 포함한다.
+         */
         function _renderEntities() {
             _state.entityContainerRows.clear();
             _state.activeEntityRows.clear();
+            _elements.entityGridBox.replaceChildren();
 
-            if (_options.renderMode == CanvasRenderMode.Intersection) {
-                _startRenderEntityRow();
-            } else if (_options.renderMode == CanvasRenderMode.Scroll) {
-                _startRenderEntityRowsWithScroll();
+            if (_options.renderMode == "scroll") {
+                _renderEntities_Scroll();
+            }
+            else if (_options.renderMode == "intersection") {
+                _renderEntities_Interection();
             } else {
-                _renderEntityRowsImediately();
+                _renderEntities_Eager();
             }
         }
 
@@ -1333,7 +1325,81 @@ namespace Services.PlumChart.Core {
             _refreshEntityRangeEvents(entityRow);
         }
 
-        const callback: IntersectionObserverCallback = (changedEntries: IntersectionObserverEntry[]) => {
+        /**
+         * 엔티티 컨테이너 엘리먼트를 생성한다.
+         * @param index
+         * @param entity 
+         * @returns 
+         */
+        function _createEntityContainer(index: number, entity: Entity) {
+            const containerEl = document.createElement("div");
+            containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
+            containerEl.addEventListener("mouseenter", (e) => {
+                (containerEl as any).tag = containerEl.style.backgroundColor;
+                containerEl.style.backgroundColor = _options.rowHoverColor;
+            });
+            containerEl.addEventListener("mouseleave", (e) => {
+                containerEl.style.backgroundColor = (containerEl as any).tag;
+            });
+            containerEl.addEventListener("click", (e) => {
+                const entityContainer = _state.entityContainerRows.get(containerEl);
+                const entity = entityContainer.entity;
+                const evtStartTime = _getFirstVisibleEventTime(entity);
+
+                if (evtStartTime != null) {
+                    const [renderStartTime] = trucateTimeRange(evtStartTime);
+                    const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
+                    const left = time * _state.cellWidth / _options.cellMinutes;
+                    _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
+                }
+            });
+            (containerEl as any).tag = index;
+            return containerEl;
+        }
+
+        /**
+         * 엔티티 컨테이너 엘리먼트를 렌더링한다.
+         * @param index
+         * @param entity 
+         * @returns 
+         */
+        function _renderEntityContainer(index: number, entity: Entity) {
+            const containerEl = _createEntityContainer(index, _data.entities[index]);
+            _elements.entityGridBox.appendChild(containerEl);
+
+            const entityRow: EntityRow = {
+                index: index,
+                containerEl: containerEl,
+                entity: _data.entities[index],
+                lastRenderTime: null,
+                hLine: null,
+                pointEventContainers: [],
+                rangeEventContainers: [],
+            };
+            _state.entityContainerRows.set(containerEl, entityRow);
+
+            return containerEl;
+        }
+
+        /**
+         * IntersecionObserver를 이용해 엔티티를 렌더링한다.
+         * 가상화 리스트 적용.
+         */
+        function _renderEntities_Interection() {
+            _intersecionObserver?.disconnect();
+            const options: IntersectionObserverInit = {
+                root: _elements.entityGridBox,
+                threshold: 0,
+            };
+            _intersecionObserver = new IntersectionObserver(activateEntityWhenIntersecting, options);
+            const containerCount = _data.entities.length;
+            for (let i = 0; i < containerCount; i++) {
+                const containerEl = _renderEntityContainer(i, _data.entities[i]);
+                _intersecionObserver.observe(containerEl);
+            }
+        }
+
+        const activateEntityWhenIntersecting: IntersectionObserverCallback = (changedEntries: IntersectionObserverEntry[]) => {
             changedEntries.forEach((entry: IntersectionObserverEntry, i: number) => {
                 const containerEl = entry.target as HTMLElement;
                 const entityRow = _state.entityContainerRows.get(containerEl);
@@ -1359,182 +1425,54 @@ namespace Services.PlumChart.Core {
         }
 
         /**
-         * 엔티티 리스트 그리기 과정을 실행한다.
-         * 실제 엔티티는 보여지는 영역에 따라 동적으로 그려진다.
+         * 스크롤 이벤트를 이용해 엔티티를 렌더링한다.
+         * 가상화 리스트 적용.
          */
-        function _startRenderEntityRow() {
-            _elements.entityTableBox.replaceChildren();
-            _intersecionObserver?.disconnect();
+        function _renderEntities_Scroll() {
+            _elements.mainCanvasBox.removeEventListener("scroll", activateEntityWhenContainerIsVisible);
+            _elements.mainCanvasBox.addEventListener("scroll", activateEntityWhenContainerIsVisible);
 
-            const options: IntersectionObserverInit = {
-                root: _elements.entityTableBox,
-                threshold: 0,
-            };
-            _intersecionObserver = new IntersectionObserver(callback, options);
             const containerCount = _data.entities.length;
             for (let i = 0; i < containerCount; i++) {
-                /*
-    엔티티 컨테이너(로우) 생성
-    -마우스 오버시 배경색 변경
-    -마우스 클릭시 해당 엔티티의 가장 빠른 이벤트로 이동
-                */
-
-                const containerEl = document.createElement("div");
-                containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
-                containerEl.addEventListener("mouseenter", (e) => {
-                    (containerEl as any).tag = containerEl.style.backgroundColor;
-                    containerEl.style.backgroundColor = _options.rowHoverColor;
-                });
-                containerEl.addEventListener("mouseleave", (e) => {
-                    containerEl.style.backgroundColor = (containerEl as any).tag;
-                });
-                containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _state.entityContainerRows.get(containerEl);
-                    const entity = entityContainer.entity;
-                    const evtStartTime = _getFirstVisibleEventTime(entity);
-
-                    if (evtStartTime != null) {
-                        const [renderStartTime] = trucateTimeRange(evtStartTime);
-                        const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
-                        const left = time * _state.cellWidth / _options.cellMinutes;
-                        _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
-                    }
-                });
-                _elements.entityTableBox.appendChild(containerEl);
-                (containerEl as any).tag = i;
-                _state.entityContainerRows.set(containerEl, {
-                    index: i,
-                    containerEl: containerEl,
-                    entity: _data.entities[i],
-                    lastRenderTime: null,
-                    hLine: null,
-                    pointEventContainers: [],
-                    rangeEventContainers: [],
-                });
-                _intersecionObserver.observe(containerEl);
+                _renderEntityContainer(i, _data.entities[i]);
             }
+            activateEntityWhenContainerIsVisible();
         }
 
-        let _scrollDetectorActive = false;
-        function _startRenderEntityRowsWithScroll() {
-            _elements.entityTableBox.replaceChildren();
-            // add container elements
-            // lazy rendering using scroll event
-
-            const containerCount = _data.entities.length;
-            for (let i = 0; i < containerCount; i++) {
-                const containerEl = document.createElement("div");
-                containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
-                containerEl.addEventListener("mouseenter", (e) => {
-                    (containerEl as any).tag = containerEl.style.backgroundColor;
-                    containerEl.style.backgroundColor = _options.rowHoverColor;
-                });
-                containerEl.addEventListener("mouseleave", (e) => {
-                    containerEl.style.backgroundColor = (containerEl as any).tag;
-                });
-                containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _state.entityContainerRows.get(containerEl);
-                    const entity = entityContainer.entity;
-                    const evtStartTime = _getFirstVisibleEventTime(entity);
-
-                    if (evtStartTime != null) {
-                        const [renderStartTime] = trucateTimeRange(evtStartTime);
-                        const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
-                        const left = time * _state.cellWidth / _options.cellMinutes;
-                        _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
-                    }
-                });
-                _elements.entityTableBox.appendChild(containerEl);
-
-                _state.entityContainerRows.set(containerEl, {
-                    index: i,
-                    containerEl: containerEl,
-                    entity: _data.entities[i],
-                    lastRenderTime: null,
-                    hLine: null,
-                    pointEventContainers: [],
-                    rangeEventContainers: [],
-                });
-
-
-                const scrollTop = _elements.mainCanvasBox.scrollTop;
-                const scrollHeight = _elements.mainCanvasBox.scrollHeight;
-                const clientHeight = _elements.mainCanvasBox.clientHeight;
-                const scrollBottom = scrollTop + clientHeight;
-                const containerTop = i * _state.cellHeight;
+        /**
+         * 컨테이너가 화면에 보이는 경우 해당 컨테이너에 포함된 엔티티를 활성화(렌더링or업데이트)한다.
+         */
+        function activateEntityWhenContainerIsVisible() {
+            const scrollTop = _elements.mainCanvasBox.scrollTop;
+            const clientHeight = _elements.mainCanvasBox.clientHeight;
+            const scrollBottom = scrollTop + clientHeight;
+            for (const [_, entityRow] of _state.entityContainerRows.entries()) {
+                const containerTop = entityRow.index * _state.cellHeight;
                 const containerBottom = containerTop + _state.cellHeight;
                 if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
-                    _renderEntityRow(_state.entityContainerRows.get(containerEl));
-                    _state.activeEntityRows.set(i, _state.entityContainerRows.get(containerEl));
+                    if (entityRow.lastRenderTime == null) {
+                        _renderEntityRow(entityRow);
+                    } else if (entityRow.lastRenderTime < _state.lastZoomTime) {
+                        _refreshEntityRow(entityRow);
+                    }
+                    _state.activeEntityRows.set(entityRow.index, entityRow);
+                } else {
+                    _state.activeEntityRows.delete(entityRow.index);
                 }
             }
-
-            if (!_scrollDetectorActive) {
-                _elements.mainCanvasBox.addEventListener("scroll", (e) => {
-                    const scrollTop = _elements.mainCanvasBox.scrollTop;
-                    const scrollHeight = _elements.mainCanvasBox.scrollHeight;
-                    const clientHeight = _elements.mainCanvasBox.clientHeight;
-                    const scrollBottom = scrollTop + clientHeight;
-                    for (const [_, entityRow] of _state.entityContainerRows.entries()) {
-                        const containerTop = entityRow.index * _state.cellHeight;
-                        const containerBottom = containerTop + _state.cellHeight;
-                        if (containerTop <= scrollBottom && scrollTop <= containerBottom) {
-                            _state.activeEntityRows.set(entityRow.index, entityRow);
-                            if (entityRow.lastRenderTime == null) {
-                                _renderEntityRow(entityRow);
-                            } else if (entityRow.lastRenderTime < _state.lastZoomTime) {
-                                _refreshEntityRow(entityRow);
-                            }
-                        } else {
-                            _state.activeEntityRows.delete(entityRow.index);
-                        }
-                    }
-                });
-
-                _scrollDetectorActive = true;
-            }
-
-
         }
 
-        function _renderEntityRowsImediately() {
-            _elements.entityTableBox.replaceChildren();
+        /**
+         * 모든 엔티티를 렌더링한다.
+         * 가상화 리스트 미적용.
+         */
+        function _renderEntities_Eager() {
             const containerCount = _data.entities.length;
             for (let i = 0; i < containerCount; i++) {
-                const containerEl = document.createElement("div");
-                containerEl.classList.add(CLS_ENTITY_TABLE_ITEM);
-                containerEl.addEventListener("mouseenter", (e) => {
-                    (containerEl as any).tag = containerEl.style.backgroundColor;
-                    containerEl.style.backgroundColor = _options.rowHoverColor;
-                });
-                containerEl.addEventListener("mouseleave", (e) => {
-                    containerEl.style.backgroundColor = (containerEl as any).tag;
-                });
-                containerEl.addEventListener("click", (e) => {
-                    const entityContainer = _state.entityContainerRows.get(containerEl);
-                    const entity = entityContainer.entity;
-                    const evtStartTime = _getFirstVisibleEventTime(entity);
-
-                    if (evtStartTime != null) {
-                        const [renderStartTime] = trucateTimeRange(evtStartTime);
-                        const time = toMinutes(renderStartTime.valueOf() - _state.chartRenderStartTime.valueOf());
-                        const left = time * _state.cellWidth / _options.cellMinutes;
-                        _elements.mainCanvasBox.scrollLeft = left + _options.entityEventSearchScrollOffset;
-                    }
-                });
-                _elements.entityTableBox.appendChild(containerEl);
-
-                _state.entityContainerRows.set(containerEl, {
-                    index: i,
-                    containerEl: containerEl,
-                    entity: _data.entities[i],
-                    lastRenderTime: null,
-                    hLine: null,
-                    pointEventContainers: [],
-                    rangeEventContainers: [],
-                });
-                _renderEntityRow(_state.entityContainerRows.get(containerEl));
-                _state.activeEntityRows.set(i, _state.entityContainerRows.get(containerEl));
+                const containerEl = _renderEntityContainer(i, _data.entities[i]);
+                const entityRow = _state.entityContainerRows.get(containerEl);
+                _renderEntityRow(entityRow);
+                _state.activeEntityRows.set(i, entityRow);
             }
         }
 
