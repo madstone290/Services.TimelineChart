@@ -998,9 +998,9 @@ window.addEventListener("load", () => {
     };
 
     let intervalId = 0;
-    // intervalId = setInterval(() => {
-    //     refresh();
-    // }, 1000);
+    intervalId = setInterval(() => {
+        refresh();
+    }, 1000);
 
 
     let timeoutId = 0;

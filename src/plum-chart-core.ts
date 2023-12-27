@@ -17,7 +17,7 @@ namespace Services.PlumChart.Core {
         rangeEvents: RangeEvent[];
     }
 
-    enum CanvasRenderMode {
+    export enum CanvasRenderMode {
         /**
         * 스크롤 이벤트를 이용하여 행을 레이지 렌더링한다.
         */
@@ -892,12 +892,7 @@ namespace Services.PlumChart.Core {
 
         function setOptions(options: ChartOptions) {
             Object.assign(_options, options);
-
             setChartTimeRange(_options.chartStartTime, _options.chartEndTime);
-            _state.originalCellWidth = _options.cellWidth;
-            _state.originalCellHeight = _options.cellHeight;
-            _state.cellWidth = _options.cellWidth;
-            _state.cellHeight = _options.cellHeight;
         }
 
         function getOptions() {
@@ -970,6 +965,25 @@ namespace Services.PlumChart.Core {
             css.setSideCanvasContentHeight(_calcSideCanvasContentHeight());
             css.setScrollWidth(_options.scrollWidth);
         }
+
+        function _initCanvasState() {
+            // 캔버스 컬럼 수를 계산한다. 
+            // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
+            _state.canvasColumnCount = Math.floor((_state.chartRenderEndTime.valueOf() - _state.chartRenderStartTime.valueOf()) / toTime(_options.cellMinutes));
+
+
+            // 캔버스 셀 크기 백업
+            _state.cellWidth = _options.cellWidth;
+            _state.cellHeight = _options.cellHeight;
+            _state.originalCellWidth = _options.cellWidth;
+            _state.originalCellHeight = _options.cellHeight;
+
+            // 캔버스 컬럼 수에 따라 캔버스 너비를 계산한다.
+            if (_options.columnAutoWidth) {
+                _state.originalCellWidth = _elements.mainCanvasBox.clientWidth / _state.canvasColumnCount;
+                _state.cellWidth = _state.originalCellWidth * _state.currZoomScale;
+            }
+        }
         /**
          * 차트를 그린다.
          */
@@ -981,18 +995,8 @@ namespace Services.PlumChart.Core {
 
             _renderMainTitle();
             _renderGridColumns();
-
-            // 캔버스 컬럼 수를 계산한다. 
-            // 이벤트 시간범위 확인을 간단하기 하기 위해 차트 구간이 셀시간으로 나누어 떨어지지 않는 경우에는 내림한다.
-            _state.canvasColumnCount = Math.floor((_state.chartRenderEndTime.valueOf() - _state.chartRenderStartTime.valueOf()) / toTime(_options.cellMinutes));
-
-            // 캔버스 컬럼 수에 따라 캔버스 너비를 계산한다.
-            if (_options.columnAutoWidth) {
-                _state.originalCellWidth = _elements.mainCanvasBox.clientWidth / _state.canvasColumnCount;
-                _state.cellWidth = _state.originalCellWidth * _state.currZoomScale;
-            }
+            _initCanvasState();
             renderCanvas();
-
             _startResizeObserver();
         }
 

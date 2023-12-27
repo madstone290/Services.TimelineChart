@@ -350,11 +350,18 @@ namespace Pages.Monitoring {
                     chartState.startTime = chartStartTime;
                     chartState.endTime = chartEndTime;
 
-                    plumChart.setEntities(getLotList(workCenterIdx, chartStartTime, chartEndTime).map(lot => lotToEntity(lot)));
-                    plumChart.getCoreChart().setChartTimeRange(chartStartTime, chartEndTime);
+                    const data = plumChart.getData();
+                    data.entities = getLotList(workCenterIdx, chartStartTime, chartEndTime).map(lot => lotToEntity(lot));
+                    plumChart.setData(data);
+                    //plumChart.getCoreChart().setChartTimeRange(chartStartTime, chartEndTime);
+                     const options = plumChart.getOptions();
+                    options.chartStartTime = chartStartTime;
+                    options.chartEndTime = chartEndTime;
+                    plumChart.setOptions(options);
+
                     plumChart.renderCanvas();
 
-                },1000);
+                }, 1000);
             }
         }
 
@@ -424,11 +431,14 @@ namespace Pages.Monitoring {
 
             Object.assign(options, optionsSource);
             plumChart.setOptions(options);
-            plumChart.setLegends(legends);
-            plumChart.setEntities(chartStateList[index].lots.map(lot => lotToEntity(lot)));
-            plumChart.setSidePointEvents(sideErrors.map(error => sideErrorToPointEvent(error)));
-            plumChart.setGlobalRangeEvents(globalErrors.map(error => globalErrorToRangeEvent(error)));
 
+            const data = plumChart.getData();
+            data.legends = legends;
+            data.entities = chartStateList[index].lots.map(lot => lotToEntity(lot));
+            data.sidePointEvents = sideErrors.map(error => sideErrorToPointEvent(error));
+            data.globalRangeEvents = globalErrors.map(error => globalErrorToRangeEvent(error));
+
+            plumChart.setData(data);
             plumChart.render();
         }
 

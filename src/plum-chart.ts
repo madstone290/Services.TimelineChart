@@ -129,13 +129,8 @@ namespace Services.PlumChart {
     }
 
     export class PlumChartOptions {
-        formatTime?: (time: Date) => string;
-        formatTimeRange?: (start: Date, end: Date) => string;
-        renderCanvasColumn?: (time: Date, containerEl: HTMLElement) => HTMLElement;
-        renderPointEventCustomTooltip?: (event: PointEvent, tooltipEl: HTMLElement) => void;
-        renderRangeEventCustomTooltip?: (event: RangeEvent, tooltipEl: HTMLElement) => void;
         useEventHoverColor?: boolean;
-        eventHoverColor?: string;
+        eventHoverColor?: string = "#ccc";
         gridColumns: GridColumn[];
         gridTitle: string;
         canvasTitle: string;
@@ -173,6 +168,57 @@ namespace Services.PlumChart {
          * 컨트롤러 위치. 고정 컨트롤러인 경우에만 사용한다.
          */
         controllerLocation?: Services.PlumChart.Core.ControllerLocation = "bottomRight";
+
+
+        formatTime?: (time: Date) => string = (time) => {
+            return dayjs(time).format("HH:mm:ss");
+        };
+        formatTimeRange?: (start: Date, end: Date) => string;
+        renderCanvasColumn?: (time: Date, containerEl: HTMLElement) => HTMLElement;
+        /**
+         * 점 이벤트 툴팁 커스텀 렌더링 함수
+         */
+        renderPointEventTooltip?: (event: PointEvent, eventEl: HTMLElement, tooltipEl: HTMLElement) => void = null;
+        /**
+         * 범위 이벤트 툴팁 커스텀 렌더링 함수
+         */
+        renderRangeEventTooltip?: (event: RangeEvent, eventEl: HTMLElement, tooltipEl: HTMLElement) => void = null;
+    }
+
+    interface PlumChartState {
+        /**
+         * 엔티티 목록 백업. 정렬에 사용.
+         */
+        entitiesBackup: Entity[],
+        /**
+         * 그리드 컬럼 목록. key: 그리드컬럼, value: 그리드컬럼 엘리먼트
+         */
+        gridColumnMap: Map<GridColumn, HTMLElement>,
+        /**
+         * 그리드 컬럼 정렬 함수
+         */
+        gridColumnSortFuncs: GridColumnSort<Entity>[],
+        /**
+         * 현재 정렬 방향
+         */
+        sortDirection: SortDirection,
+
+        /**
+         * 현재 정렬 컬럼
+         */
+        sortColumnField: string,
+        /**
+         * PlumChart컨테이너 엘리먼트
+         */
+        containerEl: HTMLElement,
+        /**
+         * 범례 엘리먼트
+         */
+        legendsEl: HTMLElement,
+        /**
+         * 고정된 툴팁 목록. key: 툴팁 컨테이너 엘리먼트, value: 툴팁 엘리먼트
+         */
+        fixedTooltipMap: Map<HTMLElement, HTMLElement>
     }
 
     export interface PlumChartData {
@@ -193,6 +239,7 @@ namespace Services.PlumChart {
          */
         globalRangeEvents: RangeEvent[],
     }
+
     const CLS_ROOT_CONTAINER = "pl-root-container";
     const CLS_LEGEND_CONTAINER = "pl-legend-container";
     const CLS_CHART_CONTAINER = "pl-chart-container";
@@ -227,96 +274,46 @@ namespace Services.PlumChart {
 
 
     export function PlumChart() {
-        /**
-         * PlumChart컨테이너 엘리먼트
-         */
-        let _containerEl: HTMLElement;
+
+        const _options = new PlumChartOptions();
+        _options.formatTimeRange = _defaultFormatTimeRange;
+        _options.renderPointEventTooltip = _renderDefaultPointEventTooltip;
+        _options.renderRangeEventTooltip = _renderDefaultRangeEventTooltip;
+
+        const _data: PlumChartData = {
+            legends: [],
+            entities: [],
+            sidePointEvents: [],
+            globalRangeEvents: [],
+        };
+
+        const _state: PlumChartState = {
+            entitiesBackup: [],
+            gridColumnMap: new Map(),
+            gridColumnSortFuncs: [],
+            sortDirection: SortDirection.NONE,
+            sortColumnField: "",
+            containerEl: null,
+            legendsEl: null,
+            fixedTooltipMap: new Map()
+        };
 
         /**
-         * 타임라인 차트
+         * 코어차트
          */
-        let _coreChart: ReturnType<typeof Services.PlumChart.Core.CoreChart>;
-
-        /**
-         * 범례 엘리먼트
-         */
-        let _legendsEl: HTMLElement;
-
-        /**
-         * 범례 목록 
-         */
-        let _legends: Legend[] = [];
-        /**
-         * 엔티티 데이터
-         */
-        let _entities: Entity[] = [];
-
-        /**
-         * 엔티티 백업 데이터
-         */
-        let _entitiesBackup: Entity[] = [];
-
-        /**
-         * 보조 점 이벤트 데이터
-         */
-        let _sidePointEvents: PointEvent[] = [];
-
-        /**
-         * 전역 범위 이벤트 데이터
-         */
-        let _globalRangeEvents: RangeEvent[] = [];
-
-        /**
-         * 고정된 툴팁 목록. key: 툴팁 컨테이너 엘리먼트, value: 툴팁 엘리먼트
-         */
-        const _fixedTooltipMap = new Map<HTMLElement, HTMLElement>();
-
-        /**
-         * 그리드 컬럼 목록. key: 그리드컬럼, value: 그리드컬럼 엘리먼트
-         */
-        let _gridColumnMap: Map<GridColumn, HTMLElement> = new Map();
-
-        let _gridColumnSorts: GridColumnSort<Entity>[] = [];
-
-        let _sortDirection = SortDirection.NONE;
-        let _sortColumnField = "";
-
-        /**
-         * 캔버스 이벤트 호버시 배경색을 변경한다.
-         */
-        let _useEventHoverColor = false;
-
-        /**
-         * 캔버스 이벤트 호버시 배경색
-         */
-        let _eventHoverColor = "#333";
-
-        let _formatTime: (time: Date) => string;
-        /**
-         * 시간범위를 문자열로 변환한다.
-         */
-        let _formatTimeRange: (start: Date, end: Date) => string;
-        /**
-         * 점 이벤트 툴팁 커스텀 렌더링 함수
-         */
-        let _customPointEventTooltip: (event: PointEvent, eventEl: HTMLElement, tooltipEl: HTMLElement) => void = null;
-        /**
-         * 범위 이벤트 툴팁 커스텀 렌더링 함수
-         */
-        let _customRangeEventTooltip: (event: RangeEvent, eventEl: HTMLElement, tooltipEl: HTMLElement) => void = null;
+        const _coreChart = Services.PlumChart.Core.CoreChart();
 
 
         function create(containerEl: HTMLElement) {
-            _containerEl = containerEl;
-            _legendsEl = _createLegendEl();
-            _coreChart = Services.PlumChart.Core.CoreChart();
+            _state.containerEl = containerEl;
+            _state.legendsEl = _createLegendEl();
 
             const rootEl = document.createElement("div");
             rootEl.classList.add(CLS_ROOT_CONTAINER);
 
             const legendContainerEl = document.createElement("div");
             legendContainerEl.classList.add(CLS_LEGEND_CONTAINER);
-            legendContainerEl.appendChild(_legendsEl);
+            legendContainerEl.appendChild(_state.legendsEl);
             rootEl.appendChild(legendContainerEl);
 
             const chartContainerEl = document.createElement("div");
@@ -324,7 +321,7 @@ namespace Services.PlumChart {
             _coreChart.create(chartContainerEl);
             rootEl.appendChild(chartContainerEl);
 
-            _containerEl.appendChild(rootEl);
+            _state.containerEl.appendChild(rootEl);
         }
 
         /**
@@ -375,15 +372,6 @@ namespace Services.PlumChart {
         }
 
         /**
-         * 기본 시간 문자열 변환 함수
-         * @param time 
-         * @returns 
-         */
-        function _defaultFormatTime(time: Date): string {
-            return dayjs(time).format("HH:mm:ss");
-        }
-
-        /**
          * 캔버스 컬럼을 기본 렌더링한다.
          * @param time 
          * @param containerEl 
@@ -405,7 +393,7 @@ namespace Services.PlumChart {
         function _setEventHoverColor(eventEl: HTMLElement) {
             const originalColor = eventEl.style.backgroundColor;
             eventEl.addEventListener("mouseenter", (e) => {
-                eventEl.style.backgroundColor = _eventHoverColor;
+                eventEl.style.backgroundColor = _options.eventHoverColor;
             });
             eventEl.addEventListener("mouseleave", (e) => {
                 eventEl.style.backgroundColor = originalColor;
@@ -470,7 +458,7 @@ namespace Services.PlumChart {
          * @returns 
          */
         function _isTooltipFixed(tooltipContainerEl: HTMLElement) {
-            return _fixedTooltipMap.has(tooltipContainerEl);
+            return _state.fixedTooltipMap.has(tooltipContainerEl);
         }
 
         /**
@@ -509,10 +497,10 @@ namespace Services.PlumChart {
                 e.stopPropagation();
                 if (_isTooltipFixed(containerEl)) {
                     _hideTooltip(tooltipEl);
-                    _fixedTooltipMap.delete(containerEl);
+                    _state.fixedTooltipMap.delete(containerEl);
                 } else {
                     _showTooltip(tooltipEl);
-                    _fixedTooltipMap.set(containerEl, tooltipEl);
+                    _state.fixedTooltipMap.set(containerEl, tooltipEl);
                 }
             });
             // 툴팁 클릭시 캔버스 클릭 이벤트가 발생하지 않도록 한다. 캔버스 이동, 툴팁 숨김 기능이 동작하지 않도록 한다.
@@ -546,7 +534,7 @@ namespace Services.PlumChart {
 
             if (event.showTime) {
                 const timeEl = document.createElement("div");
-                timeEl.innerText = _formatTime(event.time);
+                timeEl.innerText = _options.formatTime(event.time);
                 tooltipEl.appendChild(timeEl);
             }
 
@@ -582,16 +570,12 @@ namespace Services.PlumChart {
             tooltipEl.classList.add(CLS_TOOLTIP);
             canvasEl.appendChild(tooltipEl);
 
-            if (_customPointEventTooltip) {
-                _customPointEventTooltip(event, imgEl, tooltipEl);
-            } else {
-                _renderDefaultPointEventTooltip(event, imgEl, tooltipEl);
-            }
+            _options.renderPointEventTooltip(event, imgEl, tooltipEl);
 
             if (event.showTooltip) {
                 _addTooltip(imgEl, tooltipEl);
             }
-            if (_useEventHoverColor) {
+            if (_options.useEventHoverColor) {
                 _setEventHoverColor(imgEl);
             }
         }
@@ -603,9 +587,9 @@ namespace Services.PlumChart {
             tooltipEl.appendChild(titleEl);
 
             if (event.showTime) {
-                const startTime = _formatTime(event.startTime);
-                const endTime = _formatTime(event.endTime);
-                const timeRange = _formatTimeRange(event.startTime, event.endTime);
+                const startTime = _options.formatTime(event.startTime);
+                const endTime = _options.formatTime(event.endTime);
+                const timeRange = _options.formatTimeRange(event.startTime, event.endTime);
                 const timeEl = document.createElement("div");
                 timeEl.innerText = `${startTime} ~ ${endTime} (${timeRange})`;
                 tooltipEl.appendChild(timeEl);
@@ -647,16 +631,12 @@ namespace Services.PlumChart {
             tooltipEl.classList.add(CLS_TOOLTIP);
             canvasEl.appendChild(tooltipEl);
 
-            if (_customRangeEventTooltip) {
-                _customRangeEventTooltip(event, boxEl, tooltipEl);
-            } else {
-                _renderDefaultRangeEventTooltip(event, boxEl, tooltipEl);
-            }
+            _options.renderRangeEventTooltip(event, boxEl, tooltipEl);
 
             if (event.showTooltip) {
                 _addTooltip(boxEl, tooltipEl);
             }
-            if (_useEventHoverColor) {
+            if (_options.useEventHoverColor) {
                 _setEventHoverColor(boxEl);
             }
         }
@@ -720,43 +700,43 @@ namespace Services.PlumChart {
             containerEl.appendChild(titleEl);
         }
 
-        function _defaultRenderGridColumns(containerElement: HTMLElement) {
+        function _renderGridColumns(containerEl: HTMLElement) {
             const gridColumnsEl = document.createElement("div");
             gridColumnsEl.classList.add(CLS_GRID_COLUMNS);
-            containerElement.appendChild(gridColumnsEl);
+            containerEl.appendChild(gridColumnsEl);
 
             let columnIdx = 0;
-            for (const column of _gridColumnMap.keys()) {
+            for (const column of _state.gridColumnMap.keys()) {
                 const columnEl = _createColumn(gridColumnsEl, columnIdx++, column.caption);
                 gridColumnsEl.appendChild(columnEl);
-                _gridColumnMap.set(column, columnEl);
+                _state.gridColumnMap.set(column, columnEl);
             }
 
-            for (const [column, columnEl] of _gridColumnMap.entries()) {
+            for (const [column, columnEl] of _state.gridColumnMap.entries()) {
                 columnEl.addEventListener("click", (e) => {
                     const selectedField = column.field;
 
-                    if (_sortColumnField != selectedField) {
-                        _sortDirection = SortDirection.ASC;
+                    if (_state.sortColumnField != selectedField) {
+                        _state.sortDirection = SortDirection.ASC;
                     }
                     else {
-                        if (_sortDirection == SortDirection.ASC) {
-                            _sortDirection = SortDirection.DESC;
-                        } else if (_sortDirection == SortDirection.DESC) {
-                            _sortDirection = SortDirection.NONE;
+                        if (_state.sortDirection == SortDirection.ASC) {
+                            _state.sortDirection = SortDirection.DESC;
+                        } else if (_state.sortDirection == SortDirection.DESC) {
+                            _state.sortDirection = SortDirection.NONE;
                         } else {
-                            _sortDirection = SortDirection.ASC;
+                            _state.sortDirection = SortDirection.ASC;
                         }
                     }
-                    _sortColumnField = selectedField;
+                    _state.sortColumnField = selectedField;
 
-                    for (const columnEl of _gridColumnMap.values()) {
+                    for (const columnEl of _state.gridColumnMap.values()) {
                         _updateColumnIcon(columnEl, SortDirection.NONE);
                     }
-                    _updateColumnIcon(columnEl, _sortDirection);
-                    _sortEntities(selectedField, _sortDirection);
+                    _updateColumnIcon(columnEl, _state.sortDirection);
+                    _sortEntities(selectedField, _state.sortDirection);
 
-                    const sortEvent = new CustomEvent("sort", { detail: { field: selectedField, direction: _sortDirection } });
+                    const sortEvent = new CustomEvent("sort", { detail: { field: selectedField, direction: _state.sortDirection } });
                     window.dispatchEvent(sortEvent);
                 });
             }
@@ -804,32 +784,32 @@ namespace Services.PlumChart {
          * @returns 
          */
         function _sortEntities(columnField: string, sortDirection: SortDirection) {
-            let sortedEntities = [..._entitiesBackup];
+            let sortedEntities = [..._state.entitiesBackup];
 
             if (sortDirection == SortDirection.NONE) {
                 _coreChart.setData({
                     entities: sortedEntities,
-                    sidePointEvents: _sidePointEvents,
-                    globalRangeEvents: _globalRangeEvents
+                    sidePointEvents: _data.sidePointEvents,
+                    globalRangeEvents: _data.globalRangeEvents
                 });
                 _coreChart.renderCanvas();
                 return;
             }
 
-            const gridColumnSort = _gridColumnSorts.find((sort) => sort.field == columnField);
+            const gridColumnSort = _state.gridColumnSortFuncs.find((sort) => sort.field == columnField);
             if (gridColumnSort) {
-                sortedEntities = _entities.sort(gridColumnSort.compareFn);
+                sortedEntities = _data.entities.sort(gridColumnSort.compareFn);
             }
             _coreChart.setData({
                 entities: sortedEntities,
-                sidePointEvents: _sidePointEvents,
-                globalRangeEvents: _globalRangeEvents
+                sidePointEvents: _data.sidePointEvents,
+                globalRangeEvents: _data.globalRangeEvents
             });
 
             _coreChart.setData({
                 entities: sortedEntities,
-                sidePointEvents: _sidePointEvents,
-                globalRangeEvents: _globalRangeEvents
+                sidePointEvents: _data.sidePointEvents,
+                globalRangeEvents: _data.globalRangeEvents
             });
             _coreChart.renderCanvas();
         }
@@ -843,7 +823,7 @@ namespace Services.PlumChart {
             containerEl.classList.add(CLS_GRID_ROW);
 
             let cellIndex = 0;
-            for (const column of _gridColumnMap.keys()) {
+            for (const column of _state.gridColumnMap.keys()) {
                 const itemEl = document.createElement("div");
                 itemEl.setAttribute("data-index", (cellIndex++).toString());
                 itemEl.classList.add(CLS_GRID_CELL);
@@ -877,10 +857,10 @@ namespace Services.PlumChart {
 
             // 캔버스 클릭시 툴팁을 숨긴다.
             elements.rootElement.addEventListener("click", (e) => {
-                for (const [containerEl, tooltipEl] of _fixedTooltipMap.entries()) {
+                for (const [containerEl, tooltipEl] of _state.fixedTooltipMap.entries()) {
                     _hideTooltip(tooltipEl);
                 }
-                _fixedTooltipMap.clear();
+                _state.fixedTooltipMap.clear();
             });
             isMainCanvasCostomized = true;
         }
@@ -901,13 +881,13 @@ namespace Services.PlumChart {
         }
 
         function _renderLegends() {
-            if (!_legends)
+            if (!_data.legends)
                 return;
-            const leftBox = _legendsEl.getElementsByClassName(CLS_LEGENDS_LEFT)[0];
-            const rightBox = _legendsEl.getElementsByClassName(CLS_LEGENDS_RIGHT)[0];
+            const leftBox = _state.legendsEl.getElementsByClassName(CLS_LEGENDS_LEFT)[0];
+            const rightBox = _state.legendsEl.getElementsByClassName(CLS_LEGENDS_RIGHT)[0];
             leftBox.replaceChildren();
             rightBox.replaceChildren();
-            for (const item of _legends) {
+            for (const item of _data.legends) {
                 const box = document.createElement("div");
                 box.classList.add(CLS_LEGEND);
                 if (item.location == "left" || item.location == null) {
@@ -938,29 +918,11 @@ namespace Services.PlumChart {
         }
 
         function setOptions(options: PlumChartOptions) {
-            _useEventHoverColor = options.useEventHoverColor ?? _useEventHoverColor;
-            _eventHoverColor = options.eventHoverColor ?? _eventHoverColor;
-            _formatTime = options.formatTime ?? _defaultFormatTime;
-            _formatTimeRange = options.formatTimeRange ?? _defaultFormatTimeRange;
-            _gridColumnMap.clear();
-            options.gridColumns?.forEach((column) => {
-                _gridColumnMap.set(column, null);
-            });
-            _gridColumnSorts = options.gridColumns?.map((column) => {
-                return {
-                    field: column.field,
-                    compareFn: (a, b) => {
-                        const aText = ((a as any)[column.field] as object)?.toString();
-                        const bText = ((b as any)[column.field] as object)?.toString();
-                        const sign = _sortDirection == SortDirection.ASC ? 1 : -1;
-                        return sign * aText.localeCompare(bText);
-                    }
-                };
-            }) ?? [];
-
-            _customPointEventTooltip = options.renderPointEventCustomTooltip ?? _customPointEventTooltip;
-            _customRangeEventTooltip = options.renderRangeEventCustomTooltip ?? _customRangeEventTooltip;
-
+            for (const key in options) {
+                if ((options as any)[key] != null) {
+                    (_options as any)[key] = (options as any)[key];
+                }
+            }
             const coreOptions: Services.PlumChart.Core.ChartOptions = {
                 mainTitle: options.gridTitle,
                 columnTitle: options.canvasTitle,
@@ -988,6 +950,8 @@ namespace Services.PlumChart {
                 leftPanelWidth: 350,
                 buttonScrollStepX: 400,
                 buttonScrollStepY: 400,
+                borderColor: "#333c77",
+                canvasLineColor: "#e1edf8",
                 renderSidePointEvent: _defaultRenderSidePointEvent,
                 renderGridRow: _defaultRenderGridRow,
                 renderEntityPointEvent: _defaultRenderEntityPointEvent,
@@ -995,65 +959,55 @@ namespace Services.PlumChart {
                 renderHeaderCell: _defaultRenderCanvasColumn,
                 renderGlobalRangeEvent: _defaultRenderGlobalRangeEvent,
                 renderGridTitle: _defaultRenderGridTitle,
-                renderGridColumns: _defaultRenderGridColumns,
+                renderGridColumns: _renderGridColumns,
                 renderCanvasTitle: _renderCanvasTitle,
                 customizeElements: _customizeElements,
-                borderColor: "#333c77",
-                canvasLineColor: "#e1edf8",
             };
+
             _coreChart.setOptions(coreOptions);
+
+            _state.gridColumnMap.clear();
+            options.gridColumns?.forEach((column) => {
+                _state.gridColumnMap.set(column, null);
+            });
+            _state.gridColumnSortFuncs = options.gridColumns?.map((column) => {
+                return {
+                    field: column.field,
+                    compareFn: (a, b) => {
+                        const aText = ((a as any)[column.field] as object)?.toString();
+                        const bText = ((b as any)[column.field] as object)?.toString();
+                        const sign = _state.sortDirection == SortDirection.ASC ? 1 : -1;
+                        return sign * aText.localeCompare(bText);
+                    }
+                };
+            }) ?? [];
+
+        }
+
+        function getOptions() {
+            return _options;
         }
 
         function setData(data: PlumChartData) {
-            _legends = data.legends;
-            _entities = data.entities;
-            _entitiesBackup = _entities.map((entity) => {
+            Object.assign(_data, data);
+
+            _state.entitiesBackup = _data.entities.map((entity) => {
                 return {
                     ...entity,
                     pointEvents: [...entity.pointEvents],
                     rangeEvents: [...entity.rangeEvents]
                 };
             });
-
-            _sidePointEvents = data.sidePointEvents;
-            _globalRangeEvents = data.globalRangeEvents;
-
             _coreChart.setData({
-                entities: _entities,
-                sidePointEvents: _sidePointEvents,
-                globalRangeEvents: _globalRangeEvents
+                entities: _data.entities,
+                sidePointEvents: _data.sidePointEvents,
+                globalRangeEvents: _data.globalRangeEvents
             });
         }
 
-        function setLegends(legends: Legend[]) {
-            _legends = legends;
+        function getData() {
+            return _data;
         }
-
-        function setEntities(entities: Entity[]) {
-            _entities = entities;
-            _coreChart.setData({
-                entities: _entities,
-                sidePointEvents: _sidePointEvents,
-                globalRangeEvents: _globalRangeEvents
-            });
-        }
-        function setSidePointEvents(sidePointEvents: PointEvent[]) {
-            _sidePointEvents = sidePointEvents;
-            _coreChart.setData({
-                entities: _entities,
-                sidePointEvents: _sidePointEvents,
-                globalRangeEvents: _globalRangeEvents
-            });
-        }
-        function setGlobalRangeEvents(globalRangeEvents: RangeEvent[]) {
-            _globalRangeEvents = globalRangeEvents;
-            _coreChart.setData({
-                entities: _entities,
-                sidePointEvents: _sidePointEvents,
-                globalRangeEvents: _globalRangeEvents
-            });
-        }
-
 
         function render() {
             isMainCanvasCostomized = false;
@@ -1072,12 +1026,9 @@ namespace Services.PlumChart {
         return {
             create,
             setOptions,
+            getOptions,
             setData,
-            setLegends,
-            setEntities,
-            setSidePointEvents,
-            setGlobalRangeEvents,
-
+            getData,
             render,
             renderCanvas,
             getCoreChart
