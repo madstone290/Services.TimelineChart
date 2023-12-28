@@ -1192,7 +1192,7 @@ namespace Services.PlumChart.Core {
         function _renderSidePointEvents() {
             let sidePointEvents = _data.sidePointEvents;
             if (MAX_EVENT_COUNT_PER_ROW < _data.sidePointEvents.length) {
-                sidePointEvents = _data.sidePointEvents.slice(0, MAX_EVENT_COUNT_PER_ROW);
+                sidePointEvents = _filterEvenlySpacedEvents(_data.sidePointEvents, MAX_EVENT_COUNT_PER_ROW);
                 console.warn(`The number of side point events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${_data.sidePointEvents.length}]`);
             }
             for (const event of sidePointEvents) {
@@ -1558,7 +1558,7 @@ namespace Services.PlumChart.Core {
         function _renderEntityPointEvents(entity: Entity, entityRow: EntityRow) {
             let pointEvents = entity.pointEvents;
             if (MAX_EVENT_COUNT_PER_ROW < entity.pointEvents.length) {
-                pointEvents = entity.pointEvents.slice(0, MAX_EVENT_COUNT_PER_ROW);
+                pointEvents = _filterEvenlySpacedEvents(entity.pointEvents, MAX_EVENT_COUNT_PER_ROW);
                 console.warn(`The number of side point events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${entity.pointEvents.length}]`);
             }
 
@@ -1570,7 +1570,7 @@ namespace Services.PlumChart.Core {
         function _renderEntityRangeEvents(entity: Entity, entityRow: EntityRow) {
             let rangeEvents = entity.rangeEvents;
             if (MAX_EVENT_COUNT_PER_ROW < entity.rangeEvents.length) {
-                rangeEvents = entity.rangeEvents.slice(0, MAX_EVENT_COUNT_PER_ROW);
+                rangeEvents = _filterEvenlySpacedEvents(entity.rangeEvents, MAX_EVENT_COUNT_PER_ROW);
                 console.warn(`The number of entity range events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${entity.rangeEvents.length}]`);
             }
 
@@ -1676,10 +1676,24 @@ namespace Services.PlumChart.Core {
             });
         }
 
+        function _filterEvenlySpacedEvents(events: any[], maxCount: number): any[] {
+            if (events.length <= maxCount)
+                return events;
+
+            const filteredEvents: RangeEvent[] = [];
+            const step = events.length / maxCount;
+            for (let current = 0; current < events.length; current += step) {
+                const index = Math.floor(current);
+                filteredEvents.push(events[index]);
+            }
+            return filteredEvents;
+
+        }
+
         function _renderGlobalRangeEvents() {
             let globalRangeEvents = _data.globalRangeEvents;
             if (MAX_EVENT_COUNT_PER_ROW < _data.globalRangeEvents.length) {
-                globalRangeEvents = _data.globalRangeEvents.slice(0, MAX_EVENT_COUNT_PER_ROW);
+                globalRangeEvents = _filterEvenlySpacedEvents(_data.globalRangeEvents, MAX_EVENT_COUNT_PER_ROW);
                 console.warn(`The number of global range events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${_data.globalRangeEvents.length}]`);
             }
             for (const event of _data.globalRangeEvents) {

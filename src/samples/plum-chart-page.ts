@@ -220,7 +220,7 @@ namespace Services.PlumChart.DefaultPage {
                     return rangeEvent;
                 })
             })),
-            sidePointEvents: getSideErrors(5000, 600).map(error => {
+            sidePointEvents: getSideErrors(5000, 1200).map(error => {
                 const pointEvent: Services.PlumChart.PointEvent = {
                     time: error.time,
                     title: error.type,
