@@ -925,27 +925,27 @@ namespace Services.PlumChart {
                 }
             }
             const coreOptions: Services.PlumChart.Core.ChartOptions = {
-                renderMode: options.renderMode,
-                gridTitle: options.gridTitle,
-                canvasTitle: options.canvasTitle,
-                chartStartTime: options.chartStartTime,
-                chartEndTime: options.chartEndTime,
-                columnTitleHeight: options.columnTitleHeight,
-                columnHeaderHeight: options.columnHeaderHeight,
-                sideCanvasHeight: options.sideCanvasHeight,
-                sideCanvasContentHeightRatio: options.sideCanvasContentHeightRatio,
-                cellMinutes: options.cellMinutes,
-                cellWidth: options.cellWidth,
-                cellHeight: options.cellHeight,
-                mainRangeContentRatio: options.mainRangeContentRatio,
-                mainPointContentRatio: options.mainPointContentRatio,
-                maxZoomScale: options.maxZoomScale,
-                hasHorizontalLine: options.hasHorizontalLine,
-                hasVerticalLine: options.hasVerticalLine,
-                columnAutoWidth: options.columnAutoWidth,
-                rowHoverColor: options.rowHoverColor,
-                fixedController: options.fixedController,
-                controllerLocation: options.controllerLocation,
+                renderMode: _options.renderMode,
+                gridTitle: _options.gridTitle,
+                canvasTitle: _options.canvasTitle,
+                chartStartTime: _options.chartStartTime,
+                chartEndTime: _options.chartEndTime,
+                columnTitleHeight: _options.columnTitleHeight,
+                columnHeaderHeight: _options.columnHeaderHeight,
+                sideCanvasHeight: _options.sideCanvasHeight,
+                sideCanvasContentHeightRatio: _options.sideCanvasContentHeightRatio,
+                cellMinutes: _options.cellMinutes,
+                cellWidth: _options.cellWidth,
+                cellHeight: _options.cellHeight,
+                mainRangeContentRatio: _options.mainRangeContentRatio,
+                mainPointContentRatio: _options.mainPointContentRatio,
+                maxZoomScale: _options.maxZoomScale,
+                hasHorizontalLine: _options.hasHorizontalLine,
+                hasVerticalLine: _options.hasVerticalLine,
+                columnAutoWidth: _options.columnAutoWidth,
+                rowHoverColor: _options.rowHoverColor,
+                fixedController: _options.fixedController,
+                controllerLocation: _options.controllerLocation,
                 hZoomEnabled: true,
                 vZoomEnabled: false,
                 paddingCellCount: 0,
@@ -969,10 +969,10 @@ namespace Services.PlumChart {
             _coreChart.setOptions(coreOptions);
 
             _state.gridColumnMap.clear();
-            options.gridColumns?.forEach((column) => {
+            _options.gridColumns?.forEach((column) => {
                 _state.gridColumnMap.set(column, null);
             });
-            _state.gridColumnSortFuncs = options.gridColumns?.map((column) => {
+            _state.gridColumnSortFuncs = _options.gridColumns?.map((column) => {
                 return {
                     field: column.field,
                     compareFn: (a, b) => {
