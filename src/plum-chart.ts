@@ -226,19 +226,19 @@ namespace Services.PlumChart {
         /**
          * 범례 목록
          */
-        legends: Legend[],
+        legends?: Legend[],
         /**
          * 엔티티 목록
          */
-        entities: Entity[],
+        entities?: Entity[],
         /**
          * 보조 점 이벤트 목록
          */
-        sidePointEvents: PointEvent[],
+        sidePointEvents?: PointEvent[],
         /**
          * 전역 범위 이벤트 목록
          */
-        globalRangeEvents: RangeEvent[],
+        globalRangeEvents?: RangeEvent[],
     }
 
     const CLS_ROOT_CONTAINER = "pl-root-container";
