@@ -419,7 +419,8 @@ namespace Pages.Monitoring {
                 canvasTitle: 'Lot Status',
                 chartStartTime: new Date(2024, 0, 1, 6, 0, 0, 0),
                 chartEndTime: new Date(2024, 0, 1, 8, 0, 0, 0),
-                columnAutoWidth: true
+                columnAutoWidth: true,
+                
             }
 
             chartStateList.push({

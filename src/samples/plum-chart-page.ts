@@ -79,29 +79,25 @@ namespace Services.PlumChart.DefaultPage {
         lots.push(lot);
         time = operationTime + 5;
     }
-    const sideErrors: SideError[] = [
-        {
-            time: new Date(2024, 0, 1, 6, 10, 0, 0),
-            type: "Man"
-        },
-        {
-            time: new Date(2024, 0, 1, 7, 10, 0, 0),
-            type: "Man"
-        },
-        {
-            time: new Date(2024, 0, 1, 8, 32, 0, 0),
-            type: "Delivery"
-        },
-        {
-            time: new Date(2024, 0, 1, 8, 44, 0, 0),
-            type: "Cost"
-        },
-        {
-            time: new Date(2024, 0, 1, 9, 40, 0, 0),
-            type: "Man"
-        },
 
-    ];
+    function getSideErrors(count: number, gap: number = 1200): SideError[] {
+        const sideErrors: SideError[] = [];
+        let second = 0;
+        for (let i = 0; i < count; i++) {
+            second = getRandom(second, second + gap);
+            
+            let days = Math.floor(second / 86400);
+            let hours = Math.floor(second / 3600) % 24;
+            let minutes = Math.floor(second / 60) % 60;
+            let seconds = second % 60;
+            
+            sideErrors.push({
+                time: new Date(2024, 0, 1 + days, hours, minutes, seconds, 0),
+                type: sideErrorTypes[Math.floor(Math.random() * sideErrorTypes.length) % sideErrorTypes.length] as any
+            });
+        }
+        return sideErrors;
+    }
 
     const globalErrors: GlobalError[] = [
         {
@@ -224,7 +220,7 @@ namespace Services.PlumChart.DefaultPage {
                     return rangeEvent;
                 })
             })),
-            sidePointEvents: sideErrors.map(error => {
+            sidePointEvents: getSideErrors(5000, 600).map(error => {
                 const pointEvent: Services.PlumChart.PointEvent = {
                     time: error.time,
                     title: error.type,

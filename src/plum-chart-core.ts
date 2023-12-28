@@ -294,9 +294,9 @@ namespace Services.PlumChart.Core {
         gridTitle: HTMLElement;
         gridColumnBox: HTMLElement;
         canvasTitle: HTMLElement;
-        entityGridBox: HTMLElement;
-        columnHeaderBox: HTMLElement;
-        columnHeader: HTMLElement;
+        gridBox: HTMLElement;
+        canvasColumnBox: HTMLElement;
+        canvasColumn: HTMLElement;
         sideCanvasBox: HTMLElement;
         sideCanvas: HTMLElement;
         mainCanvasBox: HTMLElement;
@@ -313,18 +313,18 @@ namespace Services.PlumChart.Core {
 
     // #region Constants
     const CLS_ROOT = "tc-root";
-    const CLS_COLUMN_TITLE = "tc-column-title";
-    const CLS_COLUMN_HEADER_BOX = "tc-column-header-box";
-    const CLS_COLUMN_HEADER = "tc-column-header";
+    const CLS_CANVAS_TITLE = "tc-column-title";
+    const CLS_CANVAS_COLUMN_BOX = "tc-column-header-box";
+    const CLS_CANVAS_COLUMN = "tc-column-header";
     const CLS_SIDE_CANVAS_BOX = "tc-side-canvas-box";
     const CLS_SIDE_CANVAS = "tc-side-canvas";
     const CLS_COLUMN_HEADER_ITEM = "tc-column-header-item";
     const CLS_COLUMN_PANEL = "tc-column-panel";
     const CLS_LEFT_PANEL = "tc-left-panel";
     const CLS_MAIN_PANEL = "tc-main-panel";
-    const CLS_MAIN_TITLE = "tc-maintitle";
-    const CLS_TABLE_COLUMN_BOX = "tc-table-column-box";
-    const CLS_ENTITY_TABLE_BOX = "tc-entity-table-box";
+    const CLS_GRID_TITLE = "tc-maintitle";
+    const CLS_GRID_COLUMN_BOX = "tc-table-column-box";
+    const CLS_GRID_BOX = "tc-entity-table-box";
     const CLS_ENTITY_TABLE_ITEM = "tc-entity-table-item";
 
     const CLS_MAIN_BOX = "tc-main-box";
@@ -386,6 +386,11 @@ namespace Services.PlumChart.Core {
         ["bottomRight", CLS_CONTEXT_MENU_BOTTOM_RIGHT]
     ]);
 
+    /**
+     * 로우당 렌더링 가능한 최대 이벤트 수
+     */
+    const MAX_EVENT_COUNT_PER_ROW = 500;
+
     export const CoreChart = function () {
 
         /* Layout
@@ -408,15 +413,15 @@ namespace Services.PlumChart.Core {
         const TC_ELEMENT_HTML = `
                     <div class="${CLS_ROOT}">
                         <div class="${CLS_LEFT_PANEL}">
-                            <div class="${CLS_MAIN_TITLE}"></div>
-                            <div class="${CLS_TABLE_COLUMN_BOX}"></div>
-                            <div class="${CLS_ENTITY_TABLE_BOX}"></div>
+                            <div class="${CLS_GRID_TITLE}"></div>
+                            <div class="${CLS_GRID_COLUMN_BOX}"></div>
+                            <div class="${CLS_GRID_BOX}"></div>
                         </div>
                         <div class="${CLS_MAIN_PANEL}">
                             <div class="${CLS_COLUMN_PANEL}">
-                                <div class="${CLS_COLUMN_TITLE}"></div>
-                                <div class="${CLS_COLUMN_HEADER_BOX}">
-                                    <div class="${CLS_COLUMN_HEADER}"></div>
+                                <div class="${CLS_CANVAS_TITLE}"></div>
+                                <div class="${CLS_CANVAS_COLUMN_BOX}">
+                                    <div class="${CLS_CANVAS_COLUMN}"></div>
                                 </div>
                                 <div class="${CLS_SIDE_CANVAS_BOX}">
                                     <div class="${CLS_SIDE_CANVAS}"></div>
@@ -556,9 +561,9 @@ namespace Services.PlumChart.Core {
             gridTitle: null,
             gridColumnBox: null,
             canvasTitle: null,
-            entityGridBox: null,
-            columnHeaderBox: null,
-            columnHeader: null,
+            gridBox: null,
+            canvasColumnBox: null,
+            canvasColumn: null,
             sideCanvasBox: null,
             sideCanvas: null,
             mainCanvasBox: null,
@@ -622,12 +627,12 @@ namespace Services.PlumChart.Core {
             container.appendChild(element);
 
             _elements.root = container.getElementsByClassName(CLS_ROOT)[0] as HTMLElement;
-            _elements.gridTitle = container.getElementsByClassName(CLS_MAIN_TITLE)[0] as HTMLElement;
-            _elements.gridColumnBox = container.getElementsByClassName(CLS_TABLE_COLUMN_BOX)[0] as HTMLElement;
-            _elements.canvasTitle = container.getElementsByClassName(CLS_COLUMN_TITLE)[0] as HTMLElement;
-            _elements.entityGridBox = container.getElementsByClassName(CLS_ENTITY_TABLE_BOX)[0] as HTMLElement;
-            _elements.columnHeaderBox = container.getElementsByClassName(CLS_COLUMN_HEADER_BOX)[0] as HTMLElement;
-            _elements.columnHeader = container.getElementsByClassName(CLS_COLUMN_HEADER)[0] as HTMLElement;
+            _elements.gridTitle = container.getElementsByClassName(CLS_GRID_TITLE)[0] as HTMLElement;
+            _elements.gridColumnBox = container.getElementsByClassName(CLS_GRID_COLUMN_BOX)[0] as HTMLElement;
+            _elements.canvasTitle = container.getElementsByClassName(CLS_CANVAS_TITLE)[0] as HTMLElement;
+            _elements.gridBox = container.getElementsByClassName(CLS_GRID_BOX)[0] as HTMLElement;
+            _elements.canvasColumnBox = container.getElementsByClassName(CLS_CANVAS_COLUMN_BOX)[0] as HTMLElement;
+            _elements.canvasColumn = container.getElementsByClassName(CLS_CANVAS_COLUMN)[0] as HTMLElement;
             _elements.sideCanvasBox = container.getElementsByClassName(CLS_SIDE_CANVAS_BOX)[0] as HTMLElement;
             _elements.sideCanvas = container.getElementsByClassName(CLS_SIDE_CANVAS)[0] as HTMLElement;
             _elements.mainCanvasBox = container.getElementsByClassName(CLS_MAIN_CANVAS_BOX)[0] as HTMLElement;
@@ -719,12 +724,12 @@ namespace Services.PlumChart.Core {
         function _initCanvasBasicEventListeners() {
             _elements.mainCanvasBox.addEventListener("scroll", (e) => {
                 // 가로스크롤 동기화
-                _elements.columnHeaderBox.scrollLeft = _elements.mainCanvasBox.scrollLeft;
+                _elements.canvasColumnBox.scrollLeft = _elements.mainCanvasBox.scrollLeft;
                 _elements.sideCanvasBox.scrollLeft = _elements.mainCanvasBox.scrollLeft;
                 // 세로스크롤 동기화
-                _elements.entityGridBox.scrollTop = _elements.mainCanvasBox.scrollTop;
+                _elements.gridBox.scrollTop = _elements.mainCanvasBox.scrollTop;
             });
-            _elements.entityGridBox.addEventListener("wheel", (e) => {
+            _elements.gridBox.addEventListener("wheel", (e) => {
                 // 세로스크롤 동기화
                 _elements.mainCanvasBox.scrollTop += e.deltaY;
             });
@@ -1041,7 +1046,7 @@ namespace Services.PlumChart.Core {
             let canvasWidth = Math.max(_state.cellWidth * _state.canvasColumnCount, _elements.mainCanvasBox.clientWidth);
             let canvasHeight = Math.max(_state.cellHeight * _data.entities.length, _elements.mainCanvasBox.clientHeight);
 
-            _elements.columnHeader.style.width = `${canvasWidth + _options.scrollWidth}px`;
+            _elements.canvasColumn.style.width = `${canvasWidth + _options.scrollWidth}px`;
             _elements.sideCanvas.style.width = `${canvasWidth + _options.scrollWidth}px`;
             _elements.mainCanvas.style.width = `${canvasWidth}px`;
             _elements.mainCanvas.style.height = `${canvasHeight}px`;
@@ -1056,7 +1061,7 @@ namespace Services.PlumChart.Core {
         let _headerElements = new Map<number, HTMLElement>();
 
         function _renderColumnHeader() {
-            _elements.columnHeader.replaceChildren();
+            _elements.canvasColumn.replaceChildren();
             _headerElements.clear();
 
             let cellIndex = 0;
@@ -1068,7 +1073,7 @@ namespace Services.PlumChart.Core {
                 containerElement.style.left = `${left}px`;
                 containerElement.style.width = `${_state.cellWidth}px`;
                 _options.renderHeaderCell(currentTime, containerElement);
-                _elements.columnHeader.appendChild(containerElement);
+                _elements.canvasColumn.appendChild(containerElement);
                 _headerElements.set(cellIndex, containerElement);
 
                 currentTime = new Date(currentTime.getTime() + toTime(_options.cellMinutes));
@@ -1085,7 +1090,7 @@ namespace Services.PlumChart.Core {
                 const line = document.createElement("div") as HTMLElement;
                 line.classList.add(CLS_SIDE_CANVASE_V_BORDER);
                 line.style.left = `${left}px`;
-                _elements.columnHeader.appendChild(line);
+                _elements.canvasColumn.appendChild(line);
                 _state.canvasColumnVLines.push(line);
             }
         }
@@ -1185,10 +1190,13 @@ namespace Services.PlumChart.Core {
 
 
         function _renderSidePointEvents() {
-            if (_data.sidePointEvents != null && _data.sidePointEvents.length > 0) {
-                for (const event of _data.sidePointEvents) {
-                    _renderSidePointEvent(event);
-                }
+            let sidePointEvents = _data.sidePointEvents;
+            if (MAX_EVENT_COUNT_PER_ROW < _data.sidePointEvents.length) {
+                sidePointEvents = _data.sidePointEvents.slice(0, MAX_EVENT_COUNT_PER_ROW);
+                console.warn(`The number of side point events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${_data.sidePointEvents.length}]`);
+            }
+            for (const event of sidePointEvents) {
+                _renderSidePointEvent(event);
             }
         }
 
@@ -1286,7 +1294,7 @@ namespace Services.PlumChart.Core {
         function _renderEntities() {
             _state.entityContainerRows.clear();
             _state.activeEntityRows.clear();
-            _elements.entityGridBox.replaceChildren();
+            _elements.gridBox.replaceChildren();
 
             if (_options.renderMode == "scroll") {
                 _renderEntities_Scroll();
@@ -1365,7 +1373,7 @@ namespace Services.PlumChart.Core {
          */
         function _renderEntityContainer(index: number, entity: Entity) {
             const containerEl = _createEntityContainer(index, _data.entities[index]);
-            _elements.entityGridBox.appendChild(containerEl);
+            _elements.gridBox.appendChild(containerEl);
 
             const entityRow: EntityRow = {
                 index: index,
@@ -1388,7 +1396,7 @@ namespace Services.PlumChart.Core {
         function _renderEntities_Interection() {
             _intersecionObserver?.disconnect();
             const options: IntersectionObserverInit = {
-                root: _elements.entityGridBox,
+                root: _elements.gridBox,
                 threshold: 0,
             };
             _intersecionObserver = new IntersectionObserver(activateEntityWhenIntersecting, options);
@@ -1543,17 +1551,31 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderEntityEvents(entity: Entity, entityRow: EntityRow) {
-            const pointEvents = entity.pointEvents;
-            if (pointEvents != null && pointEvents.length > 0) {
-                for (const event of pointEvents) {
-                    _renderEntityPointEvent(event, entityRow);
-                }
+            _renderEntityPointEvents(entity, entityRow);
+            _renderEntityRangeEvents(entity, entityRow);
+        }
+
+        function _renderEntityPointEvents(entity: Entity, entityRow: EntityRow) {
+            let pointEvents = entity.pointEvents;
+            if (MAX_EVENT_COUNT_PER_ROW < entity.pointEvents.length) {
+                pointEvents = entity.pointEvents.slice(0, MAX_EVENT_COUNT_PER_ROW);
+                console.warn(`The number of side point events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${entity.pointEvents.length}]`);
             }
-            const rangeEvents = entity.rangeEvents;
-            if (rangeEvents != null && rangeEvents.length > 0) {
-                for (const event of rangeEvents) {
-                    _renderEntityRangeEvent(event, entityRow);
-                }
+
+            for (const event of pointEvents) {
+                _renderEntityPointEvent(event, entityRow);
+            }
+        }
+
+        function _renderEntityRangeEvents(entity: Entity, entityRow: EntityRow) {
+            let rangeEvents = entity.rangeEvents;
+            if (MAX_EVENT_COUNT_PER_ROW < entity.rangeEvents.length) {
+                rangeEvents = entity.rangeEvents.slice(0, MAX_EVENT_COUNT_PER_ROW);
+                console.warn(`The number of entity range events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${entity.rangeEvents.length}]`);
+            }
+
+            for (const event of rangeEvents) {
+                _renderEntityRangeEvent(event, entityRow);
             }
         }
 
@@ -1655,10 +1677,13 @@ namespace Services.PlumChart.Core {
         }
 
         function _renderGlobalRangeEvents() {
-            if (_data.globalRangeEvents != null && _data.globalRangeEvents.length > 0) {
-                for (const event of _data.globalRangeEvents) {
-                    _renderGlobalRangeEvent(event);
-                }
+            let globalRangeEvents = _data.globalRangeEvents;
+            if (MAX_EVENT_COUNT_PER_ROW < _data.globalRangeEvents.length) {
+                globalRangeEvents = _data.globalRangeEvents.slice(0, MAX_EVENT_COUNT_PER_ROW);
+                console.warn(`The number of global range events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${_data.globalRangeEvents.length}]`);
+            }
+            for (const event of _data.globalRangeEvents) {
+                _renderGlobalRangeEvent(event);
             }
         }
 
