@@ -166,6 +166,11 @@ namespace Services.PlumChart.Core {
          */
         entityEventSearchScrollOffset?: number;
 
+        /**
+         * 로우당 렌더링 가능한 최대 이벤트 수
+         */
+        maxRenderCountPerRow?: number;
+
         customizeElements?: (elements: { rootElement: HTMLElement }) => void;
         formatHeaderTime?: (time: Date) => string;
         renderHeaderCell?: (time: Date, containerEl: HTMLElement) => void;
@@ -386,11 +391,6 @@ namespace Services.PlumChart.Core {
         ["bottomRight", CLS_CONTEXT_MENU_BOTTOM_RIGHT]
     ]);
 
-    /**
-     * 로우당 렌더링 가능한 최대 이벤트 수
-     */
-    const MAX_EVENT_COUNT_PER_ROW = 500;
-
     export const CoreChart = function () {
 
         /* Layout
@@ -490,8 +490,7 @@ namespace Services.PlumChart.Core {
             columnAutoWidth: true,
             entityEventSearchScrollOffset: -100,
             renderMode: "scroll",
-
-
+            maxRenderCountPerRow: 300,
             customizeElements: (_) => { },
             formatHeaderTime: (time: Date) => { return time.toLocaleTimeString(); },
             renderHeaderCell: (time: Date, containerEl: HTMLElement) => {
@@ -1191,9 +1190,9 @@ namespace Services.PlumChart.Core {
 
         function _renderSidePointEvents() {
             let sidePointEvents = _data.sidePointEvents;
-            if (MAX_EVENT_COUNT_PER_ROW < _data.sidePointEvents.length) {
-                sidePointEvents = _filterEvenlySpacedEvents(_data.sidePointEvents, MAX_EVENT_COUNT_PER_ROW);
-                console.warn(`The number of side point events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${_data.sidePointEvents.length}]`);
+            if (_options.maxRenderCountPerRow < _data.sidePointEvents.length) {
+                sidePointEvents = _filterEvenlySpacedEvents(_data.sidePointEvents, _options.maxRenderCountPerRow);
+                console.warn(`The number of side point events exceeds the maximum limit. [max: ${_options.maxRenderCountPerRow}, current: ${_data.sidePointEvents.length}]`);
             }
             for (const event of sidePointEvents) {
                 _renderSidePointEvent(event);
@@ -1557,9 +1556,9 @@ namespace Services.PlumChart.Core {
 
         function _renderEntityPointEvents(entity: Entity, entityRow: EntityRow) {
             let pointEvents = entity.pointEvents;
-            if (MAX_EVENT_COUNT_PER_ROW < entity.pointEvents.length) {
-                pointEvents = _filterEvenlySpacedEvents(entity.pointEvents, MAX_EVENT_COUNT_PER_ROW);
-                console.warn(`The number of side point events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${entity.pointEvents.length}]`);
+            if (_options.maxRenderCountPerRow < entity.pointEvents.length) {
+                pointEvents = _filterEvenlySpacedEvents(entity.pointEvents, _options.maxRenderCountPerRow);
+                console.warn(`The number of entity point events exceeds the maximum limit. [max: ${_options.maxRenderCountPerRow}, current: ${entity.pointEvents.length}]`);
             }
 
             for (const event of pointEvents) {
@@ -1569,9 +1568,9 @@ namespace Services.PlumChart.Core {
 
         function _renderEntityRangeEvents(entity: Entity, entityRow: EntityRow) {
             let rangeEvents = entity.rangeEvents;
-            if (MAX_EVENT_COUNT_PER_ROW < entity.rangeEvents.length) {
-                rangeEvents = _filterEvenlySpacedEvents(entity.rangeEvents, MAX_EVENT_COUNT_PER_ROW);
-                console.warn(`The number of entity range events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${entity.rangeEvents.length}]`);
+            if (_options.maxRenderCountPerRow < entity.rangeEvents.length) {
+                rangeEvents = _filterEvenlySpacedEvents(entity.rangeEvents, _options.maxRenderCountPerRow);
+                console.warn(`The number of entity range events exceeds the maximum limit. [max: ${_options.maxRenderCountPerRow}, current: ${entity.rangeEvents.length}]`);
             }
 
             for (const event of rangeEvents) {
@@ -1692,9 +1691,9 @@ namespace Services.PlumChart.Core {
 
         function _renderGlobalRangeEvents() {
             let globalRangeEvents = _data.globalRangeEvents;
-            if (MAX_EVENT_COUNT_PER_ROW < _data.globalRangeEvents.length) {
-                globalRangeEvents = _filterEvenlySpacedEvents(_data.globalRangeEvents, MAX_EVENT_COUNT_PER_ROW);
-                console.warn(`The number of global range events exceeds the maximum limit. [max: ${MAX_EVENT_COUNT_PER_ROW}, current: ${_data.globalRangeEvents.length}]`);
+            if (_options.maxRenderCountPerRow < _data.globalRangeEvents.length) {
+                globalRangeEvents = _filterEvenlySpacedEvents(_data.globalRangeEvents, _options.maxRenderCountPerRow);
+                console.warn(`The number of global range events exceeds the maximum limit. [max: ${_options.maxRenderCountPerRow}, current: ${_data.globalRangeEvents.length}]`);
             }
             for (const event of _data.globalRangeEvents) {
                 _renderGlobalRangeEvent(event);
