@@ -1308,7 +1308,9 @@ namespace Services.PlumChart.Core {
         function _renderEntityRow(entityRow: EntityRow) {
             const { index, entity, containerEl } = entityRow;
             _options.renderGridRow(index, entity, containerEl);
+            console.log(`render entity row: ${index}`, entity);
             _renderEntityEvents(entity, entityRow);
+
 
             if (_options.hasHorizontalLine) {
                 const mainCanvasHLine = document.createElement("div");

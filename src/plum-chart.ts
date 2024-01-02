@@ -196,6 +196,10 @@ namespace Services.PlumChart {
          */
         gridColumnMap: Map<GridColumn, HTMLElement>,
         /**
+         * 그리드 컬럼 목록. key: 그리드컬럼, value: icon element
+         */
+        gridColumnIconMap: Map<GridColumn, HTMLElement>,
+        /**
          * 그리드 컬럼 정렬 함수
          */
         gridColumnSortFuncs: GridColumnSort<Entity>[],
@@ -291,6 +295,7 @@ namespace Services.PlumChart {
         const _state: PlumChartState = {
             entitiesBackup: [],
             gridColumnMap: new Map(),
+            gridColumnIconMap: new Map(),
             gridColumnSortFuncs: [],
             sortDirection: SortDirection.NONE,
             sortColumnField: "",
@@ -702,17 +707,20 @@ namespace Services.PlumChart {
         }
 
         function _renderGridColumns(containerEl: HTMLElement) {
+            console.log("renderGridColumns");
             const gridColumnsEl = document.createElement("div");
             gridColumnsEl.classList.add(CLS_GRID_COLUMNS);
             containerEl.appendChild(gridColumnsEl);
 
             let columnIdx = 0;
             for (const column of _state.gridColumnMap.keys()) {
-                const columnEl = _createColumn(gridColumnsEl, columnIdx++, column.caption);
+                const [columnEl, iconEl] = _createColumn(gridColumnsEl, columnIdx++, column.caption);
                 gridColumnsEl.appendChild(columnEl);
                 _state.gridColumnMap.set(column, columnEl);
+                _state.gridColumnIconMap.set(column, iconEl);
             }
 
+            console.log("_state.gridColumnMap", _state.gridColumnMap);
             for (const [column, columnEl] of _state.gridColumnMap.entries()) {
                 columnEl.addEventListener("click", (e) => {
                     const selectedField = column.field;
@@ -731,10 +739,12 @@ namespace Services.PlumChart {
                     }
                     _state.sortColumnField = selectedField;
 
-                    for (const columnEl of _state.gridColumnMap.values()) {
-                        _updateColumnIcon(columnEl, SortDirection.NONE);
+                    for (const otherIconEl of _state.gridColumnIconMap.values()) {
+                        _updateColumnIcon(otherIconEl, SortDirection.NONE);
                     }
-                    _updateColumnIcon(columnEl, _state.sortDirection);
+
+                    const iconEl = _state.gridColumnIconMap.get(column);
+                    _updateColumnIcon(iconEl, _state.sortDirection);
                     _sortEntities(selectedField, _state.sortDirection);
 
                     const sortEvent = new CustomEvent("sort", { detail: { field: selectedField, direction: _state.sortDirection } });
@@ -744,7 +754,7 @@ namespace Services.PlumChart {
 
         }
 
-        function _createColumn(containerEl: HTMLElement, index: number, caption: string): HTMLElement {
+        function _createColumn(containerEl: HTMLElement, index: number, caption: string): HTMLElement[] {
             const columnEl = document.createElement("div");
             columnEl.classList.add(CLS_GRID_COLUMN);
             columnEl.setAttribute("data-index", index.toString());
@@ -759,7 +769,7 @@ namespace Services.PlumChart {
             columnEl.appendChild(icon);
 
             containerEl.appendChild(columnEl);
-            return columnEl;
+            return [columnEl, icon];
         }
 
         /**
@@ -767,14 +777,13 @@ namespace Services.PlumChart {
          * @param columnEl 
          * @param sortDirection 
          */
-        function _updateColumnIcon(columnEl: HTMLElement, sortDirection: SortDirection) {
-            const icon = columnEl.getElementsByClassName(CLS_GRID_COLUMN_ICON)[0];
+        function _updateColumnIcon(iconEl: HTMLElement, sortDirection: SortDirection) {
             if (sortDirection == SortDirection.ASC) {
-                icon.innerHTML = "&#9650;";
+                iconEl.innerHTML = "&#9650;";
             } else if (sortDirection == SortDirection.DESC) {
-                icon.innerHTML = "&#9660;";
+                iconEl.innerHTML = "&#9660;";
             } else {
-                icon.innerHTML = "";
+                iconEl.innerHTML = "";
             }
         }
 
@@ -1018,7 +1027,8 @@ namespace Services.PlumChart {
         }
 
         function renderCanvas() {
-            _coreChart.renderCanvas();
+            // 정렬과정에서 렌더링이 발생한다. 중복렌더링을 방지를 위해 renderCanvas()를 호출하지 않도록 한다.
+            _sortEntities(_state.sortColumnField, _state.sortDirection);
         }
 
         function getCoreChart() {
